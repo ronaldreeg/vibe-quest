@@ -907,9 +907,12 @@ function safeImageSrc(src) {
 }
 
 function safeExternalUrl(src) {
-  const value = String(src || "").trim();
+  const rawValue = String(src || "").trim();
+  if (!rawValue) return "";
+  const value = /^@[a-z\d._-]+$/i.test(rawValue)
+    ? `https://instagram.com/${rawValue.slice(1)}`
+    : rawValue;
   if (/^[a-z][a-z\d+.-]*:/i.test(value) && !/^https?:\/\//i.test(value)) return "";
-  if (!value) return "";
   const withProtocol = /^https?:\/\//i.test(value) ? value : `https://${value}`;
   try {
     const url = new URL(withProtocol);
@@ -949,16 +952,28 @@ function linkHost(url) {
   }
 }
 
-function hostLinkInputs(data) {
+function formText(data, form, ...names) {
+  for (const name of names) {
+    const value = data.get(name);
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  for (const name of names) {
+    const field = form?.elements?.namedItem(name);
+    if (field && typeof field.value === "string" && field.value.trim()) return field.value.trim();
+  }
+  return "";
+}
+
+function hostLinkInputs(data, form = null) {
   return [
-    { label: "Website or social", value: data.get("websiteUrl") || data.get("linkUrl") },
-    { label: "Sign up", value: data.get("signupUrl") },
-    { label: "More info", value: data.get("infoUrl") }
+    { label: "Website or social", value: formText(data, form, "websiteUrl", "linkUrl", "socialUrl", "instagramUrl") },
+    { label: "Sign up", value: formText(data, form, "signupUrl", "registerUrl", "ticketUrl") },
+    { label: "More info", value: formText(data, form, "infoUrl", "detailsUrl", "eventUrl") }
   ];
 }
 
-function buildHostLinks(data) {
-  return hostLinkInputs(data)
+function buildHostLinks(data, form = null) {
+  return hostLinkInputs(data, form)
     .map((item) => ({ ...item, url: safeExternalUrl(item.url) }))
     .filter((item) => item.url);
 }
@@ -2234,7 +2249,7 @@ async function publishAdventure(event) {
   const city = String(data.get("city") || "").trim();
   const description = String(data.get("description") || "").trim();
   const price = String(data.get("price") || "").trim();
-  const invalidLink = hostLinkInputs(data).find((item) => String(item.value || "").trim() && !safeExternalUrl(item.value));
+  const invalidLink = hostLinkInputs(data, els.hostForm).find((item) => String(item.value || "").trim() && !safeExternalUrl(item.value));
   if (title.length < 3 || title.length > 120) {
     toast("Give the activity a title between 3 and 120 characters.");
     return;
@@ -2273,7 +2288,7 @@ async function publishAdventure(event) {
     if (photoFile instanceof File && photoFile.size) {
       uploadedPhoto = await optimizeImageFile(photoFile);
     }
-    const links = buildHostLinks(data);
+    const links = buildHostLinks(data, els.hostForm);
     const existing = state.editingAdventureId ? getStoredAdventure(state.editingAdventureId) : null;
     if (state.editingAdventureId && (!existing || existing.createdBy !== user.id)) {
       resetHostForm();
