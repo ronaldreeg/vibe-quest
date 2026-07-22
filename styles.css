@@ -461,6 +461,32 @@ textarea:focus {
   font-weight: 800;
 }
 
+.city-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: center;
+}
+
+.city-input-row input {
+  min-width: 0;
+}
+
+.location-button {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  background: var(--button-fill);
+  color: var(--button-text);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.location-button[aria-busy="true"] {
+  cursor: wait;
+  opacity: 0.62;
+}
+
 .hero-map {
   min-height: clamp(430px, 58vh, 640px);
   margin-bottom: 0;

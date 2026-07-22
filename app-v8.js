@@ -110,6 +110,9 @@ const CITY_CENTERS = {
   "austin, tx": [30.2672, -97.7431]
 };
 
+const DEFAULT_MAP_CENTER = [39.8283, -98.5795];
+const LOCATION_STORAGE_KEY = "vv_location_preference";
+
 const DEFAULT_ADVENTURES = [
   {
     id: "sunset-paddle",
@@ -414,7 +417,10 @@ const state = {
   activeType: "All",
   activeVibe: "All",
   location: "",
-  mapCenter: CITY_CENTERS.galveston,
+  locationSource: "",
+  locationStatus: "idle",
+  locationIntentVersion: 0,
+  mapCenter: DEFAULT_MAP_CENTER,
   mapNeedsFit: true,
   session: store.get("vv_session", null),
   authBusy: false,
@@ -429,7 +435,9 @@ const state = {
 
 const els = {
   navTabs: document.querySelectorAll(".nav-tab"),
+  locationEyebrow: document.querySelector("#locationEyebrow"),
   locationInput: document.querySelector("#locationInput"),
+  locationButton: document.querySelector(".location-button"),
   timingFilters: document.querySelector("#timingFilters"),
   typeFilters: document.querySelector("#typeFilters"),
   vibeFilters: document.querySelector("#vibeFilters"),
@@ -521,7 +529,7 @@ function normalizeAdventureRecord(adventure, index, users = getUsers()) {
   if (Number.isFinite(normalizedAdventure.lat) && Number.isFinite(normalizedAdventure.lng)) {
     return normalizedAdventure;
   }
-  const center = knownCenterForLocation(normalizedAdventure.city) || CITY_CENTERS.galveston;
+  const center = knownCenterForLocation(normalizedAdventure.city) || DEFAULT_MAP_CENTER;
   const hash = hashString(normalizedAdventure.id || normalizedAdventure.title || index);
   return {
     ...normalizedAdventure,
@@ -1249,7 +1257,9 @@ function renderMap(adventures) {
   });
 
   if (state.mapNeedsFit) {
-    if (points.length > 1) {
+    if (state.locationSource === "geolocation" && !state.location) {
+      map.setView(state.mapCenter, 12);
+    } else if (points.length > 1) {
       map.fitBounds(points.map((item) => [item.lat, item.lng]), { padding: [34, 34], maxZoom: 14 });
     } else if (points.length === 1) {
       map.setView([points[0].lat, points[0].lng], 14);
@@ -1433,6 +1443,7 @@ function renderProfileLists() {
 }
 
 function render() {
+  updateLocationUi();
   renderFilters();
   renderViews();
   renderAdventures();
@@ -1457,6 +1468,132 @@ async function fetchGeocodeResults(location, limit = 5) {
   } catch {
     return [];
   }
+}
+
+function formatReverseGeocodeLabel(address = {}) {
+  const locality = address.city
+    || address.town
+    || address.village
+    || address.municipality
+    || address.county
+    || "Your area";
+  const stateCode = String(address.state_code || "")
+    .replace(/^us-/i, "")
+    .trim()
+    .toUpperCase();
+  return stateCode ? `${locality}, ${stateCode}` : locality;
+}
+
+async function reverseGeocodeLocation(latitude, longitude) {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=10&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}`
+    );
+    if (!response.ok) return "";
+    const result = await response.json();
+    return formatReverseGeocodeLabel(result?.address || {});
+  } catch {
+    return "";
+  }
+}
+
+function getBrowserLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("geolocation-unavailable"));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: false,
+      maximumAge: 300000,
+      timeout: 8000
+    });
+  });
+}
+
+function readStoredLocationPreference() {
+  const preference = store.get(LOCATION_STORAGE_KEY, null);
+  if (!preference || typeof preference !== "object" || !preference.label) return null;
+  const lat = Number(preference.lat);
+  const lng = Number(preference.lng);
+  return {
+    label: String(preference.label),
+    center: Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null
+  };
+}
+
+function applyStoredLocationPreference() {
+  const preference = readStoredLocationPreference();
+  if (!preference) return false;
+  state.location = preference.label;
+  state.locationSource = "manual";
+  state.mapCenter = preference.center || knownCenterForLocation(preference.label) || DEFAULT_MAP_CENTER;
+  state.mapNeedsFit = true;
+  els.locationInput.value = state.location;
+  return true;
+}
+
+function updateLocationUi() {
+  if (els.locationEyebrow) {
+    els.locationEyebrow.textContent = state.location
+      ? `Near ${state.location}`
+      : state.locationStatus === "checking" ? "Finding your starting point" : "Find your starting point";
+  }
+  if (els.locationInput && !els.locationInput.value) {
+    els.locationInput.placeholder = state.locationStatus === "checking"
+      ? "Finding your location..."
+      : "City, neighborhood, or ZIP";
+  }
+  if (els.locationButton) {
+    els.locationButton.setAttribute("aria-busy", state.locationStatus === "checking" ? "true" : "false");
+  }
+}
+
+async function useBrowserLocation({ force = false } = {}) {
+  const requestVersion = state.locationIntentVersion;
+  state.locationStatus = "checking";
+  updateLocationUi();
+  try {
+    const position = await getBrowserLocation();
+    if (!force && requestVersion !== state.locationIntentVersion) return;
+    const latitude = Number(position.coords.latitude);
+    const longitude = Number(position.coords.longitude);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) throw new Error("invalid-location");
+    const label = await reverseGeocodeLocation(latitude, longitude);
+    if (!force && requestVersion !== state.locationIntentVersion) return;
+    state.location = label;
+    state.locationSource = "geolocation";
+    state.locationStatus = "ready";
+    state.mapCenter = [latitude, longitude];
+    state.mapNeedsFit = true;
+    store.set(LOCATION_STORAGE_KEY, null);
+    els.locationInput.value = label;
+    render();
+    toast(label ? `Showing finds near ${label}.` : "Showing the map near you.");
+  } catch {
+    if (!force && requestVersion !== state.locationIntentVersion) return;
+    state.locationStatus = "error";
+    updateLocationUi();
+    toast("Location access is off. Search a city to get started.");
+  }
+}
+
+async function initializeLocation() {
+  const user = getCurrentUser();
+  if (user?.city) {
+    state.location = user.city;
+    state.locationSource = "profile";
+    state.mapCenter = knownCenterForLocation(user.city) || state.mapCenter;
+    state.mapNeedsFit = true;
+    els.locationInput.value = user.city;
+    render();
+    return;
+  }
+  if (applyStoredLocationPreference()) {
+    render();
+    return;
+  }
+  await useBrowserLocation();
 }
 
 async function geocodeFreeformLocation(location) {
@@ -1591,8 +1728,19 @@ async function applyFilters() {
   const requestId = ++latestLocationSearchRequest;
   const nextCenter = await geocodeLocation(state.location);
   if (requestId !== latestLocationSearchRequest) return;
+  state.locationSource = state.location ? "manual" : "";
+  state.locationStatus = state.location ? "ready" : "idle";
   state.mapCenter = nextCenter;
   state.mapNeedsFit = true;
+  if (state.location) {
+    store.set(LOCATION_STORAGE_KEY, {
+      label: state.location,
+      lat: nextCenter[0],
+      lng: nextCenter[1]
+    });
+  } else {
+    store.set(LOCATION_STORAGE_KEY, null);
+  }
   render();
 }
 
@@ -2478,15 +2626,32 @@ document.addEventListener("click", async (event) => {
   const action = target.dataset.action;
   if (action === "home") setView("discover");
   if (action === "focus-search") els.locationInput.focus();
+  if (action === "use-location") {
+    state.locationIntentVersion += 1;
+    state.location = "";
+    state.locationSource = "";
+    state.locationStatus = "idle";
+    state.mapNeedsFit = true;
+    els.locationInput.value = "";
+    store.set(LOCATION_STORAGE_KEY, null);
+    await useBrowserLocation({ force: true });
+  }
   if (action === "apply-filters") await applyFilters();
   if (action === "explore-galveston") {
     state.location = "Galveston, TX";
+    state.locationSource = "manual";
+    state.locationStatus = "ready";
     state.mapCenter = CITY_CENTERS["galveston, tx"];
     state.mapNeedsFit = true;
     state.activeType = "All";
     state.activeVibe = "All";
     state.activeTiming = "all";
     els.locationInput.value = state.location;
+    store.set(LOCATION_STORAGE_KEY, {
+      label: state.location,
+      lat: state.mapCenter[0],
+      lng: state.mapCenter[1]
+    });
     setView("discover");
   }
   if (action === "use-profile") {
@@ -2495,6 +2660,8 @@ document.addEventListener("click", async (event) => {
       showAuth("signup");
     } else {
       state.location = user.city;
+      state.locationSource = "profile";
+      state.locationStatus = "ready";
       state.mapCenter = knownCenterForLocation(user.city) || state.mapCenter;
       state.mapNeedsFit = true;
       els.locationInput.value = user.city;
@@ -2530,7 +2697,10 @@ document.addEventListener("click", async (event) => {
 });
 
 els.locationInput.addEventListener("input", (event) => {
+  state.locationIntentVersion += 1;
   state.location = event.target.value;
+  state.locationSource = state.location ? "manual" : "";
+  state.locationStatus = state.location ? "idle" : "idle";
   state.mapCenter = knownCenterForLocation(state.location) || state.mapCenter;
   clearTimeout(window.vvLocationFilterTimer);
   window.vvLocationFilterTimer = setTimeout(() => renderAdventures(), 180);
@@ -2584,14 +2754,11 @@ render();
 
 if (state.backendEnabled) {
   state.session = null;
-  bootstrapSupabase().then(() => updateHostFormMode());
+  bootstrapSupabase().then(async () => {
+    updateHostFormMode();
+    if (!getCurrentUser()) await initializeLocation();
+  });
 } else {
-  const user = getCurrentUser();
-  if (user) {
-    state.location = user.city || "";
-    state.mapCenter = knownCenterForLocation(state.location) || state.mapCenter;
-    state.mapNeedsFit = true;
-    els.locationInput.value = state.location;
-  }
+  initializeLocation().catch(() => {});
   repairHostedCoordinates().catch(() => {});
 }

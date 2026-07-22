@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="./styles.css?v=20260722-mobile-overflow-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260722-location-awareness-v1" />
   </head>
   <body>
     <div class="app-shell">
@@ -39,15 +39,18 @@
           <section class="map-hero">
             <div class="map-hero-header">
               <div class="map-hero-copy">
-                <p class="eyebrow">Galveston beta</p>
+                <p class="eyebrow" id="locationEyebrow">Find your starting point</p>
                 <h1>Find something fun.<br />Nearby and beyond.</h1>
                 <p class="hero-subtitle">Discover pop-ups, meet-ups, classes, local gems, and day-trip-worthy happenings, whether they are around the corner or a town over.</p>
               </div>
               <div class="map-search-panel" aria-label="City search">
-                <label class="city-field">
-                  <span>Search a city</span>
-                  <input id="locationInput" type="search" placeholder="Galveston, TX" autocomplete="off" />
-                </label>
+                <div class="city-field">
+                  <label for="locationInput">Search a city</label>
+                  <div class="city-input-row">
+                    <input id="locationInput" type="search" placeholder="City, neighborhood, or ZIP" autocomplete="off" />
+                    <button class="icon-button location-button" type="button" data-action="use-location" aria-label="Use my location" title="Use my location">⌖</button>
+                  </div>
+                </div>
                 <button class="primary-button" data-action="apply-filters">Search map</button>
                 <button class="secondary-button" data-view="host">Share a find</button>
               </div>
@@ -403,6 +406,6 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.min.js"></script>
   <script src="./supabase-client.js?v=20260722"></script>
-  <script src="./app-v8.js"></script>
+  <script src="./app-v8.js?v=20260722-location-awareness-v1"></script>
 </body>
 </html>
