@@ -1841,11 +1841,17 @@ function openDetail(id) {
     <h2>${escapeHtml(adventure.title)}</h2>
     <p>${escapeHtml(adventure.description)}</p>
     <div class="detail-list">
-      <div>
+      <button
+        class="detail-map-link"
+        type="button"
+        data-action="show-on-map"
+        data-id="${adventure.id}"
+        aria-label="Show ${escapeHtml(adventure.title)} on the map"
+      >
         <span>Where</span>
         <strong>${escapeHtml(adventure.area)}</strong>
         ${adventure.locationAccuracy === "approximate" ? `<em class="location-accuracy">Approximate map area</em>` : ""}
-      </div>
+      </button>
       <div><span>Price</span><strong>${escapeHtml(adventure.price)}</strong></div>
       <div><span>When</span><strong>${escapeHtml(timingLabel(adventure, true))}</strong></div>
       <div><span>Type</span><strong>${escapeHtml(type)}</strong></div>

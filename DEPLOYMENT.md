@@ -16,7 +16,7 @@ The exact DNS records depend on the registrar's current interface, so they shoul
 
 The Supabase project reference supplied for Vibe Quest is `wyebrsyiauxgoabzigrg`. It identifies the project, but it is not an application secret.
 
-Before production launch, the browser storage adapter in `app-v4.js` should be replaced with:
+Before production launch, the browser storage adapter in `app-v5.js` should be replaced with:
 
 - Supabase Auth for sign-up, sign-in, email verification, recovery, and sessions.
 - Postgres tables for profiles, activities, activity occurrences, saves, field notes, media, reports, and editorial posts.

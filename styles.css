@@ -636,6 +636,7 @@ textarea:focus {
 .save-button:focus-visible,
 .compact-button:focus-visible,
 .listing-link-card:focus-visible,
+.detail-map-link:focus-visible,
 .out-there-slide-button:focus-visible,
 .out-there-slide-dot:focus-visible {
   outline: 2px solid var(--accent);
@@ -1533,11 +1534,24 @@ textarea:focus {
   margin: var(--gap) 0;
 }
 
-.detail-list div {
+.detail-list > div,
+.detail-map-link {
   padding: var(--gap-xs);
   border: 1px solid color-mix(in srgb, var(--text) 15%, transparent);
   border-radius: 0;
   background: var(--detail-surface);
+}
+
+.detail-map-link {
+  width: 100%;
+  color: var(--text);
+  text-align: left;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+
+.detail-map-link:hover {
+  border-color: color-mix(in srgb, var(--accent) 62%, var(--text));
+  background: color-mix(in srgb, var(--accent) 10%, var(--detail-surface));
 }
 
 .detail-list span,
