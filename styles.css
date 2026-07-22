@@ -1822,13 +1822,21 @@ textarea:focus {
 
   .out-there-feature {
     min-height: 58vh;
-    margin-bottom: 165px;
+    margin-bottom: 104px;
   }
 
   .out-there-slide-controls {
     top: auto;
     bottom: -56px;
-    gap: 10px;
+    gap: 6px;
+  }
+
+  .out-there-slide-dots {
+    gap: 6px;
+  }
+
+  .out-there-slide-dot.is-active {
+    width: 20px;
   }
 
   .out-there-blurb {
@@ -1838,11 +1846,29 @@ textarea:focus {
   .editorial-map-window {
     right: 12px;
     bottom: 0;
-    width: min(285px, calc(100% - 24px));
+    width: min(160px, calc(100% - 24px));
   }
 
   .editorial-map {
-    height: 140px;
+    height: 90px;
+  }
+
+  .editorial-map-titlebar,
+  .editorial-map-footer p {
+    display: none;
+  }
+
+  .editorial-map-footer {
+    min-height: 42px;
+    padding: 8px;
+  }
+
+  .editorial-map-link {
+    display: block;
+    width: 100%;
+    font-size: 0.68rem;
+    line-height: 1.2;
+    white-space: nowrap;
   }
 
   .out-there-blurb h2 {
