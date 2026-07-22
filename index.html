@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Discover pop-ups, meet-ups, classes, local gems, and day-trip-worthy happenings nearby and beyond." />
+    <meta name="theme-color" content="#0d1117" />
+    <title>Vibe Ventures</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="./styles.css?v=20260722-map-zoom" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <button class="brand" data-action="home" aria-label="Vibe Ventures home">
+            <span class="brand-mark">VV</span>
+          <span>
+            <strong>Vibe Ventures</strong>
+            <small>Local finds, fast</small>
+          </span>
+        </button>
+        <nav class="nav-tabs" aria-label="Primary">
+          <button class="nav-tab is-active" data-view="discover">Discover</button>
+          <button class="nav-tab" data-view="host">Share</button>
+          <button class="nav-tab" data-view="saved">Saved</button>
+          <button class="nav-tab" data-view="out-there">Out There</button>
+        </nav>
+        <div class="topbar-actions">
+          <button class="icon-button" data-action="toggle-theme" aria-label="Toggle theme">☼</button>
+          <button class="profile-pill" data-action="open-profile">Sign in</button>
+        </div>
+      </header>
+
+      <main>
+        <section class="workspace">
+          <section class="map-hero">
+            <div class="map-hero-header">
+              <div class="map-hero-copy">
+                <p class="eyebrow">Galveston beta</p>
+                <h1>Find something fun.<br />Nearby and beyond.</h1>
+                <p class="hero-subtitle">Discover pop-ups, meet-ups, classes, local gems, and day-trip-worthy happenings, whether they are around the corner or a town over.</p>
+              </div>
+              <div class="map-search-panel" aria-label="City search">
+                <label class="city-field">
+                  <span>Search a city</span>
+                  <input id="locationInput" type="search" placeholder="Galveston, TX" autocomplete="off" />
+                </label>
+                <button class="primary-button" data-action="apply-filters">Search map</button>
+                <button class="secondary-button" data-view="host">Share a find</button>
+              </div>
+            </div>
+            <div class="map-board hero-map" aria-label="Local activity map">
+              <div id="realMap"></div>
+            </div>
+          </section>
+
+          <section class="filter-bar" aria-label="Discovery filters">
+            <div class="panel-heading">
+              <div>
+                <span class="mini-label">Discovery filters</span>
+                <h2>Browse the good stuff</h2>
+              </div>
+            </div>
+            <div class="filter-groups">
+              <div class="filter-group">
+                <span class="filter-label">Vibe</span>
+                <div class="segmented" id="vibeFilters" role="group" aria-label="Vibe filter"></div>
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">Type</span>
+                <div class="segmented" id="typeFilters" role="group" aria-label="Activity type filter"></div>
+              </div>
+              <div class="filter-group timing-filter-group">
+                <span class="filter-label">When</span>
+                  <div class="segmented timing-tabs" id="timingFilters" role="group" aria-label="Activity timing filter">
+                  <button class="chip timing-chip is-active" data-timing-filter="all" aria-pressed="true">All</button>
+                  <button class="chip timing-chip" data-timing-filter="today" aria-pressed="false">Today</button>
+                  <button class="chip timing-chip" data-timing-filter="coming-up" aria-pressed="false">Coming up</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="results-area" aria-live="polite">
+            <div class="toolbar">
+              <div>
+                <span class="mini-label" id="resultsMeta">Nearby finds</span>
+                <h2 id="resultsTitle">Local happenings</h2>
+              </div>
+            </div>
+            <div class="adventure-grid" id="adventureGrid"></div>
+          </section>
+        </section>
+
+        <section class="saved-view" id="savedView" hidden>
+          <div class="section-heading">
+            <span class="mini-label">Your collection</span>
+            <h2>Saved activities</h2>
+          </div>
+          <div class="adventure-grid" id="savedGrid"></div>
+        </section>
+
+        <section class="out-there-view" id="outThereView" hidden>
+          <header class="out-there-header">
+            <span class="mini-label">From the Vibe Ventures team</span>
+            <h1 class="out-there-title">Good things are happening out there.</h1>
+            <p>News, updates, and photographs from the places, people, and unexpected local moments inspiring Vibe Ventures.</p>
+          </header>
+          <figure class="out-there-feature" data-out-there-slideshow>
+            <div class="out-there-slides" aria-live="polite">
+              <img class="out-there-slide is-active" data-out-there-slide src="https://upload.wikimedia.org/wikipedia/commons/0/03/Sunset_Over_Kemah_Bridge.jpg" alt="Sunset over the channel from Clear Lake toward Galveston Bay" />
+              <img class="out-there-slide" data-out-there-slide src="https://images.unsplash.com/photo-1701972184355-d7de7849ee26?auto=format&fit=crop&w=2200&q=88" alt="Soft evening waves along the Galveston shore" loading="lazy" aria-hidden="true" />
+              <img class="out-there-slide" data-out-there-slide src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2200&q=88" alt="Wide coastal water and open sky" loading="lazy" aria-hidden="true" />
+            </div>
+            <div class="out-there-slide-controls" aria-label="Out There photo slideshow">
+              <button class="out-there-slide-button" type="button" data-action="out-there-prev" aria-label="Previous photo">&larr;</button>
+              <div class="out-there-slide-dots" role="tablist" aria-label="Choose Out There photo">
+                <button class="out-there-slide-dot is-active" type="button" data-action="out-there-slide" data-slide-index="0" aria-label="Show photo 1"></button>
+                <button class="out-there-slide-dot" type="button" data-action="out-there-slide" data-slide-index="1" aria-label="Show photo 2"></button>
+                <button class="out-there-slide-dot" type="button" data-action="out-there-slide" data-slide-index="2" aria-label="Show photo 3"></button>
+              </div>
+              <button class="out-there-slide-button" type="button" data-action="out-there-next" aria-label="Next photo">&rarr;</button>
+            </div>
+            <figcaption class="editorial-map-window">
+              <div class="editorial-map-titlebar">
+                <span class="mini-label">Photo location</span>
+                <strong>Galveston Bay, TX</strong>
+              </div>
+              <div class="editorial-map" id="outThereMap" aria-label="Map showing where the Galveston photograph was taken"></div>
+              <div class="editorial-map-footer">
+                <p>Bay side light near the Clear Lake channel.</p>
+                <button class="text-button editorial-map-link" type="button" data-action="explore-galveston">
+                  Explore Galveston vibes →
+                </button>
+              </div>
+            </figcaption>
+          </figure>
+          <section class="out-there-blurb">
+            <span class="mini-label">Field note 001</span>
+            <h2>Galveston, after the crowds thin out.</h2>
+            <p>There is a particular kind of magic along the island at the edge of the day: the air cools, the lights come on, and familiar places start to feel newly discovered.</p>
+            <p>This is the spirit of Out There: a closer look at the people, places, and local possibilities that can turn an ordinary afternoon into somewhere worth going.</p>
+          </section>
+          <section class="out-there-submit" aria-label="Submit photos and stories">
+            <div>
+              <span class="mini-label">Open call</span>
+              <h2>Show us what is worth noticing.</h2>
+            </div>
+            <div class="out-there-submit-copy">
+              <p>Have a sharp photo, a tiny local legend, a road-trip detour, or a scene that deserves a little more daylight? Send it our way for a chance to be featured in Out There.</p>
+              <p>We are looking for high-quality photos, short field notes, overlooked places, makers, markets, groups, rituals, and odd little sparks that make a city feel alive.</p>
+              <a class="primary-button out-there-submit-link" href="mailto:hello@vibeventure.org?subject=Out%20There%20feature%20submission">Submit a field note</a>
+            </div>
+          </section>
+        </section>
+
+        <section class="host-view" id="hostView" hidden>
+          <div class="host-layout">
+            <div>
+              <span class="mini-label" id="hostModeLabel">Share mode</span>
+              <h2 id="hostFormTitle">Post something worth showing up for.</h2>
+              <p id="hostFormCopy">Share a pop-up, meet-up, class, running group, special event, or one-off local find with people nearby.</p>
+            </div>
+            <form class="host-form" id="hostForm">
+              <section class="share-auth-prompt" id="shareAuthPrompt">
+                <div>
+                  <span class="mini-label">Quick profile</span>
+                  <strong>Sign in first so you can manage your post.</strong>
+                  <p>Create a profile to edit, delete, and keep track of anything you share.</p>
+                </div>
+                <div class="share-auth-actions">
+                  <button class="secondary-button" type="button" data-action="open-profile">Sign in</button>
+                  <button class="primary-button" type="button" data-action="open-signup">Create account</button>
+                </div>
+              </section>
+              <label class="field">
+                <span>Activity name</span>
+                <input name="title" required maxlength="120" placeholder="Sunset picnic workshop" />
+              </label>
+              <div class="form-grid location-fields">
+                <label class="field">
+                  <span>Place or street address</span>
+                  <input name="location" required maxlength="180" autocomplete="street-address" placeholder="East End Lagoon or 2100 Strand St" aria-describedby="locationHelp locationFeedback" />
+                </label>
+                <label class="field">
+                  <span>City and state</span>
+                  <input name="city" required maxlength="120" autocomplete="address-level2" placeholder="Galveston, TX" aria-describedby="locationHelp locationFeedback" />
+                </label>
+              </div>
+              <p class="location-help" id="locationHelp">Use a named venue, park, landmark, or full address. Broader areas will be shown as approximate.</p>
+              <p class="location-feedback" id="locationFeedback" role="status" aria-live="polite"></p>
+              <fieldset class="field checklist-field">
+                <legend>Vibes <span>Choose up to 3. Free is automatic.</span></legend>
+                <div class="check-grid">
+                  <label class="check-pill"><input name="vibes" type="checkbox" value="Low-key" /> Low-key</label>
+                  <label class="check-pill"><input name="vibes" type="checkbox" value="Lively" /> Lively</label>
+                  <label class="check-pill"><input name="vibes" type="checkbox" value="Social" /> Social</label>
+                  <label class="check-pill"><input name="vibes" type="checkbox" value="Creative" /> Creative</label>
+                  <label class="check-pill"><input name="vibes" type="checkbox" value="Active" /> Active</label>
+                  <label class="check-pill"><input name="vibes" type="checkbox" value="Curious" /> Curious</label>
+                  <label class="check-pill"><input name="vibes" type="checkbox" value="Offbeat" /> Offbeat</label>
+                  <label class="check-pill"><input name="vibes" type="checkbox" value="Local Flavor" /> Local Flavor</label>
+                  <label class="check-pill"><input name="vibes" type="checkbox" value="Date-worthy" /> Date-worthy</label>
+                  <label class="check-pill"><input name="vibes" type="checkbox" value="Solo-friendly" /> Solo-friendly</label>
+                  <label class="check-pill"><input name="vibes" type="checkbox" value="Play" /> Play</label>
+                </div>
+              </fieldset>
+              <label class="field">
+                <span>Type</span>
+                <select name="type" required>
+                  <option value="Pop-ups & Events">Pop-ups & Events</option>
+                  <option value="Classes">Classes</option>
+                  <option value="Tours & Culture">Tours & Culture</option>
+                  <option value="Markets">Markets</option>
+                  <option value="Food & Drink">Food & Drink</option>
+                  <option value="Groups">Groups</option>
+                  <option value="Arts & Music">Arts & Music</option>
+                  <option value="Outdoors">Outdoors</option>
+                  <option value="Wellness">Wellness</option>
+                  <option value="Nightlife">Nightlife</option>
+                  <option value="Random">Random</option>
+                </select>
+              </label>
+              <fieldset class="field timing-fieldset">
+                <legend>When does it happen?</legend>
+                <div class="listing-mode-options">
+                  <label class="listing-mode-option">
+                    <input name="listingMode" type="radio" value="one-time" checked />
+                    <span>
+                      <strong>One-time</strong>
+                      <small>One specific date</small>
+                    </span>
+                  </label>
+                  <label class="listing-mode-option">
+                    <input name="listingMode" type="radio" value="recurring" />
+                    <span>
+                      <strong>Recurring</strong>
+                      <small>Repeats each week</small>
+                    </span>
+                  </label>
+                  <label class="listing-mode-option">
+                    <input name="listingMode" type="radio" value="anytime" />
+                    <span>
+                      <strong>Anytime</strong>
+                      <small>Available to visit</small>
+                    </span>
+                  </label>
+                </div>
+                <div class="schedule-panel form-grid" data-schedule-panel="one-time">
+                  <label class="field">
+                    <span>Date</span>
+                    <input name="startDate" type="date" required />
+                  </label>
+                  <label class="field">
+                    <span>Start time</span>
+                    <input name="startTime" type="time" required />
+                  </label>
+                </div>
+                <div class="schedule-panel form-grid" data-schedule-panel="recurring" hidden>
+                  <label class="field">
+                    <span>Repeats every</span>
+                    <select name="recurringDay">
+                      <option value="0">Sunday</option>
+                      <option value="1">Monday</option>
+                      <option value="2">Tuesday</option>
+                      <option value="3">Wednesday</option>
+                      <option value="4">Thursday</option>
+                      <option value="5">Friday</option>
+                      <option value="6">Saturday</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>Start time</span>
+                    <input name="recurringTime" type="time" />
+                  </label>
+                </div>
+                <p class="anytime-note" data-schedule-panel="anytime" hidden>No date needed. This listing stays discoverable until you remove it.</p>
+              </fieldset>
+              <label class="field">
+                <span>Short description</span>
+                <textarea name="description" required maxlength="900" rows="4" placeholder="What makes this worth leaving the house for?"></textarea>
+              </label>
+              <div class="link-fields">
+                <label class="field">
+                  <span>Website or social</span>
+                  <input name="websiteUrl" type="text" maxlength="500" inputmode="url" autocapitalize="none" spellcheck="false" placeholder="Website, Instagram, Facebook..." />
+                </label>
+                <label class="field">
+                  <span>Sign up or tickets</span>
+                  <input name="signupUrl" type="text" maxlength="500" inputmode="url" autocapitalize="none" spellcheck="false" placeholder="Registration, RSVP, tickets..." />
+                </label>
+                <label class="field">
+                  <span>More info</span>
+                  <input name="infoUrl" type="text" maxlength="500" inputmode="url" autocapitalize="none" spellcheck="false" placeholder="Event page, menu, flyer..." />
+                </label>
+              </div>
+              <label class="field">
+                <span>Upload photo</span>
+                <input class="file-input" name="photoFile" type="file" accept="image/*" />
+              </label>
+              <div class="form-grid">
+                <label class="field">
+                  <span>Price</span>
+                  <input name="price" required maxlength="40" placeholder="Free, $10, donation..." />
+                </label>
+              </div>
+              <div class="host-form-actions">
+                <button class="secondary-button" id="cancelEditButton" type="button" data-action="cancel-edit" hidden>Cancel edit</button>
+                <button class="primary-button" id="hostSubmitButton" type="submit">Post locally</button>
+              </div>
+            </form>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog class="modal" id="authModal">
+      <form method="dialog" class="modal-card" id="authForm">
+        <button class="icon-button modal-close" type="button" data-action="close-auth" aria-label="Close">×</button>
+        <span class="mini-label" id="authModeLabel">Welcome back</span>
+        <h2 id="authTitle">Sign in to Vibe Ventures</h2>
+        <div class="auth-tabs">
+          <button type="button" class="auth-tab is-active" data-auth-mode="signin">Sign in</button>
+          <button type="button" class="auth-tab" data-auth-mode="signup">Create account</button>
+        </div>
+        <label class="field signup-only">
+          <span>Full name</span>
+          <input name="name" autocomplete="name" placeholder="Jordan Rivera" />
+        </label>
+        <label class="field">
+          <span>Email</span>
+          <input name="email" required type="email" autocomplete="email" placeholder="you@example.com" />
+        </label>
+        <label class="field">
+          <span>Password</span>
+          <input name="password" required type="password" autocomplete="current-password" placeholder="At least 8 characters" />
+        </label>
+        <label class="field signup-only">
+          <span>Home city</span>
+          <input name="city" autocomplete="address-level2" placeholder="Galveston, TX" />
+        </label>
+        <p class="form-message" id="authMessage"></p>
+        <button class="primary-button full-width" id="authSubmit" type="submit">Sign in</button>
+      </form>
+    </dialog>
+
+    <dialog class="modal" id="profileModal">
+      <form method="dialog" class="modal-card" id="profileForm">
+        <button class="icon-button modal-close" type="button" data-action="close-profile" aria-label="Close">×</button>
+        <span class="mini-label">Profile</span>
+        <h2>Your discovery settings</h2>
+        <label class="field">
+          <span>Name</span>
+          <input name="name" required />
+        </label>
+        <label class="field">
+          <span>Home city</span>
+          <input name="city" required />
+        </label>
+        <div class="profile-library">
+          <section>
+            <div class="section-heading compact-heading">
+              <span class="mini-label">Saved</span>
+              <h3>Saved activities</h3>
+            </div>
+            <div class="profile-list" id="profileSavedList"></div>
+          </section>
+          <section>
+            <div class="section-heading compact-heading">
+              <span class="mini-label">Shared</span>
+              <h3>Your posts</h3>
+            </div>
+            <div class="profile-list" id="profileHostedList"></div>
+          </section>
+        </div>
+        <div class="modal-actions">
+          <button class="secondary-button" type="button" data-action="sign-out">Sign out</button>
+          <button class="primary-button" type="submit">Save profile</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal" id="detailModal">
+      <div class="modal-card detail-card">
+        <button class="modal-close detail-close" type="button" data-action="close-detail" aria-label="Close activity">× Close</button>
+        <div id="detailContent"></div>
+      </div>
+    </dialog>
+
+    <dialog class="modal" id="deleteModal">
+      <div class="modal-card confirm-card">
+        <span class="mini-label">Delete post</span>
+        <h2>Remove this activity?</h2>
+        <p><strong id="deletePostTitle"></strong> will disappear from discovery, the map, saved lists, and your profile. This cannot be undone.</p>
+        <div class="confirm-actions">
+          <button class="secondary-button" type="button" data-action="cancel-delete">Keep post</button>
+          <button class="compact-button danger-button" type="button" data-action="confirm-delete">Delete permanently</button>
+        </div>
+      </div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <noscript>This discovery map needs JavaScript enabled to load.</noscript>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="./app.js?v=20260722-map-zoom"></script>
+</body>
+</html>
