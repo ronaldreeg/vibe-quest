@@ -1866,7 +1866,7 @@ textarea:focus {
   .editorial-map-link {
     display: block;
     width: 100%;
-    font-size: 0.68rem;
+    font-size: 0.66rem;
     line-height: 1.2;
     white-space: nowrap;
   }
@@ -1882,5 +1882,15 @@ textarea:focus {
 
   .out-there-submit h2 {
     font-size: clamp(2rem, 10vw, 3.1rem);
+  }
+}
+
+@media (max-width: 360px) {
+  .out-there-feature {
+    margin-bottom: 126px;
+  }
+
+  .out-there-slide-controls {
+    bottom: -104px;
   }
 }
