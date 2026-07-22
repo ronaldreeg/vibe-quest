@@ -954,12 +954,12 @@ function linkHost(url) {
 
 function formText(data, form, ...names) {
   for (const name of names) {
-    const value = data.get(name);
-    if (typeof value === "string" && value.trim()) return value.trim();
+    const field = form?.querySelector(`[name="${name}"]`);
+    if (field && typeof field.value === "string" && field.value.trim()) return field.value.trim();
   }
   for (const name of names) {
-    const field = form?.elements?.namedItem(name);
-    if (field && typeof field.value === "string" && field.value.trim()) return field.value.trim();
+    const value = data?.get?.(name);
+    if (typeof value === "string" && value.trim()) return value.trim();
   }
   return "";
 }
@@ -972,10 +972,11 @@ function hostLinkInputs(data, form = null) {
   ];
 }
 
-function buildHostLinks(data, form = null) {
-  return hostLinkInputs(data, form)
-    .map((item) => ({ ...item, url: safeExternalUrl(item.url) }))
-    .filter((item) => item.url);
+function normalizeHostLinks(items) {
+  return items
+    .map((item) => ({ ...item, url: safeExternalUrl(item.value) }))
+    .filter((item) => item.url)
+    .map(({ label, url }) => ({ label, url }));
 }
 
 function photoMarkup(adventure, className = "card-photo") {
@@ -2239,6 +2240,7 @@ async function publishAdventure(event) {
   if (!requireUser("Create a profile before sharing an activity.")) return;
   const user = getCurrentUser();
   const data = new FormData(els.hostForm);
+  const submittedLinkInputs = hostLinkInputs(null, els.hostForm);
   const type = String(data.get("type") || data.get("category") || "Pop-ups & Events");
   const listingMode = LISTING_MODES.includes(String(data.get("listingMode")))
     ? String(data.get("listingMode"))
@@ -2249,7 +2251,7 @@ async function publishAdventure(event) {
   const city = String(data.get("city") || "").trim();
   const description = String(data.get("description") || "").trim();
   const price = String(data.get("price") || "").trim();
-  const invalidLink = hostLinkInputs(data, els.hostForm).find((item) => String(item.value || "").trim() && !safeExternalUrl(item.value));
+  const invalidLink = submittedLinkInputs.find((item) => String(item.value || "").trim() && !safeExternalUrl(item.value));
   if (title.length < 3 || title.length > 120) {
     toast("Give the activity a title between 3 and 120 characters.");
     return;
@@ -2288,7 +2290,7 @@ async function publishAdventure(event) {
     if (photoFile instanceof File && photoFile.size) {
       uploadedPhoto = await optimizeImageFile(photoFile);
     }
-    const links = buildHostLinks(data, els.hostForm);
+    const links = normalizeHostLinks(submittedLinkInputs);
     const existing = state.editingAdventureId ? getStoredAdventure(state.editingAdventureId) : null;
     if (state.editingAdventureId && (!existing || existing.createdBy !== user.id)) {
       resetHostForm();
