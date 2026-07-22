@@ -21,7 +21,7 @@ const VIBE_FILTERS = [
   "Active",
   "Curious",
   "Offbeat",
-  "Local Flavor",
+  "Local Lore",
   "Date-worthy",
   "Solo-friendly",
   "Play"
@@ -87,16 +87,17 @@ const LEGACY_TYPE_MAP = {
 const LEGACY_VIBE_MAP = {
   Chill: ["Low-key"],
   Thrill: ["Active"],
-  Foodie: ["Local Flavor"],
+  Foodie: ["Local Lore"],
   Artsy: ["Creative"],
   Social: ["Social"],
-  Nature: ["Active", "Local Flavor"]
+  Nature: ["Active", "Local Lore"]
 };
 
 const LEGACY_VIBE_LABEL_MAP = {
   "Date Night": "Date-worthy",
   "Date-worthy": "Date-worthy",
-  "Solo-friendly": "Solo-friendly"
+  "Solo-friendly": "Solo-friendly",
+  "Local Flavor": "Local Lore"
 };
 
 const CITY_CENTERS = {
@@ -116,7 +117,7 @@ const DEFAULT_ADVENTURES = [
     area: "East End Lagoon",
     category: "Outdoors",
     type: "Outdoors",
-    vibes: ["Active", "Social", "Local Flavor"],
+    vibes: ["Active", "Social", "Local Lore"],
     price: "$42",
     seats: 6,
     distance: 2.4,
@@ -139,7 +140,7 @@ const DEFAULT_ADVENTURES = [
     area: "The Strand",
     category: "Food & Drink",
     type: "Food & Drink",
-    vibes: ["Local Flavor", "Social", "Date-worthy"],
+    vibes: ["Local Lore", "Social", "Date-worthy"],
     price: "$58",
     seats: 10,
     distance: 1.1,
@@ -185,7 +186,7 @@ const DEFAULT_ADVENTURES = [
     area: "Postoffice District",
     category: "Pop-ups & Events",
     type: "Pop-ups & Events",
-    vibes: ["Low-key", "Local Flavor", "Solo-friendly"],
+    vibes: ["Low-key", "Local Lore", "Solo-friendly"],
     price: "Free",
     seats: 18,
     distance: 0.8,
@@ -254,7 +255,7 @@ const DEFAULT_ADVENTURES = [
     area: "Heights",
     category: "Markets",
     type: "Markets",
-    vibes: ["Local Flavor", "Low-key", "Solo-friendly"],
+    vibes: ["Local Lore", "Low-key", "Solo-friendly"],
     price: "$16",
     seats: 14,
     distance: 52,
@@ -300,7 +301,7 @@ const DEFAULT_ADVENTURES = [
     area: "East End Historic District",
     category: "Markets",
     type: "Markets",
-    vibes: ["Local Flavor", "Offbeat", "Low-key"],
+    vibes: ["Local Lore", "Offbeat", "Low-key"],
     price: "Free",
     seats: 40,
     distance: 1.4,
@@ -323,7 +324,7 @@ const DEFAULT_ADVENTURES = [
     area: "Historic Strand",
     category: "Tours & Culture",
     type: "Tours & Culture",
-    vibes: ["Curious", "Local Flavor", "Solo-friendly"],
+    vibes: ["Curious", "Local Lore", "Solo-friendly"],
     price: "$22",
     seats: 14,
     distance: 0.9,
