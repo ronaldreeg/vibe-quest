@@ -418,7 +418,11 @@ const state = {
   authBusy: false,
   editingAdventureId: null,
   pendingDeleteId: null,
-  outThereSlideIndex: 0
+  outThereSlideIndex: 0,
+  backendEnabled: Boolean(window.vvSupabase),
+  remoteUser: null,
+  remoteActivities: [],
+  remoteSavedIds: []
 };
 
 const els = {
@@ -473,6 +477,7 @@ function setUsers(users) {
 }
 
 function getCurrentUser() {
+  if (state.backendEnabled) return state.remoteUser;
   if (!state.session) return null;
   return getUsers().find((user) => user.id === state.session.userId) || null;
 }
@@ -485,6 +490,10 @@ function createId(prefix = "id") {
   return typeof crypto.randomUUID === "function"
     ? crypto.randomUUID()
     : `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ""));
 }
 
 function isPlaceholderArea(value) {
@@ -520,6 +529,9 @@ function normalizeAdventureRecord(adventure, index, users = getUsers()) {
 }
 
 function getAdventures() {
+  if (state.backendEnabled) {
+    return [...DEFAULT_ADVENTURES, ...state.remoteActivities].map((adventure, index) => normalizeAdventureRecord(adventure, index));
+  }
   const userAdventures = store.get("vv_adventures", []);
   const hosted = Array.isArray(userAdventures) ? userAdventures : [];
   const users = getUsers();
@@ -527,6 +539,7 @@ function getAdventures() {
 }
 
 function getSavedIds() {
+  if (state.backendEnabled) return state.remoteSavedIds;
   const user = getCurrentUser();
   if (!user) return [];
   const storedSaves = store.get("vv_saves", {});
@@ -535,12 +548,152 @@ function getSavedIds() {
 }
 
 function setSavedIds(ids) {
+  if (state.backendEnabled) {
+    state.remoteSavedIds = ids;
+    return true;
+  }
   const user = getCurrentUser();
   if (!user) return false;
   const storedSaves = store.get("vv_saves", {});
   const saves = storedSaves && typeof storedSaves === "object" && !Array.isArray(storedSaves) ? storedSaves : {};
   saves[user.id] = ids;
   return store.set("vv_saves", saves);
+}
+
+function publicActivityPhoto(path) {
+  if (!path || !window.vvSupabase) return "";
+  return window.vvSupabase.storage.from("activity-media").getPublicUrl(path).data.publicUrl || "";
+}
+
+function normalizeDatabaseTime(value) {
+  const normalized = String(value || "");
+  return normalized.match(/^\d{1,2}:\d{2}/)?.[0] || "";
+}
+
+function mapRemoteActivity(row, linkRows, profileMap) {
+  const links = linkRows
+    .filter((link) => link.activity_id === row.id)
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((link) => ({ label: link.label, url: link.url }));
+  const host = profileMap.get(row.owner_id)?.display_name || "Vibe Explorer";
+  return {
+    id: row.id,
+    title: row.title,
+    city: row.city,
+    area: row.location_name,
+    locationQuery: row.location_query || row.location_name,
+    locationAccuracy: row.location_accuracy,
+    geocodeLabel: row.location_name,
+    category: row.type,
+    type: row.type,
+    vibes: Array.isArray(row.vibes) ? row.vibes : [],
+    price: row.price_label || "Free",
+    seats: 12,
+    distance: 1.5,
+    lat: Number(row.latitude),
+    lng: Number(row.longitude),
+    photo: publicActivityPhoto(row.cover_photo_path),
+    photoPath: row.cover_photo_path || "",
+    host,
+    description: row.description,
+    links,
+    listingMode: row.listing_mode,
+    startDate: row.start_date || "",
+    startTime: normalizeDatabaseTime(row.start_time),
+    recurringDay: row.recurring_day,
+    recurringTime: normalizeDatabaseTime(row.recurring_time),
+    createdBy: row.owner_id,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+async function loadRemoteActivities() {
+  if (!state.backendEnabled) return;
+  const { data: rows, error } = await window.vvSupabase
+    .from("activities")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+
+  const activities = Array.isArray(rows) ? rows : [];
+  const ids = activities.map((row) => row.id);
+  const [linksResult, profilesResult] = await Promise.all([
+    ids.length
+      ? window.vvSupabase.from("activity_links").select("*").in("activity_id", ids)
+      : Promise.resolve({ data: [], error: null }),
+    window.vvSupabase.from("profiles").select("id, display_name")
+  ]);
+  if (linksResult.error) throw linksResult.error;
+  if (profilesResult.error) throw profilesResult.error;
+  const profileMap = new Map((profilesResult.data || []).map((profile) => [profile.id, profile]));
+  state.remoteActivities = activities.map((row) => mapRemoteActivity(row, linksResult.data || [], profileMap));
+}
+
+async function loadRemoteSavedIds() {
+  const user = getCurrentUser();
+  if (!state.backendEnabled || !user) {
+    state.remoteSavedIds = [];
+    return;
+  }
+  const { data, error } = await window.vvSupabase
+    .from("saved_activities")
+    .select("activity_id")
+    .eq("user_id", user.id);
+  if (error) throw error;
+  const demoSaves = store.get("vv_demo_saves", {});
+  const localDemoIds = Array.isArray(demoSaves?.[user.id]) ? demoSaves[user.id] : [];
+  state.remoteSavedIds = [...new Set([...(data || []).map((item) => item.activity_id), ...localDemoIds])];
+}
+
+async function syncRemoteSession(session) {
+  state.remoteUser = null;
+  if (!session?.user) {
+    state.remoteSavedIds = [];
+    render();
+    return;
+  }
+  const authUser = session.user;
+  const { data: profile, error } = await window.vvSupabase
+    .from("profiles")
+    .select("id, display_name, city, bio, avatar_path, created_at")
+    .eq("id", authUser.id)
+    .maybeSingle();
+  if (error) throw error;
+  state.remoteUser = {
+    id: authUser.id,
+    name: profile?.display_name || authUser.user_metadata?.name || "Vibe Explorer",
+    email: authUser.email || "",
+    city: profile?.city || authUser.user_metadata?.city || "",
+    bio: profile?.bio || "",
+    avatarPath: profile?.avatar_path || "",
+    createdAt: profile?.created_at || authUser.created_at
+  };
+  state.location = state.remoteUser.city || state.location;
+  state.mapCenter = knownCenterForLocation(state.location) || state.mapCenter;
+  els.locationInput.value = state.location;
+  await loadRemoteSavedIds();
+  render();
+}
+
+async function bootstrapSupabase() {
+  if (!state.backendEnabled) return false;
+  try {
+    const { data, error } = await window.vvSupabase.auth.getSession();
+    if (error) throw error;
+    await loadRemoteActivities();
+    await syncRemoteSession(data.session);
+    window.vvSupabase.auth.onAuthStateChange((_event, session) => {
+      window.setTimeout(() => syncRemoteSession(session).catch(() => {
+        toast("Your account session needs a refresh. Please sign in again.");
+      }), 0);
+    });
+    return true;
+  } catch {
+    state.remoteActivities = [];
+    toast("The discovery backend is waking up. Demo listings are still available.");
+    return false;
+  }
 }
 
 async function legacyHashPassword(value) {
@@ -1468,11 +1621,57 @@ async function handleAuthSubmit(event) {
   }
 }
 
+async function handleRemoteAuthSubmit(data, email, password) {
+  const name = String(data.get("name") || "").trim();
+  const city = String(data.get("city") || "").trim();
+  if (password.length < 8) {
+    els.authMessage.textContent = "Use at least 8 characters.";
+    return;
+  }
+  if (state.authMode === "signup" && !name) {
+    els.authMessage.textContent = "Add your name so your profile feels human.";
+    return;
+  }
+
+  const credentials = state.authMode === "signup"
+    ? {
+        email,
+        password,
+        options: {
+          data: { name, city },
+          ...(window.location.protocol === "http:" || window.location.protocol === "https:"
+            ? { emailRedirectTo: `${window.location.origin}${window.location.pathname}` }
+            : {})
+        }
+      }
+    : { email, password };
+  const result = state.authMode === "signup"
+    ? await window.vvSupabase.auth.signUp(credentials)
+    : await window.vvSupabase.auth.signInWithPassword(credentials);
+
+  if (result.error) {
+    els.authMessage.textContent = result.error.message || "We could not complete that request.";
+    return;
+  }
+  if (state.authMode === "signup" && !result.data.session) {
+    els.authMessage.textContent = "Check your email to confirm your account, then come back to sign in.";
+    return;
+  }
+  if (result.data.session) await syncRemoteSession(result.data.session);
+  els.authModal.close();
+  toast(state.authMode === "signup" ? "Your profile is ready." : `Welcome back, ${getCurrentUser()?.name?.split(" ")[0] || "explorer"}.`);
+  render();
+}
+
 async function handleAuthSubmitWork(event) {
   event.preventDefault();
   const data = new FormData(els.authForm);
   const email = normalize(data.get("email"));
   const password = String(data.get("password") || "");
+  if (state.backendEnabled) {
+    await handleRemoteAuthSubmit(data, email, password);
+    return;
+  }
   const users = getUsers();
 
   if (password.length < 8) {
@@ -1558,20 +1757,42 @@ function requireUser(action) {
   return false;
 }
 
-function toggleSave(id) {
+async function toggleSave(id) {
   if (!requireUser("Create a profile to save activities.")) return;
   const saved = new Set(getSavedIds());
-  if (saved.has(id)) {
+  const user = getCurrentUser();
+  const wasSaved = saved.has(id);
+  if (state.backendEnabled && user && isUuid(id)) {
+    const result = wasSaved
+      ? await window.vvSupabase.from("saved_activities").delete().eq("user_id", user.id).eq("activity_id", id)
+      : await window.vvSupabase.from("saved_activities").insert({ user_id: user.id, activity_id: id });
+    if (result.error) {
+      toast("We could not update your saved list yet.");
+      return;
+    }
+  } else if (state.backendEnabled && user) {
+    const demoSaves = store.get("vv_demo_saves", {});
+    const saves = demoSaves && typeof demoSaves === "object" && !Array.isArray(demoSaves) ? demoSaves : {};
+    const ids = new Set(Array.isArray(saves[user.id]) ? saves[user.id] : []);
+    if (wasSaved) ids.delete(id); else ids.add(id);
+    saves[user.id] = [...ids];
+    store.set("vv_demo_saves", saves);
+  } else {
+    const nextSaved = new Set(saved);
+    if (wasSaved) nextSaved.delete(id); else nextSaved.add(id);
+    if (!setSavedIds([...nextSaved])) {
+      toast("This browser could not save that yet. Try clearing a little local space.");
+      return;
+    }
+  }
+  if (wasSaved) {
     saved.delete(id);
     toast("Removed from saved.");
   } else {
     saved.add(id);
     toast("Saved to your profile.");
   }
-  if (!setSavedIds([...saved])) {
-    toast("This browser could not save that yet. Try clearing a little local space.");
-    return;
-  }
+  if (state.backendEnabled) state.remoteSavedIds = [...saved];
   render();
   if (els.detailModal.open) openDetail(id);
 }
@@ -1653,16 +1874,46 @@ function openProfile() {
   els.profileModal.showModal();
 }
 
-function saveProfile(event) {
+async function saveProfile(event) {
   event.preventDefault();
   const user = getCurrentUser();
   if (!user) return;
+  const name = els.profileForm.elements.name.value.trim();
+  const city = els.profileForm.elements.city.value.trim();
+  if (state.backendEnabled) {
+    const { data, error } = await window.vvSupabase
+      .from("profiles")
+      .update({ display_name: name, city })
+      .eq("id", user.id)
+      .select("id, display_name, city, bio, avatar_path, created_at")
+      .single();
+    if (error) {
+      toast("We could not update your profile yet.");
+      return;
+    }
+    state.remoteUser = {
+      ...user,
+      name: data.display_name,
+      city: data.city || "",
+      bio: data.bio || "",
+      avatarPath: data.avatar_path || "",
+      createdAt: data.created_at
+    };
+    state.location = city;
+    state.mapCenter = knownCenterForLocation(state.location) || state.mapCenter;
+    state.mapNeedsFit = true;
+    els.locationInput.value = state.location;
+    els.profileModal.close();
+    toast("Profile updated.");
+    render();
+    return;
+  }
   const users = getUsers().map((candidate) => {
     if (candidate.id !== user.id) return candidate;
     return {
       ...candidate,
-      name: els.profileForm.elements.name.value.trim(),
-      city: els.profileForm.elements.city.value.trim()
+      name,
+      city
     };
   });
   if (!setUsers(users)) {
@@ -1678,7 +1929,20 @@ function saveProfile(event) {
   render();
 }
 
-function signOut() {
+async function signOut() {
+  if (state.backendEnabled) {
+    const { error } = await window.vvSupabase.auth.signOut();
+    if (error) {
+      toast("We could not sign you out yet.");
+      return;
+    }
+    state.remoteUser = null;
+    state.remoteSavedIds = [];
+    els.profileModal.close();
+    toast("Signed out.");
+    render();
+    return;
+  }
   resetHostForm();
   state.session = null;
   store.set("vv_session", null);
@@ -1688,6 +1952,9 @@ function signOut() {
 }
 
 function getStoredAdventure(id) {
+  if (state.backendEnabled) {
+    return state.remoteActivities.find((item) => item.id === id) || null;
+  }
   const storedAdventures = store.get("vv_adventures", []);
   return (Array.isArray(storedAdventures) ? storedAdventures : []).find((item) => item.id === id) || null;
 }
@@ -1704,7 +1971,7 @@ function updateHostFormMode() {
   els.hostFormCopy.textContent = editing
     ? "Make any changes below. Your listing, map pin, and profile will update together."
     : "Share a pop-up, meet-up, class, running group, special event, or one-off local find with people nearby.";
-  els.hostSubmitButton.textContent = editing ? "Save changes" : "Post locally";
+  els.hostSubmitButton.textContent = editing ? "Save changes" : (state.backendEnabled ? "Post activity" : "Post locally");
   els.cancelEditButton.hidden = !editing;
 }
 
@@ -1739,6 +2006,95 @@ function startNewPost() {
   state.view = "host";
   render();
   window.scrollTo({ top: 0, behavior: "auto" });
+}
+
+function dataUrlToBlob(dataUrl) {
+  const match = String(dataUrl || "").match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) throw new Error("invalid-image-data");
+  const binary = atob(match[2]);
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  return new Blob([bytes], { type: match[1] });
+}
+
+async function uploadRemoteActivityPhoto(activityId, dataUrl) {
+  if (!dataUrl) return "";
+  const blob = dataUrlToBlob(dataUrl);
+  const path = `${getCurrentUser().id}/${activityId}/${Date.now()}.${blob.type === "image/jpeg" ? "jpg" : "webp"}`;
+  const { error } = await window.vvSupabase.storage
+    .from("activity-media")
+    .upload(path, blob, { cacheControl: "31536000", contentType: blob.type, upsert: false });
+  if (error) throw error;
+  return path;
+}
+
+async function saveRemoteActivity(adventure, existing, photoDataUrl) {
+  const user = getCurrentUser();
+  if (!user) throw new Error("auth-required");
+  const photoPath = photoDataUrl
+    ? await uploadRemoteActivityPhoto(adventure.id, photoDataUrl)
+    : existing?.photoPath || "";
+  const record = {
+    id: adventure.id,
+    owner_id: user.id,
+    title: adventure.title,
+    description: adventure.description,
+    location_name: adventure.area,
+    location_query: adventure.locationQuery,
+    city: adventure.city,
+    latitude: adventure.lat,
+    longitude: adventure.lng,
+    location_accuracy: adventure.locationAccuracy,
+    type: adventure.type,
+    vibes: adventure.vibes,
+    price_label: adventure.price || "Free",
+    listing_mode: adventure.listingMode,
+    start_date: adventure.startDate || null,
+    start_time: adventure.startTime || null,
+    recurring_day: Number.isInteger(adventure.recurringDay) ? adventure.recurringDay : null,
+    recurring_time: adventure.recurringTime || null,
+    status: "published",
+    cover_photo_path: photoPath || null
+  };
+  let activityResult;
+  try {
+    activityResult = existing
+      ? await window.vvSupabase.from("activities").update(record).eq("id", existing.id).eq("owner_id", user.id).select("*").single()
+      : await window.vvSupabase.from("activities").insert(record).select("*").single();
+    if (activityResult.error) throw activityResult.error;
+
+    const { error: deleteLinksError } = await window.vvSupabase
+      .from("activity_links")
+      .delete()
+      .eq("activity_id", adventure.id);
+    if (deleteLinksError) throw deleteLinksError;
+    if (adventure.links.length) {
+      const { error: linkError } = await window.vvSupabase.from("activity_links").insert(
+        adventure.links.map((link, index) => ({
+          activity_id: adventure.id,
+          label: link.label,
+          url: link.url,
+          sort_order: index
+        }))
+      );
+      if (linkError) throw linkError;
+    }
+    if (photoDataUrl && photoPath) {
+      const { error: mediaError } = await window.vvSupabase.from("activity_media").insert({
+        activity_id: adventure.id,
+        uploaded_by: user.id,
+        storage_path: photoPath,
+        alt_text: `${adventure.title} at ${adventure.area}`,
+        moderation_status: "approved"
+      });
+      if (mediaError) throw mediaError;
+    }
+  } catch (error) {
+    if (photoPath && photoPath !== existing?.photoPath) {
+      await window.vvSupabase.storage.from("activity-media").remove([photoPath]).catch(() => {});
+    }
+    throw error;
+  }
+  await loadRemoteActivities();
 }
 
 function editPost(id) {
@@ -1799,13 +2155,45 @@ function cancelDeletePost() {
   els.deleteModal.close();
 }
 
-function confirmDeletePost() {
+async function removeRemoteActivity(adventure) {
+  const user = getCurrentUser();
+  if (!user) throw new Error("auth-required");
+  const { error } = await window.vvSupabase
+    .from("activities")
+    .delete()
+    .eq("id", adventure.id)
+    .eq("owner_id", user.id);
+  if (error) throw error;
+  if (adventure.photoPath) {
+    await window.vvSupabase.storage.from("activity-media").remove([adventure.photoPath]);
+  }
+  await loadRemoteActivities();
+  await loadRemoteSavedIds();
+}
+
+async function confirmDeletePost() {
   const id = state.pendingDeleteId;
   const user = getCurrentUser();
   const adventure = getStoredAdventure(id);
   if (!id || !user || !adventure || adventure.createdBy !== user.id) {
     cancelDeletePost();
     toast("That post is no longer available.");
+    return;
+  }
+  if (state.backendEnabled) {
+    try {
+      await removeRemoteActivity(adventure);
+    } catch {
+      cancelDeletePost();
+      toast("We could not delete that post yet.");
+      return;
+    }
+    if (state.editingAdventureId === id) resetHostForm();
+    state.pendingDeleteId = null;
+    els.deleteModal.close();
+    els.detailModal.close();
+    toast("Post deleted.");
+    render();
     return;
   }
   const storedAdventures = store.get("vv_adventures", []);
@@ -1926,6 +2314,29 @@ async function publishAdventure(event) {
       createdAt: existing?.createdAt || new Date().toISOString(),
       updatedAt: existing ? new Date().toISOString() : undefined
     };
+    if (state.backendEnabled) {
+      try {
+        await saveRemoteActivity(adventure, existing, uploadedPhoto);
+      } catch {
+        setLocationFeedback("We could not save this activity to the shared map yet. Please try again.", "error");
+        toast("Your activity could not be published yet.");
+        return;
+      }
+      const wasEditing = Boolean(existing);
+      resetHostForm();
+      state.view = "discover";
+      state.location = city;
+      state.mapCenter = center;
+      state.mapNeedsFit = true;
+      state.activeType = type;
+      state.activeVibe = "All";
+      const publishedBucket = getListingSchedule(adventure).bucket;
+      state.activeTiming = publishedBucket === "anytime" ? "all" : publishedBucket === "expired" ? "coming-up" : publishedBucket;
+      els.locationInput.value = city;
+      toast(wasEditing ? "Your post has been updated." : "Your activity is live.");
+      render();
+      return;
+    }
     const storedAdventures = store.get("vv_adventures", []);
     const adventures = Array.isArray(storedAdventures) ? storedAdventures : [];
     const saved = store.set(
@@ -2036,7 +2447,7 @@ document.addEventListener("click", async (event) => {
   if (action === "open-signup") showAuth("signup");
   if (action === "close-auth") els.authModal.close();
   if (action === "close-profile") els.profileModal.close();
-  if (action === "toggle-save") toggleSave(target.dataset.id);
+  if (action === "toggle-save") await toggleSave(target.dataset.id);
   if (action === "open-detail") openDetail(target.dataset.id);
   if (action === "close-detail") els.detailModal.close();
   if (action === "show-on-map") showAdventureOnMap(target.dataset.id);
@@ -2046,7 +2457,7 @@ document.addEventListener("click", async (event) => {
   if (action === "edit-post") editPost(target.dataset.id);
   if (action === "delete-post") requestDeletePost(target.dataset.id);
   if (action === "cancel-delete") cancelDeletePost();
-  if (action === "confirm-delete") confirmDeletePost();
+  if (action === "confirm-delete") await confirmDeletePost();
   if (action === "cancel-edit") {
     resetHostForm();
     state.view = "discover";
@@ -2057,7 +2468,7 @@ document.addEventListener("click", async (event) => {
     document.documentElement.dataset.theme = next;
     store.set("vv_theme", next);
   }
-  if (action === "sign-out") signOut();
+  if (action === "sign-out") await signOut();
 });
 
 els.locationInput.addEventListener("input", (event) => {
@@ -2110,14 +2521,19 @@ els.hostForm.querySelectorAll('input[name="location"], input[name="city"]').forE
 });
 
 document.documentElement.dataset.theme = store.get("vv_theme", "");
-const user = getCurrentUser();
-if (user) {
-  state.location = user.city || "";
-  state.mapCenter = knownCenterForLocation(state.location) || state.mapCenter;
-  state.mapNeedsFit = true;
-  els.locationInput.value = state.location;
-}
-
 resetHostForm();
 render();
-repairHostedCoordinates().catch(() => {});
+
+if (state.backendEnabled) {
+  state.session = null;
+  bootstrapSupabase().then(() => updateHostFormMode());
+} else {
+  const user = getCurrentUser();
+  if (user) {
+    state.location = user.city || "";
+    state.mapCenter = knownCenterForLocation(state.location) || state.mapCenter;
+    state.mapNeedsFit = true;
+    els.locationInput.value = state.location;
+  }
+  repairHostedCoordinates().catch(() => {});
+}

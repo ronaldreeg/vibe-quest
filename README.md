@@ -3,31 +3,25 @@
 This is the current functional Vibe Ventures prototype, prepared for the Vibe Quest repository on July 22, 2026. The Vibe Quest name and visual identity are still intentionally open while the brand is being developed.
 
 For the launch boundary, see [`LAUNCH_READINESS.md`](./LAUNCH_READINESS.md).
-For the hosting and backend handoff, see [`DEPLOYMENT.md`](./DEPLOYMENT.md).
+For the hosting and backend handoff, see [`DEPLOYMENT.md`](./DEPLOYMENT.md) and [`SUPABASE_SETUP.md`](./SUPABASE_SETUP.md).
 
 ## What is included
 
 - Discovery-first layout with city search, activity type and vibe filters, activity cards, and an OpenStreetMap map.
-- Local sign up and sign in flow.
+- Supabase sign up and sign in flow with persistent sessions.
 - Editable user profile with a saved home city.
-- Saved activities tied to the signed-in local user.
-- Share form for creating, editing, and deleting activities, including verified map placement, vibe tags, optional links, and an uploaded photo.
+- Saved activities tied to the signed-in user.
+- Share form for creating, editing, and deleting activities, including verified map placement, vibe tags, optional links, and a Storage-backed uploaded photo.
 - Activity detail windows with location, price, type, host, external links, and saved-state controls.
 - An editorial Out There page reserved for team news, updates, and photography.
 - Responsive styling for desktop and mobile.
 - Launch-readiness hardening for local storage failures, map position, keyboard navigation, reduced motion, links, dates, and image uploads.
 
-## Important storage note
+## Backend note
 
-The prototype stores accounts, profile data, saved activities, posted activities, and session data in the browser's `localStorage`. Passwords are hashed before being stored, but this is still only a prototype pattern.
+The app is now connected to Supabase for real account sessions, profiles, user-created activities, saved remote activities, and activity photo uploads. The original demo listings and their local-only demo saves remain as a temporary bridge while the database is populated.
 
-For production, replace the local storage adapter in `app.js` with a real backend:
-
-- Supabase Auth for email/password or magic-link login.
-- Supabase Postgres tables for `profiles`, `activities`, `saved_activities`, and future RSVP/scheduling records.
-- Supabase Storage for activity photos.
-- Row-level security so users can only edit their own profile, saves, and posted activities.
-- Optional verification/moderation before activities are publicly visible.
+The complete production foundation lives in Supabase: Auth, Postgres, Storage, and row-level security policies. See [`SUPABASE_SETUP.md`](./SUPABASE_SETUP.md) for the dashboard redirect configuration and security notes.
 
 ## Early schema sketch
 
