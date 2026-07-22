@@ -609,7 +609,10 @@ textarea:focus {
 }
 
 .adventure-card {
+  display: flex;
+  min-width: 0;
   overflow: hidden;
+  flex-direction: column;
   border: 1px solid var(--line);
   border-radius: 0;
   background: var(--panel);
@@ -646,7 +649,8 @@ textarea:focus {
 .card-art {
   position: relative;
   overflow: hidden;
-  min-height: 164px;
+  aspect-ratio: 16 / 9;
+  min-height: 0;
   padding: var(--gap);
   background: linear-gradient(135deg, var(--card-a), var(--card-b));
 }
@@ -720,6 +724,10 @@ textarea:focus {
 }
 
 .card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 310px;
   padding: var(--gap);
 }
 
@@ -728,9 +736,16 @@ textarea:focus {
   font-size: 1.08rem;
 }
 
-.card-body p {
+.card-body > p {
+  display: -webkit-box;
+  min-height: 4.5em;
+  overflow: hidden;
   color: var(--muted);
   line-height: 1.5;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
 }
 
 .tag-row {
@@ -757,7 +772,8 @@ textarea:focus {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 12px;
-  margin: var(--gap) 0;
+  margin: auto 0 var(--gap);
+  padding-top: var(--gap);
   color: var(--muted-strong);
   font-size: 0.86rem;
   font-weight: 700;
