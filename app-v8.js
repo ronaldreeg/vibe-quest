@@ -2628,12 +2628,6 @@ document.addEventListener("click", async (event) => {
   if (action === "focus-search") els.locationInput.focus();
   if (action === "use-location") {
     state.locationIntentVersion += 1;
-    state.location = "";
-    state.locationSource = "";
-    state.locationStatus = "idle";
-    state.mapNeedsFit = true;
-    els.locationInput.value = "";
-    store.set(LOCATION_STORAGE_KEY, null);
     await useBrowserLocation({ force: true });
   }
   if (action === "apply-filters") await applyFilters();
