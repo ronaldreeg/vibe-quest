@@ -470,11 +470,14 @@ textarea:focus {
 
 .city-input-row input {
   min-width: 0;
+  height: 44px;
+  min-height: 44px;
 }
 
 .location-button {
   width: 44px;
   height: 44px;
+  padding: 0;
   border: 1px solid var(--line);
   background: var(--button-fill);
   color: var(--button-text);
