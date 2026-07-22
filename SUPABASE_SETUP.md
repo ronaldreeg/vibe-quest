@@ -26,7 +26,7 @@ The app sends users back to the current site after email confirmation. Add the l
 
 ## Key safety
 
-The browser uses the Supabase **publishable** key. That key is designed to be public and is protected by row-level security. Never put a secret or `service_role` key in `index.html`, `app-v3.js`, Storage, or GitHub.
+The browser uses the Supabase **publishable** key. That key is designed to be public and is protected by row-level security. Never put a secret or `service_role` key in `index.html`, `app-v4.js`, Storage, or GitHub.
 
 ## Data transition
 

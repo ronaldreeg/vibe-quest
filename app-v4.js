@@ -927,9 +927,10 @@ function getAdventureLinks(adventure) {
     ...(Array.isArray(adventure.links) ? adventure.links : []),
     adventure.websiteUrl ? { label: "Website or social", url: adventure.websiteUrl } : null,
     adventure.signupUrl ? { label: "Sign up", url: adventure.signupUrl } : null,
-    adventure.infoUrl ? { label: "More info", url: adventure.infoUrl } : null,
     adventure.linkUrl ? { label: "Website or social", url: adventure.linkUrl } : null
-  ].filter(Boolean);
+  ]
+    .filter(Boolean)
+    .filter((item) => normalize(item.label) !== "more info");
 
   const seen = new Set();
   return candidates.reduce((links, item) => {
@@ -967,8 +968,7 @@ function formText(data, form, ...names) {
 function hostLinkInputs(data, form = null) {
   return [
     { label: "Website or social", value: formText(data, form, "websiteUrl", "linkUrl", "socialUrl", "instagramUrl") },
-    { label: "Sign up", value: formText(data, form, "signupUrl", "registerUrl", "ticketUrl") },
-    { label: "More info", value: formText(data, form, "infoUrl", "detailsUrl", "eventUrl") }
+    { label: "Sign up", value: formText(data, form, "signupUrl", "registerUrl", "ticketUrl") }
   ];
 }
 
@@ -2138,7 +2138,6 @@ function editPost(id) {
   form.price.value = adventure.price || "";
   form.websiteUrl.value = hostLinkValue(adventure, ["website or social", "website", "instagram", "facebook"]);
   form.signupUrl.value = hostLinkValue(adventure, ["sign up", "signup", "register", "reserve", "tickets", "book ride"]);
-  form.infoUrl.value = hostLinkValue(adventure, ["more info", "event page", "menu", "flyer", "map", "route map"]);
   const selectedVibes = new Set(getListingVibes(adventure));
   els.hostForm.querySelectorAll('input[name="vibes"]').forEach((input) => {
     input.checked = selectedVibes.has(input.value);
