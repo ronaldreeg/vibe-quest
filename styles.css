@@ -116,28 +116,22 @@ button {
 }
 
 .brand {
-  position: relative;
   display: inline-flex;
   align-items: center;
   justify-self: start;
-  width: 104px;
+  width: 230px;
   height: 72px;
   padding: 0;
   min-width: 0;
   background: transparent;
   text-align: left;
-  z-index: 2;
 }
 
 .brand-logo {
-  position: absolute;
-  top: 50%;
-  left: -10px;
   display: block;
-  width: 124px;
-  height: 124px;
+  width: 230px;
+  height: 60px;
   object-fit: contain;
-  transform: translateY(-50%);
 }
 
 .nav-tabs,
@@ -1777,14 +1771,13 @@ textarea:focus {
   }
 
   .brand {
-    width: 86px;
-    height: 60px;
+    width: 184px;
+    height: 54px;
   }
 
   .brand-logo {
-    left: -8px;
-    width: 102px;
-    height: 102px;
+    width: 184px;
+    height: 48px;
   }
 
   .profile-pill {
