@@ -119,8 +119,8 @@ button {
   display: inline-flex;
   align-items: center;
   justify-self: start;
-  width: 54px;
-  height: 54px;
+  width: 88px;
+  height: 88px;
   padding: 0;
   min-width: 0;
   background: transparent;
@@ -129,8 +129,8 @@ button {
 
 .brand-logo {
   display: block;
-  width: 54px;
-  height: 54px;
+  width: 88px;
+  height: 88px;
   object-fit: contain;
 }
 
@@ -1768,6 +1768,12 @@ textarea:focus {
   .topbar {
     top: 8px;
     border-radius: 0;
+  }
+
+  .brand,
+  .brand-logo {
+    width: 76px;
+    height: 76px;
   }
 
   .profile-pill {
