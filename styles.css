@@ -119,7 +119,7 @@ button {
   display: inline-flex;
   align-items: center;
   justify-self: start;
-  width: 320px;
+  width: 400px;
   height: 76px;
   padding: 0;
   min-width: 0;
@@ -129,7 +129,7 @@ button {
 
 .brand-logo {
   display: block;
-  width: 320px;
+  width: 400px;
   height: 74px;
   object-fit: contain;
 }
@@ -1771,12 +1771,12 @@ textarea:focus {
   }
 
   .brand {
-    width: 208px;
+    width: 210px;
     height: 54px;
   }
 
   .brand-logo {
-    width: 208px;
+    width: 210px;
     height: 48px;
   }
 
