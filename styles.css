@@ -119,7 +119,7 @@ button {
   display: inline-flex;
   align-items: center;
   justify-self: start;
-  width: 400px;
+  width: 320px;
   height: 76px;
   padding: 0;
   min-width: 0;
@@ -129,7 +129,7 @@ button {
 
 .brand-logo {
   display: block;
-  width: 400px;
+  width: 320px;
   height: 74px;
   object-fit: contain;
 }
