@@ -116,6 +116,7 @@ button {
 }
 
 .brand {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-self: start;
@@ -128,10 +129,14 @@ button {
 }
 
 .brand-logo {
+  position: absolute;
+  top: 50%;
+  left: 0;
   display: block;
   width: 320px;
-  height: 74px;
+  height: 116px;
   object-fit: contain;
+  transform: translateY(-50%);
 }
 
 .nav-tabs,
@@ -1777,7 +1782,7 @@ textarea:focus {
 
   .brand-logo {
     width: 210px;
-    height: 48px;
+    height: 76px;
   }
 
   .profile-pill {
