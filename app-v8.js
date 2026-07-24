@@ -426,6 +426,7 @@ const state = {
   activeTiming: "all",
   activeType: "All",
   activeVibe: "All",
+  activeFilterPanel: "vibe",
   location: "",
   locationSource: "",
   locationStatus: "idle",
@@ -448,9 +449,13 @@ const els = {
   locationEyebrow: document.querySelector("#locationEyebrow"),
   locationInput: document.querySelector("#locationInput"),
   locationButton: document.querySelector(".location-button"),
+  filterTabs: document.querySelectorAll("[data-filter-tab]"),
+  filterPanels: document.querySelectorAll("[data-filter-panel]"),
   timingFilters: document.querySelector("#timingFilters"),
   typeFilters: document.querySelector("#typeFilters"),
   vibeFilters: document.querySelector("#vibeFilters"),
+  activeFilterSummary: document.querySelector("#activeFilterSummary"),
+  activeFilters: document.querySelector("#activeFilters"),
   adventureGrid: document.querySelector("#adventureGrid"),
   savedGrid: document.querySelector("#savedGrid"),
   realMap: document.querySelector("#realMap"),
@@ -1118,6 +1123,15 @@ function vibeFilterMarkup(activeVibe, dataAttribute) {
 }
 
 function renderFilters() {
+  els.filterTabs.forEach((tab) => {
+    const active = tab.dataset.filterTab === state.activeFilterPanel;
+    tab.classList.toggle("is-active", active);
+    tab.setAttribute("aria-selected", String(active));
+    tab.tabIndex = active ? 0 : -1;
+  });
+  els.filterPanels.forEach((panel) => {
+    panel.hidden = panel.dataset.filterPanel !== state.activeFilterPanel;
+  });
   els.timingFilters.querySelectorAll("[data-timing-filter]").forEach((button) => {
     const active = button.dataset.timingFilter === state.activeTiming;
     button.classList.toggle("is-active", active);
@@ -1125,6 +1139,20 @@ function renderFilters() {
   });
   els.typeFilters.innerHTML = typeFilterMarkup(state.activeType, "type-filter");
   els.vibeFilters.innerHTML = vibeFilterMarkup(state.activeVibe, "vibe-filter");
+
+  const activeFilters = [
+    state.activeVibe !== "All" ? { key: "vibe", label: state.activeVibe } : null,
+    state.activeType !== "All" ? { key: "type", label: state.activeType } : null,
+    state.activeTiming !== "all"
+      ? { key: "timing", label: state.activeTiming === "today" ? "Today" : "Coming up" }
+      : null
+  ].filter(Boolean);
+  els.activeFilterSummary.hidden = activeFilters.length === 0;
+  els.activeFilters.innerHTML = activeFilters.map((filter) => `
+    <button class="active-filter-chip" type="button" data-action="clear-filter" data-filter-key="${filter.key}" aria-label="Remove ${escapeHtml(filter.label)} filter">
+      ${escapeHtml(filter.label)}<span aria-hidden="true">×</span>
+    </button>
+  `).join("");
 }
 
 function adventureCard(adventure) {
@@ -2597,7 +2625,7 @@ function setView(view) {
 }
 
 document.addEventListener("click", async (event) => {
-  const target = event.target.closest("[data-action], [data-view], [data-timing-filter], [data-type-filter], [data-vibe-filter], [data-auth-mode]");
+  const target = event.target.closest("[data-action], [data-view], [data-filter-tab], [data-timing-filter], [data-type-filter], [data-vibe-filter], [data-auth-mode]");
   if (!target) return;
 
   if (target.dataset.view) {
@@ -2606,6 +2634,12 @@ document.addEventListener("click", async (event) => {
     } else {
       setView(target.dataset.view);
     }
+    return;
+  }
+
+  if (target.dataset.filterTab) {
+    state.activeFilterPanel = target.dataset.filterTab;
+    renderFilters();
     return;
   }
 
@@ -2634,6 +2668,18 @@ document.addEventListener("click", async (event) => {
   }
 
   const action = target.dataset.action;
+  if (action === "clear-filter") {
+    if (target.dataset.filterKey === "vibe") state.activeVibe = "All";
+    if (target.dataset.filterKey === "type") state.activeType = "All";
+    if (target.dataset.filterKey === "timing") state.activeTiming = "all";
+    render();
+  }
+  if (action === "clear-filters") {
+    state.activeVibe = "All";
+    state.activeType = "All";
+    state.activeTiming = "all";
+    render();
+  }
   if (action === "home") setView("discover");
   if (action === "focus-search") els.locationInput.focus();
   if (action === "use-location") {
@@ -2717,6 +2763,20 @@ els.locationInput.addEventListener("keydown", async (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
+  const filterTab = event.target.closest?.("[data-filter-tab]");
+  if (filterTab && ["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
+    event.preventDefault();
+    const tabs = [...els.filterTabs];
+    const currentIndex = tabs.indexOf(filterTab);
+    const nextIndex = event.key === "Home"
+      ? 0
+      : event.key === "End"
+        ? tabs.length - 1
+        : (currentIndex + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+    tabs[nextIndex].focus();
+    tabs[nextIndex].click();
+    return;
+  }
   if (event.key !== "Enter" && event.key !== " ") return;
   const card = event.target.closest?.('.adventure-card[data-action="open-detail"]');
   if (!card || event.target !== card) return;
