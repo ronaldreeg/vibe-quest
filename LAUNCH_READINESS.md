@@ -1,4 +1,4 @@
-# Vibe Ventures Launch Readiness
+# Vibe Quest Launch Readiness
 
 Audit date: July 22, 2026
 

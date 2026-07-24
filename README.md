@@ -1,6 +1,6 @@
 # Vibe Quest
 
-This is the current functional Vibe Ventures prototype, prepared for the Vibe Quest repository on July 22, 2026. The Vibe Quest name and visual identity are still intentionally open while the brand is being developed.
+This is the current functional Vibe Quest prototype, prepared for the Vibe Quest repository on July 22, 2026.
 
 For the launch boundary, see [`LAUNCH_READINESS.md`](./LAUNCH_READINESS.md).
 For the hosting and backend handoff, see [`DEPLOYMENT.md`](./DEPLOYMENT.md) and [`SUPABASE_SETUP.md`](./SUPABASE_SETUP.md).

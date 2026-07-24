@@ -1805,7 +1805,7 @@ function showAuth(mode = "signin") {
 function updateAuthMode() {
   const signup = state.authMode === "signup";
   els.authForm.classList.toggle("is-signup", signup);
-  els.authTitle.textContent = signup ? "Create your Vibe Ventures profile" : "Sign in to Vibe Ventures";
+  els.authTitle.textContent = signup ? "Create your Vibe Quest profile" : "Sign in to Vibe Quest";
   els.authModeLabel.textContent = signup ? "Save your vibe" : "Welcome back";
   els.authSubmit.textContent = signup ? "Create account" : "Sign in";
   document.querySelectorAll(".auth-tab").forEach((tab) => {
