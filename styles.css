@@ -436,12 +436,25 @@ textarea:focus {
 
 .map-hero-copy {
   min-width: 0;
-  max-width: 760px;
-  padding: clamp(20px, 2.5vw, 32px);
-  border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--panel-solid) 88%, transparent);
-  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.16);
-  backdrop-filter: blur(18px);
+  max-width: 560px;
+  color: var(--text);
+  text-shadow:
+    0 0 3px var(--panel-solid),
+    0 4px 18px var(--panel-solid);
+}
+
+.map-hero-copy h1 {
+  max-width: 14ch;
+  margin-bottom: 10px;
+  font-size: clamp(2rem, 3.2vw, 3.2rem);
+  line-height: 1;
+}
+
+.map-hero-copy .hero-subtitle {
+  max-width: 44ch;
+  margin-bottom: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 .map-search-panel {
@@ -1832,8 +1845,12 @@ textarea:focus {
   }
 
   .hero-subtitle {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     line-height: 1.45;
+  }
+
+  .map-hero-copy .hero-subtitle {
+    font-size: 0.82rem;
   }
 
   .map-hero-header {
@@ -1842,8 +1859,8 @@ textarea:focus {
   }
 
   .map-hero-copy h1 {
-    margin-bottom: 12px;
-    font-size: clamp(2.25rem, 11vw, 3rem);
+    margin-bottom: 8px;
+    font-size: clamp(1.9rem, 8vw, 2.35rem);
   }
 
   .map-search-panel {
