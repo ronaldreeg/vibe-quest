@@ -253,7 +253,7 @@ h1 {
 
 .workspace {
   display: block;
-  padding-top: var(--gap-lg);
+  padding-top: 0;
 }
 
 .map-board,
@@ -417,14 +417,23 @@ textarea:focus {
 
 .map-hero {
   display: grid;
-  gap: var(--gap);
+  position: relative;
+  gap: 0;
 }
 
 .map-hero-header {
+  position: relative;
+  z-index: 2;
+  grid-area: 1 / 1;
+  align-self: start;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(360px, 520px);
   gap: var(--gap-lg);
   align-items: end;
+  padding: clamp(22px, 3vw, 42px);
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--panel-solid) 84%, transparent);
+  backdrop-filter: blur(18px);
 }
 
 .map-hero-copy {
@@ -439,8 +448,8 @@ textarea:focus {
   padding: var(--gap);
   border: 1px solid var(--line);
   border-radius: 0;
-  background: var(--panel);
-  box-shadow: var(--shadow);
+  background: color-mix(in srgb, var(--panel-solid) 92%, transparent);
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.16);
   backdrop-filter: blur(20px);
 }
 
@@ -482,7 +491,9 @@ textarea:focus {
 }
 
 .hero-map {
-  min-height: clamp(430px, 58vh, 640px);
+  z-index: 1;
+  grid-area: 1 / 1;
+  min-height: clamp(620px, 74vh, 780px);
   margin-bottom: 0;
   border-radius: 0;
 }
@@ -512,6 +523,11 @@ textarea:focus {
 #realMap .leaflet-popup-content-wrapper,
 #realMap .leaflet-popup-tip {
   border-radius: 0 !important;
+}
+
+#realMap .leaflet-top.leaflet-left {
+  top: auto;
+  bottom: 28px;
 }
 
 .map-fallback {
@@ -1749,7 +1765,7 @@ textarea:focus {
   }
 
   .hero-map {
-    min-height: 340px;
+    min-height: 720px;
   }
 
   .adventure-grid {
@@ -1803,19 +1819,31 @@ textarea:focus {
   }
 
   .hero-map {
-    min-height: 220px;
+    min-height: 660px;
   }
 
   .workspace {
-    padding-top: 22px;
+    padding-top: 0;
   }
 
   .hero-subtitle {
+    font-size: 0.95rem;
     line-height: 1.45;
+  }
+
+  .map-hero-header {
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .map-hero-copy h1 {
+    margin-bottom: 12px;
+    font-size: clamp(2.25rem, 11vw, 3rem);
   }
 
   .map-search-panel {
     grid-template-columns: 1fr;
+    padding: 12px;
   }
 
   .toolbar,
