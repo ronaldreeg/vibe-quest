@@ -445,7 +445,6 @@ const state = {
 
 const els = {
   navTabs: document.querySelectorAll(".nav-tab"),
-  locationEyebrow: document.querySelector("#locationEyebrow"),
   locationInput: document.querySelector("#locationInput"),
   locationButton: document.querySelector(".location-button"),
   timingFilters: document.querySelector("#timingFilters"),
@@ -1559,11 +1558,6 @@ function applyStoredLocationPreference() {
 }
 
 function updateLocationUi() {
-  if (els.locationEyebrow) {
-    els.locationEyebrow.textContent = state.location
-      ? `Near ${state.location}`
-      : state.locationStatus === "checking" ? "Finding your starting point" : "Find your starting point";
-  }
   if (els.locationInput && !els.locationInput.value) {
     els.locationInput.placeholder = state.locationStatus === "checking"
       ? "Finding your location..."
