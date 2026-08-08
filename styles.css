@@ -908,6 +908,89 @@ textarea:focus {
   margin-top: 18px;
 }
 
+.site-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(240px, 0.6fr);
+  gap: clamp(28px, 5vw, 72px);
+  margin-top: var(--gap-lg);
+  padding: clamp(28px, 5vw, 64px);
+  border: 1px solid var(--line);
+  background: var(--panel-solid);
+  box-shadow: var(--shadow);
+}
+
+.site-footer-copy {
+  max-width: 760px;
+}
+
+.site-footer-copy h2 {
+  max-width: 18ch;
+  margin: 10px 0 16px;
+  font-size: clamp(2rem, 4vw, 4rem);
+  line-height: 0.98;
+}
+
+.site-footer-copy p {
+  max-width: 64ch;
+  margin: 0;
+  color: var(--muted-strong);
+  font-size: clamp(0.98rem, 1.5vw, 1.12rem);
+  line-height: 1.65;
+}
+
+.site-footer-links {
+  display: grid;
+  align-content: start;
+  border-top: 1px solid var(--line);
+}
+
+.site-footer-links a,
+.site-footer-links button {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  font-weight: 800;
+  text-align: left;
+  text-decoration: none;
+}
+
+.site-footer-links a::after,
+.site-footer-links button::after {
+  content: "+";
+  color: var(--accent-text);
+  font-size: 1.1rem;
+}
+
+.site-footer-links a:hover,
+.site-footer-links button:hover {
+  color: var(--accent-text);
+}
+
+.site-footer-links a:focus-visible,
+.site-footer-links button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.site-footer-signoff {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--gap);
+  padding-top: var(--gap);
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 .saved-view {
   padding: var(--gap);
   border-radius: 0;
@@ -1807,6 +1890,22 @@ textarea:focus {
   .topbar {
     top: 8px;
     border-radius: 0;
+  }
+
+  .site-footer {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 24px 20px;
+  }
+
+  .site-footer-copy h2 {
+    font-size: clamp(2rem, 10vw, 2.8rem);
+  }
+
+  .site-footer-signoff {
+    grid-column: 1;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .brand {
