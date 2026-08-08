@@ -460,6 +460,7 @@ const els = {
   outThereView: document.querySelector("#outThereView"),
   outThereSlideCount: document.querySelector("#outThereSlideCount"),
   hostView: document.querySelector("#hostView"),
+  shareView: document.querySelector("#shareView"),
   profilePill: document.querySelector(".profile-pill"),
   authModal: document.querySelector("#authModal"),
   authForm: document.querySelector("#authForm"),
@@ -1385,16 +1386,19 @@ function renderViews() {
   const isOutThere = state.view === "out-there";
   const isSaved = state.view === "saved";
   const isHost = state.view === "host";
+  const isShare = state.view === "share";
   document.querySelector(".workspace").hidden = !isDiscover;
   els.outThereView.hidden = !isOutThere;
   els.savedView.hidden = !isSaved;
   els.hostView.hidden = !isHost;
+  els.shareView.hidden = !isShare;
   els.navTabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.view === state.view));
   if (isDiscover && map) setTimeout(() => map.invalidateSize(), 50);
   if (isOutThere) {
     initOutThereMap();
     updateOutThereSlideshow();
   }
+  if (isShare) window.vvFlyerStudio?.render();
 }
 
 function renderAdventures() {

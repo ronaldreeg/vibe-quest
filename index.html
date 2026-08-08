@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="./styles.css?v=20260808-site-footer-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260808-flyer-studio-v1" />
   </head>
   <body>
     <div class="app-shell">
@@ -21,6 +21,7 @@
         <nav class="nav-tabs" aria-label="Primary">
           <button class="nav-tab is-active" data-view="discover">Discover</button>
           <button class="nav-tab" data-view="host">New Quest</button>
+          <button class="nav-tab" data-view="share">Share</button>
           <button class="nav-tab" data-view="saved">Inventory</button>
           <button class="nav-tab" data-view="out-there">Out There</button>
         </nav>
@@ -308,6 +309,92 @@
             </form>
           </div>
         </section>
+
+        <section class="share-view" id="shareView" hidden>
+          <header class="share-page-header">
+            <span class="mini-label">Quest Flyer Studio</span>
+            <h1>Make a signal worth sharing.</h1>
+            <p>Turn your photo and event details into a Vibe Quest flyer built for the feed, the group chat, and wherever your people are looking.</p>
+          </header>
+
+          <div class="flyer-studio">
+            <form class="flyer-controls" id="flyerForm">
+              <div class="flyer-controls-heading">
+                <span class="mini-label">Build your flyer</span>
+                <strong>1080 × 1350 PNG</strong>
+              </div>
+
+              <label class="field">
+                <span>Event title</span>
+                <input name="flyerTitle" maxlength="72" value="Sunset Pasta Club" placeholder="Sunset Pasta Club" />
+              </label>
+              <div class="form-grid">
+                <label class="field">
+                  <span>Vibe or category</span>
+                  <input name="flyerKicker" maxlength="38" value="A table-sized quest" placeholder="A table-sized quest" />
+                </label>
+                <label class="field">
+                  <span>Date and place</span>
+                  <input name="flyerDetails" maxlength="64" value="Saturday / 6 PM / Galveston" placeholder="Saturday / 6 PM / Galveston" />
+                </label>
+              </div>
+              <label class="field">
+                <span>Short note</span>
+                <textarea name="flyerNote" maxlength="150" rows="3" placeholder="A quick reason to show up.">Beginner friendly. Bring an appetite and leave with a new recipe.</textarea>
+              </label>
+              <label class="field">
+                <span>Your photo</span>
+                <input class="file-input" id="flyerPhotoInput" name="flyerPhoto" type="file" accept="image/*" />
+              </label>
+
+              <fieldset class="flyer-option-group">
+                <legend>Layout</legend>
+                <div class="flyer-layout-options" role="group" aria-label="Flyer layout">
+                  <button class="flyer-option is-active" type="button" data-flyer-layout="full" aria-pressed="true">Full frame</button>
+                  <button class="flyer-option" type="button" data-flyer-layout="split" aria-pressed="false">Split frame</button>
+                  <button class="flyer-option" type="button" data-flyer-layout="signal" aria-pressed="false">Signal block</button>
+                </div>
+              </fieldset>
+
+              <fieldset class="flyer-option-group">
+                <legend>Accent</legend>
+                <div class="flyer-swatch-options" role="group" aria-label="Flyer accent color">
+                  <button class="flyer-swatch is-active" type="button" data-flyer-accent="#6ee7c8" style="--flyer-swatch: #6ee7c8" aria-label="Mint accent" aria-pressed="true"></button>
+                  <button class="flyer-swatch" type="button" data-flyer-accent="#f1c75b" style="--flyer-swatch: #f1c75b" aria-label="Gold accent" aria-pressed="false"></button>
+                  <button class="flyer-swatch" type="button" data-flyer-accent="#e37b67" style="--flyer-swatch: #e37b67" aria-label="Coral accent" aria-pressed="false"></button>
+                  <button class="flyer-swatch" type="button" data-flyer-accent="#75a7d8" style="--flyer-swatch: #75a7d8" aria-label="Blue accent" aria-pressed="false"></button>
+                  <button class="flyer-swatch" type="button" data-flyer-accent="#b9a3db" style="--flyer-swatch: #b9a3db" aria-label="Violet accent" aria-pressed="false"></button>
+                </div>
+              </fieldset>
+
+              <fieldset class="flyer-option-group">
+                <legend>Quest mark</legend>
+                <div class="flyer-symbol-options" role="group" aria-label="Flyer quest mark">
+                  <button class="flyer-symbol is-active" type="button" data-flyer-symbol="spark" aria-label="Spark mark" aria-pressed="true">✦</button>
+                  <button class="flyer-symbol" type="button" data-flyer-symbol="diamond" aria-label="Diamond mark" aria-pressed="false">◆</button>
+                  <button class="flyer-symbol" type="button" data-flyer-symbol="cross" aria-label="Cross mark" aria-pressed="false">+</button>
+                  <button class="flyer-symbol" type="button" data-flyer-symbol="orbit" aria-label="Orbit mark" aria-pressed="false">○</button>
+                </div>
+              </fieldset>
+
+              <div class="flyer-actions">
+                <button class="secondary-button" type="button" data-flyer-action="reset">Reset</button>
+                <button class="primary-button" type="button" data-flyer-action="download">Download flyer</button>
+              </div>
+              <p class="flyer-status" id="flyerStatus" role="status" aria-live="polite">Your photo stays on this device.</p>
+            </form>
+
+            <section class="flyer-preview-panel" aria-labelledby="flyerPreviewTitle">
+              <div class="flyer-preview-heading">
+                <span class="mini-label" id="flyerPreviewTitle">Live preview</span>
+                <span>4:5 social post</span>
+              </div>
+              <div class="flyer-canvas-shell">
+                <canvas id="flyerCanvas" width="1080" height="1350" aria-label="Preview of your Vibe Quest event flyer"></canvas>
+              </div>
+            </section>
+          </div>
+        </section>
       </main>
 
       <footer class="site-footer">
@@ -319,6 +406,7 @@
         <nav class="site-footer-links" aria-label="Footer navigation">
           <button type="button" data-view="discover">Scout the map</button>
           <button type="button" data-view="host">Post a quest</button>
+          <button type="button" data-view="share">Make a flyer</button>
           <a href="mailto:hello@vibeventure.org?subject=Hello%20Vibe%20Quest">Contact</a>
         </nav>
         <div class="site-footer-signoff">
@@ -418,6 +506,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.min.js"></script>
   <script src="./supabase-client.js?v=20260722"></script>
-  <script src="./app-v8.js?v=20260808-map-copy-v1"></script>
+  <script src="./app-v8.js?v=20260808-share-view-v1"></script>
+  <script src="./flyer-studio.js?v=20260808-flyer-studio-v1"></script>
 </body>
 </html>
