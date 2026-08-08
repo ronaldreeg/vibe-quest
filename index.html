@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="./styles.css?v=20260724-filter-tabs-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260808-multiselect-filters-v1" />
   </head>
   <body>
     <div class="app-shell">
@@ -57,30 +57,29 @@
           </section>
 
           <section class="filter-bar" aria-label="Discovery filters">
-            <div class="filter-tablist" role="tablist" aria-label="Choose a filter category">
-              <button class="filter-tab is-active" id="vibeFilterTab" type="button" role="tab" data-filter-tab="vibe" aria-controls="vibeFilterPanel" aria-selected="true">Vibe</button>
-              <button class="filter-tab" id="typeFilterTab" type="button" role="tab" data-filter-tab="type" aria-controls="typeFilterPanel" aria-selected="false" tabindex="-1">Type</button>
-              <button class="filter-tab" id="timingFilterTab" type="button" role="tab" data-filter-tab="timing" aria-controls="timingFilterPanel" aria-selected="false" tabindex="-1">When</button>
+            <div class="panel-heading">
+              <div>
+                <span class="mini-label">Discovery filters</span>
+                <h2>Browse the good stuff</h2>
+              </div>
             </div>
-            <div class="filter-panels">
-              <div class="filter-panel" id="vibeFilterPanel" role="tabpanel" data-filter-panel="vibe" aria-labelledby="vibeFilterTab">
-                <div class="segmented filter-option-grid" id="vibeFilters" role="group" aria-label="Vibe filter"></div>
+            <div class="filter-groups">
+              <div class="filter-group">
+                <span class="filter-label">Vibe</span>
+                <div class="segmented" id="vibeFilters" role="group" aria-label="Vibe filters"></div>
               </div>
-              <div class="filter-panel" id="typeFilterPanel" role="tabpanel" data-filter-panel="type" aria-labelledby="typeFilterTab" hidden>
-                <div class="segmented filter-option-grid" id="typeFilters" role="group" aria-label="Activity type filter"></div>
+              <div class="filter-group">
+                <span class="filter-label">Type</span>
+                <div class="segmented" id="typeFilters" role="group" aria-label="Activity type filters"></div>
               </div>
-              <div class="filter-panel" id="timingFilterPanel" role="tabpanel" data-filter-panel="timing" aria-labelledby="timingFilterTab" hidden>
-                <div class="segmented filter-option-grid timing-tabs" id="timingFilters" role="group" aria-label="Activity timing filter">
+              <div class="filter-group timing-filter-group">
+                <span class="filter-label">When</span>
+                <div class="segmented timing-tabs" id="timingFilters" role="group" aria-label="Activity timing filter">
                   <button class="chip timing-chip is-active" data-timing-filter="all" aria-pressed="true">All</button>
                   <button class="chip timing-chip" data-timing-filter="today" aria-pressed="false">Today</button>
                   <button class="chip timing-chip" data-timing-filter="coming-up" aria-pressed="false">Coming up</button>
                 </div>
               </div>
-            </div>
-            <div class="active-filter-summary" id="activeFilterSummary" hidden>
-              <span class="mini-label">Active filters</span>
-              <div class="active-filter-list" id="activeFilters"></div>
-              <button class="text-button clear-filter-button" type="button" data-action="clear-filters">Clear all</button>
             </div>
           </section>
 
@@ -403,6 +402,6 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.min.js"></script>
   <script src="./supabase-client.js?v=20260722"></script>
-  <script src="./app-v8.js?v=20260724-filter-tabs-v1"></script>
+  <script src="./app-v8.js?v=20260808-multiselect-filters-v1"></script>
 </body>
 </html>

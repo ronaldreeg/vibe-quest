@@ -574,68 +574,44 @@ textarea:focus {
 
 .filter-bar {
   display: grid;
-  gap: 0;
+  grid-template-columns: minmax(190px, 0.28fr) minmax(0, 1fr);
+  gap: var(--gap);
+  align-items: start;
   margin: var(--gap) 0;
-  padding: 0;
-  overflow: hidden;
+  padding: var(--gap);
   border-radius: 0;
 }
 
-.filter-tablist {
+.filter-bar h2 {
+  margin-bottom: 0;
+  font-size: 1.15rem;
+}
+
+.filter-groups,
+.filter-group {
+  display: grid;
+  gap: 9px;
+}
+
+.filter-groups {
+  display: grid;
+  gap: var(--gap);
+}
+
+.timing-filter-group {
+  padding-top: var(--gap);
+  border-top: 1px solid var(--line);
+}
+
+.timing-tabs {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  border-bottom: 1px solid var(--line);
-}
-
-.filter-tab {
-  min-width: 0;
-  min-height: 54px;
-  padding: 0 16px;
-  border: 0;
-  border-right: 1px solid var(--line);
-  background: transparent;
-  color: var(--muted-strong);
-  font-size: 0.9rem;
-  font-weight: 900;
-  text-align: left;
-}
-
-.filter-tab:last-child {
-  border-right: 0;
-}
-
-.filter-tab.is-active {
-  background: var(--text);
-  color: var(--bg);
-}
-
-.filter-panels {
-  padding: var(--gap);
-}
-
-.filter-panel {
-  min-width: 0;
-}
-
-.filter-option-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--gap-xs);
-}
-
-.filter-option-grid .chip {
-  display: flex;
-  width: 100%;
-  min-width: 0;
-  min-height: 48px;
-  align-items: center;
-  justify-content: flex-start;
-  text-align: left;
-  white-space: normal;
+  max-width: 540px;
 }
 
 .timing-chip {
-  justify-content: flex-start;
+  justify-content: center;
+  min-height: 46px;
   font-size: 0.9rem;
 }
 
@@ -644,43 +620,11 @@ textarea:focus {
   color: #08110f;
 }
 
-.active-filter-summary {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: var(--gap-xs);
-  align-items: center;
-  padding: var(--gap-xs) var(--gap);
-  border-top: 1px solid var(--line);
-}
-
-.active-filter-list {
-  display: flex;
-  min-width: 0;
-  flex-wrap: wrap;
-  gap: 7px;
-}
-
-.active-filter-chip {
-  display: inline-flex;
-  min-height: 34px;
-  padding: 0 10px;
-  align-items: center;
-  border: 1px solid var(--line);
-  background: var(--detail-surface);
-  color: var(--text);
+.filter-label {
+  color: var(--muted);
   font-size: 0.78rem;
-  font-weight: 800;
-}
-
-.active-filter-chip span {
-  margin-left: 7px;
-  font-size: 1rem;
-  line-height: 1;
-}
-
-.clear-filter-button {
-  min-height: 34px;
-  padding: 0 8px;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .adventure-grid {
@@ -710,8 +654,6 @@ textarea:focus {
 
 .adventure-card:focus-visible,
 .chip:focus-visible,
-.filter-tab:focus-visible,
-.active-filter-chip:focus-visible,
 .nav-tab:focus-visible,
 .brand:focus-visible,
 .profile-pill:focus-visible,
@@ -1814,6 +1756,10 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 
+  .filter-bar {
+    grid-template-columns: 1fr;
+  }
+
   .segmented {
     gap: 7px;
   }
@@ -1870,29 +1816,6 @@ textarea:focus {
 
   .map-search-panel {
     grid-template-columns: 1fr;
-  }
-
-  .filter-tab {
-    min-height: 50px;
-    padding: 0 10px;
-    text-align: center;
-  }
-
-  .filter-panels {
-    padding: 10px;
-  }
-
-  .filter-option-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .active-filter-summary {
-    grid-template-columns: 1fr auto;
-    padding: 10px;
-  }
-
-  .active-filter-summary .mini-label {
-    grid-column: 1 / -1;
   }
 
   .toolbar,

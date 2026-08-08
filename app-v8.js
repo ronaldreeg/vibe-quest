@@ -424,9 +424,8 @@ const state = {
   view: "discover",
   authMode: "signin",
   activeTiming: "all",
-  activeType: "All",
-  activeVibe: "All",
-  activeFilterPanel: "vibe",
+  activeTypes: [],
+  activeVibes: [],
   location: "",
   locationSource: "",
   locationStatus: "idle",
@@ -449,13 +448,9 @@ const els = {
   locationEyebrow: document.querySelector("#locationEyebrow"),
   locationInput: document.querySelector("#locationInput"),
   locationButton: document.querySelector(".location-button"),
-  filterTabs: document.querySelectorAll("[data-filter-tab]"),
-  filterPanels: document.querySelectorAll("[data-filter-panel]"),
   timingFilters: document.querySelector("#timingFilters"),
   typeFilters: document.querySelector("#typeFilters"),
   vibeFilters: document.querySelector("#vibeFilters"),
-  activeFilterSummary: document.querySelector("#activeFilterSummary"),
-  activeFilters: document.querySelector("#activeFilters"),
   adventureGrid: document.querySelector("#adventureGrid"),
   savedGrid: document.querySelector("#savedGrid"),
   realMap: document.querySelector("#realMap"),
@@ -901,8 +896,12 @@ function filteredAdventures() {
       const bucket = getListingSchedule(adventure).bucket;
       return state.activeTiming === "all" ? bucket !== "expired" : bucket === state.activeTiming;
     })
-    .filter((adventure) => state.activeType === "All" || getListingType(adventure) === state.activeType)
-    .filter((adventure) => state.activeVibe === "All" || getListingVibes(adventure).includes(state.activeVibe))
+    .filter((adventure) => state.activeTypes.length === 0 || state.activeTypes.includes(getListingType(adventure)))
+    .filter((adventure) => {
+      if (state.activeVibes.length === 0) return true;
+      const listingVibes = getListingVibes(adventure);
+      return state.activeVibes.some((vibe) => listingVibes.includes(vibe));
+    })
     .filter((adventure) => {
       if (!location) return true;
       return normalize(adventure.city).includes(location) || normalize(adventure.area).includes(location);
@@ -1098,14 +1097,15 @@ function styleVars(source) {
   return `--card-a:${a};--card-b:${b};--pin-color:${a}`;
 }
 
-function typeFilterMarkup(activeType, dataAttribute) {
+function typeFilterMarkup(activeTypes, dataAttribute) {
   return ["All", ...LISTING_TYPES].map((type) => {
     const markerColor = MARKER_STYLE[type];
+    const active = type === "All" ? activeTypes.length === 0 : activeTypes.includes(type);
     return `
     <button
-      class="chip type-chip ${type === "All" ? "type-all" : ""} ${type === activeType ? "is-active" : ""}"
+      class="chip type-chip ${type === "All" ? "type-all" : ""} ${active ? "is-active" : ""}"
       data-${dataAttribute}="${escapeHtml(type)}"
-      aria-pressed="${type === activeType}"
+      aria-pressed="${active}"
       ${markerColor ? `style="--type-color:${markerColor}"` : ""}
     >
       ${escapeHtml(type)}
@@ -1114,45 +1114,31 @@ function typeFilterMarkup(activeType, dataAttribute) {
   }).join("");
 }
 
-function vibeFilterMarkup(activeVibe, dataAttribute) {
-  return ["All", ...VIBE_FILTERS].map((vibe) => `
-    <button class="chip ${vibe === activeVibe ? "is-active" : ""}" data-${dataAttribute}="${escapeHtml(vibe)}" aria-pressed="${vibe === activeVibe}">
-      ${escapeHtml(vibe)}
-    </button>
-  `).join("");
+function vibeFilterMarkup(activeVibes, dataAttribute) {
+  return ["All", ...VIBE_FILTERS].map((vibe) => {
+    const active = vibe === "All" ? activeVibes.length === 0 : activeVibes.includes(vibe);
+    return `
+      <button class="chip ${active ? "is-active" : ""}" data-${dataAttribute}="${escapeHtml(vibe)}" aria-pressed="${active}">
+        ${escapeHtml(vibe)}
+      </button>
+    `;
+  }).join("");
+}
+
+function toggleFilterValue(values, value) {
+  return values.includes(value)
+    ? values.filter((item) => item !== value)
+    : [...values, value];
 }
 
 function renderFilters() {
-  els.filterTabs.forEach((tab) => {
-    const active = tab.dataset.filterTab === state.activeFilterPanel;
-    tab.classList.toggle("is-active", active);
-    tab.setAttribute("aria-selected", String(active));
-    tab.tabIndex = active ? 0 : -1;
-  });
-  els.filterPanels.forEach((panel) => {
-    panel.hidden = panel.dataset.filterPanel !== state.activeFilterPanel;
-  });
   els.timingFilters.querySelectorAll("[data-timing-filter]").forEach((button) => {
     const active = button.dataset.timingFilter === state.activeTiming;
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-pressed", String(active));
   });
-  els.typeFilters.innerHTML = typeFilterMarkup(state.activeType, "type-filter");
-  els.vibeFilters.innerHTML = vibeFilterMarkup(state.activeVibe, "vibe-filter");
-
-  const activeFilters = [
-    state.activeVibe !== "All" ? { key: "vibe", label: state.activeVibe } : null,
-    state.activeType !== "All" ? { key: "type", label: state.activeType } : null,
-    state.activeTiming !== "all"
-      ? { key: "timing", label: state.activeTiming === "today" ? "Today" : "Coming up" }
-      : null
-  ].filter(Boolean);
-  els.activeFilterSummary.hidden = activeFilters.length === 0;
-  els.activeFilters.innerHTML = activeFilters.map((filter) => `
-    <button class="active-filter-chip" type="button" data-action="clear-filter" data-filter-key="${filter.key}" aria-label="Remove ${escapeHtml(filter.label)} filter">
-      ${escapeHtml(filter.label)}<span aria-hidden="true">×</span>
-    </button>
-  `).join("");
+  els.typeFilters.innerHTML = typeFilterMarkup(state.activeTypes, "type-filter");
+  els.vibeFilters.innerHTML = vibeFilterMarkup(state.activeVibes, "vibe-filter");
 }
 
 function adventureCard(adventure) {
@@ -1321,8 +1307,8 @@ function showAdventureOnMap(id) {
   state.location = adventure.city || "";
   state.mapCenter = [adventure.lat, adventure.lng];
   state.mapNeedsFit = true;
-  state.activeType = "All";
-  state.activeVibe = "All";
+  state.activeTypes = [];
+  state.activeVibes = [];
   state.activeTiming = "all";
   els.locationInput.value = state.location;
   render();
@@ -1422,13 +1408,14 @@ function renderAdventures() {
     ? "Happening today"
     : state.activeTiming === "coming-up" ? "Worth planning for" : "Nearby finds";
   els.resultsMeta.textContent = state.location ? `${timingMeta} · ${state.location}` : timingMeta;
-  const typeLabel = state.activeType === "All" ? "Local happenings" : state.activeType;
   const timingTitle = state.activeTiming === "today"
     ? "What’s happening today"
     : state.activeTiming === "coming-up" ? "Coming up" : "Local happenings";
-  els.resultsTitle.textContent = state.activeType === "All" && state.activeVibe === "All"
+  const activeFilterCount = state.activeTypes.length + state.activeVibes.length;
+  const onlyFilter = state.activeTypes[0] || state.activeVibes[0];
+  els.resultsTitle.textContent = activeFilterCount === 0
     ? timingTitle
-    : state.activeVibe === "All" ? typeLabel : `${state.activeVibe} ${typeLabel}`;
+    : activeFilterCount === 1 ? onlyFilter : "Matching happenings";
 }
 
 function renderSaved() {
@@ -2568,8 +2555,8 @@ async function publishAdventure(event) {
       state.location = city;
       state.mapCenter = center;
       state.mapNeedsFit = true;
-      state.activeType = type;
-      state.activeVibe = "All";
+      state.activeTypes = [type];
+      state.activeVibes = [];
       const publishedBucket = getListingSchedule(adventure).bucket;
       state.activeTiming = publishedBucket === "anytime" ? "all" : publishedBucket === "expired" ? "coming-up" : publishedBucket;
       els.locationInput.value = city;
@@ -2596,8 +2583,8 @@ async function publishAdventure(event) {
     state.location = city;
     state.mapCenter = center;
     state.mapNeedsFit = true;
-    state.activeType = type;
-    state.activeVibe = "All";
+    state.activeTypes = [type];
+    state.activeVibes = [];
     const publishedBucket = getListingSchedule(adventure).bucket;
     state.activeTiming = publishedBucket === "anytime" ? "all" : publishedBucket === "expired" ? "coming-up" : publishedBucket;
     els.locationInput.value = city;
@@ -2625,7 +2612,7 @@ function setView(view) {
 }
 
 document.addEventListener("click", async (event) => {
-  const target = event.target.closest("[data-action], [data-view], [data-filter-tab], [data-timing-filter], [data-type-filter], [data-vibe-filter], [data-auth-mode]");
+  const target = event.target.closest("[data-action], [data-view], [data-timing-filter], [data-type-filter], [data-vibe-filter], [data-auth-mode]");
   if (!target) return;
 
   if (target.dataset.view) {
@@ -2637,14 +2624,10 @@ document.addEventListener("click", async (event) => {
     return;
   }
 
-  if (target.dataset.filterTab) {
-    state.activeFilterPanel = target.dataset.filterTab;
-    renderFilters();
-    return;
-  }
-
   if ("typeFilter" in target.dataset) {
-    state.activeType = target.dataset.typeFilter;
+    state.activeTypes = target.dataset.typeFilter === "All"
+      ? []
+      : toggleFilterValue(state.activeTypes, target.dataset.typeFilter);
     render();
     return;
   }
@@ -2656,7 +2639,9 @@ document.addEventListener("click", async (event) => {
   }
 
   if ("vibeFilter" in target.dataset) {
-    state.activeVibe = target.dataset.vibeFilter;
+    state.activeVibes = target.dataset.vibeFilter === "All"
+      ? []
+      : toggleFilterValue(state.activeVibes, target.dataset.vibeFilter);
     render();
     return;
   }
@@ -2668,18 +2653,6 @@ document.addEventListener("click", async (event) => {
   }
 
   const action = target.dataset.action;
-  if (action === "clear-filter") {
-    if (target.dataset.filterKey === "vibe") state.activeVibe = "All";
-    if (target.dataset.filterKey === "type") state.activeType = "All";
-    if (target.dataset.filterKey === "timing") state.activeTiming = "all";
-    render();
-  }
-  if (action === "clear-filters") {
-    state.activeVibe = "All";
-    state.activeType = "All";
-    state.activeTiming = "all";
-    render();
-  }
   if (action === "home") setView("discover");
   if (action === "focus-search") els.locationInput.focus();
   if (action === "use-location") {
@@ -2693,8 +2666,8 @@ document.addEventListener("click", async (event) => {
     state.locationStatus = "ready";
     state.mapCenter = CITY_CENTERS["galveston, tx"];
     state.mapNeedsFit = true;
-    state.activeType = "All";
-    state.activeVibe = "All";
+    state.activeTypes = [];
+    state.activeVibes = [];
     state.activeTiming = "all";
     els.locationInput.value = state.location;
     store.set(LOCATION_STORAGE_KEY, {
@@ -2763,20 +2736,6 @@ els.locationInput.addEventListener("keydown", async (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
-  const filterTab = event.target.closest?.("[data-filter-tab]");
-  if (filterTab && ["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
-    event.preventDefault();
-    const tabs = [...els.filterTabs];
-    const currentIndex = tabs.indexOf(filterTab);
-    const nextIndex = event.key === "Home"
-      ? 0
-      : event.key === "End"
-        ? tabs.length - 1
-        : (currentIndex + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
-    tabs[nextIndex].focus();
-    tabs[nextIndex].click();
-    return;
-  }
   if (event.key !== "Enter" && event.key !== " ") return;
   const card = event.target.closest?.('.adventure-card[data-action="open-detail"]');
   if (!card || event.target !== card) return;
