@@ -136,7 +136,12 @@ button {
   width: 320px;
   height: 116px;
   object-fit: contain;
+  filter: invert(1);
   transform: translateY(-50%);
+}
+
+:root[data-theme="light"] .brand-logo {
+  filter: none;
 }
 
 .nav-tabs,
