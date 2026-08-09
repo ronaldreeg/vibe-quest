@@ -437,10 +437,10 @@ textarea:focus {
 .map-hero-copy {
   min-width: 0;
   max-width: 560px;
-  color: var(--text);
+  color: #101318;
   text-shadow:
-    0 0 3px var(--panel-solid),
-    0 4px 18px var(--panel-solid);
+    0 0 3px rgba(255, 255, 255, 0.96),
+    0 4px 18px rgba(255, 255, 255, 0.9);
 }
 
 .map-hero-copy h1 {
@@ -453,6 +453,7 @@ textarea:focus {
 .map-hero-copy .hero-subtitle {
   max-width: 44ch;
   margin-bottom: 0;
+  color: #242a33;
   font-size: 0.9rem;
   line-height: 1.45;
 }
