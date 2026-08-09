@@ -453,6 +453,8 @@ const els = {
   adventureGrid: document.querySelector("#adventureGrid"),
   savedGrid: document.querySelector("#savedGrid"),
   realMap: document.querySelector("#realMap"),
+  mapInteractionButton: document.querySelector(".map-interaction-button"),
+  mapInteractionLabel: document.querySelector("[data-map-interaction-label]"),
   legendCount: document.querySelector("#legendCount"),
   resultsMeta: document.querySelector("#resultsMeta"),
   resultsTitle: document.querySelector("#resultsTitle"),
@@ -1177,6 +1179,10 @@ function adventureCard(adventure) {
 let map;
 let mapMarkers = [];
 let outThereMap;
+let mobileMapInteractionEnabled = false;
+const compactMapQuery = window.matchMedia("(max-width: 900px), (pointer: coarse)");
+let mapPinchDelta = 0;
+let mapPinchResetTimer;
 let latestLocationSearchRequest = 0;
 const geocodeCache = new Map();
 
@@ -1212,6 +1218,55 @@ function knownCenterForLocation(location) {
   return CITY_CENTERS[key] || null;
 }
 
+function updateMapInteractionMode(enabled = mobileMapInteractionEnabled) {
+  const compact = compactMapQuery.matches;
+  mobileMapInteractionEnabled = compact && Boolean(enabled);
+
+  if (map) {
+    map.scrollWheelZoom.disable();
+    if (compact && !mobileMapInteractionEnabled) {
+      map.dragging.disable();
+      map.touchZoom.disable();
+    } else {
+      map.dragging.enable();
+      map.touchZoom.enable();
+    }
+  }
+
+  const mapBoard = els.realMap?.closest(".hero-map");
+  mapBoard?.classList.toggle("is-page-scroll-mode", compact && !mobileMapInteractionEnabled);
+  mapBoard?.classList.toggle("is-map-interaction-mode", compact && mobileMapInteractionEnabled);
+
+  if (els.mapInteractionButton) {
+    els.mapInteractionButton.hidden = !compact;
+    els.mapInteractionButton.classList.toggle("is-active", mobileMapInteractionEnabled);
+    els.mapInteractionButton.setAttribute("aria-pressed", mobileMapInteractionEnabled ? "true" : "false");
+    els.mapInteractionButton.setAttribute(
+      "aria-label",
+      mobileMapInteractionEnabled ? "Stop moving the map and scroll the page" : "Enable map movement"
+    );
+  }
+  if (els.mapInteractionLabel) {
+    els.mapInteractionLabel.textContent = mobileMapInteractionEnabled ? "Scroll page" : "Move map";
+  }
+}
+
+function handleMapPinchZoom(event) {
+  if (!map || compactMapQuery.matches || !event.ctrlKey) return;
+  event.preventDefault();
+  window.clearTimeout(mapPinchResetTimer);
+  mapPinchDelta += event.deltaY;
+  mapPinchResetTimer = window.setTimeout(() => {
+    mapPinchDelta = 0;
+  }, 140);
+  if (Math.abs(mapPinchDelta) < 18) return;
+
+  const zoomDirection = mapPinchDelta < 0 ? 1 : -1;
+  const nextZoom = Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), map.getZoom() + zoomDirection));
+  map.setZoomAround(map.mouseEventToContainerPoint(event), nextZoom);
+  mapPinchDelta = 0;
+}
+
 function initMap() {
   if (map || !els.realMap) return Boolean(map);
   if (!window.L) {
@@ -1220,8 +1275,9 @@ function initMap() {
   }
   map = L.map(els.realMap, {
     zoomControl: false,
-    scrollWheelZoom: true,
-    touchZoom: true,
+    scrollWheelZoom: false,
+    touchZoom: !compactMapQuery.matches,
+    dragging: !compactMapQuery.matches,
     wheelDebounceTime: 40
   }).setView(state.mapCenter, 13);
   L.control.zoom({ position: "bottomright" }).addTo(map);
@@ -1229,6 +1285,7 @@ function initMap() {
     maxZoom: 19,
     attribution: "&copy; OpenStreetMap contributors"
   }).addTo(map);
+  updateMapInteractionMode(false);
   setTimeout(() => map.invalidateSize(), 50);
   return true;
 }
@@ -2697,6 +2754,7 @@ document.addEventListener("click", async (event) => {
   if (action === "open-detail") openDetail(target.dataset.id);
   if (action === "close-detail") els.detailModal.close();
   if (action === "show-on-map") showAdventureOnMap(target.dataset.id);
+  if (action === "toggle-map-interaction") updateMapInteractionMode(!mobileMapInteractionEnabled);
   if (action === "out-there-prev") updateOutThereSlideshow(state.outThereSlideIndex - 1);
   if (action === "out-there-next") updateOutThereSlideshow(state.outThereSlideIndex + 1);
   if (action === "out-there-slide") updateOutThereSlideshow(target.dataset.slideIndex);
@@ -2770,6 +2828,10 @@ els.hostForm.querySelectorAll('input[name="location"], input[name="city"]').forE
 });
 
 document.documentElement.dataset.theme = store.get("vv_theme", "");
+const handleCompactMapChange = () => updateMapInteractionMode(false);
+if (compactMapQuery.addEventListener) compactMapQuery.addEventListener("change", handleCompactMapChange);
+else compactMapQuery.addListener?.(handleCompactMapChange);
+els.realMap?.addEventListener("wheel", handleMapPinchZoom, { passive: false });
 resetHostForm();
 render();
 

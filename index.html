@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="./styles.css?v=20260808-flyer-studio-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260809-map-scroll-v1" />
   </head>
   <body>
     <div class="app-shell">
@@ -53,6 +53,10 @@
             </div>
             <div class="map-board hero-map" aria-label="Local activity map">
               <div id="realMap"></div>
+              <button class="map-interaction-button" type="button" data-action="toggle-map-interaction" aria-pressed="false" hidden>
+                <span class="map-interaction-icon" aria-hidden="true">↕</span>
+                <span data-map-interaction-label>Move map</span>
+              </button>
             </div>
           </section>
 
@@ -506,7 +510,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.min.js"></script>
   <script src="./supabase-client.js?v=20260722"></script>
-  <script src="./app-v8.js?v=20260808-share-view-v1"></script>
+  <script src="./app-v8.js?v=20260809-map-scroll-v1"></script>
   <script src="./flyer-studio.js?v=20260808-flyer-studio-v1"></script>
 </body>
 </html>
