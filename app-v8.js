@@ -122,6 +122,8 @@ const CITY_CENTERS = {
 
 const DEFAULT_MAP_CENTER = [39.8283, -98.5795];
 const LOCATION_STORAGE_KEY = "vv_location_preference";
+const PUBLIC_SITE_URL = "https://www.vibe-quest.net/";
+const SHARED_ACTIVITY_PARAM = "activity";
 
 const DEFAULT_ADVENTURES = [
   {
@@ -1858,6 +1860,80 @@ function toast(message) {
   window.vvToastTimer = setTimeout(() => els.toast.classList.remove("is-visible"), 2400);
 }
 
+function activityShareUrl(id) {
+  const isLocalPreview = window.location.protocol === "file:"
+    || ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const url = new URL(isLocalPreview ? PUBLIC_SITE_URL : window.location.href);
+  url.search = "";
+  url.hash = "";
+  url.searchParams.set(SHARED_ACTIVITY_PARAM, id);
+  return url.toString();
+}
+
+async function copyShareUrl(url) {
+  try {
+    await navigator.clipboard.writeText(url);
+    return true;
+  } catch {
+    try {
+      const input = document.createElement("textarea");
+      input.value = url;
+      input.setAttribute("readonly", "");
+      input.style.position = "fixed";
+      input.style.opacity = "0";
+      document.body.append(input);
+      input.select();
+      const copied = document.execCommand("copy");
+      input.remove();
+      return copied;
+    } catch {
+      return false;
+    }
+  }
+}
+
+async function shareActivity(id) {
+  const adventure = getAdventures().find((item) => item.id === id);
+  if (!adventure) {
+    toast("That activity is not available right now.");
+    return;
+  }
+
+  const url = activityShareUrl(adventure.id);
+  if (typeof navigator.share === "function") {
+    try {
+      await navigator.share({
+        title: adventure.title,
+        text: `${adventure.title} · ${adventure.area}, ${adventure.city}`,
+        url
+      });
+      return;
+    } catch (error) {
+      if (error?.name === "AbortError") return;
+    }
+  }
+
+  if (await copyShareUrl(url)) {
+    toast("Activity link copied.");
+  } else {
+    window.prompt("Copy this activity link:", url);
+  }
+}
+
+function openSharedActivityFromUrl({ notifyMissing = false } = {}) {
+  const id = new URL(window.location.href).searchParams.get(SHARED_ACTIVITY_PARAM)?.trim();
+  if (!id) return false;
+  const adventure = getAdventures().find((item) => item.id === id);
+  if (!adventure) {
+    if (notifyMissing) toast("That shared activity is no longer available.");
+    return false;
+  }
+  state.view = "discover";
+  render();
+  openDetail(adventure.id);
+  return true;
+}
+
 function setLocationFeedback(message = "", tone = "") {
   if (!els.locationFeedback) return;
   els.locationFeedback.textContent = message;
@@ -2135,6 +2211,9 @@ function openDetail(id) {
     <div class="modal-actions">
       <button class="secondary-button" type="button" data-action="show-on-map" data-id="${adventure.id}">
         Show on map
+      </button>
+      <button class="secondary-button" type="button" data-action="share-activity" data-id="${escapeHtml(adventure.id)}">
+        Share activity
       </button>
       <button class="primary-button" data-action="toggle-save" data-id="${adventure.id}">
         ${saved ? "Remove from saved" : "Save activity"}
@@ -2754,6 +2833,7 @@ document.addEventListener("click", async (event) => {
   if (action === "open-detail") openDetail(target.dataset.id);
   if (action === "close-detail") els.detailModal.close();
   if (action === "show-on-map") showAdventureOnMap(target.dataset.id);
+  if (action === "share-activity") await shareActivity(target.dataset.id);
   if (action === "toggle-map-interaction") updateMapInteractionMode(!mobileMapInteractionEnabled);
   if (action === "out-there-prev") updateOutThereSlideshow(state.outThereSlideIndex - 1);
   if (action === "out-there-next") updateOutThereSlideshow(state.outThereSlideIndex + 1);
@@ -2839,9 +2919,11 @@ if (state.backendEnabled) {
   state.session = null;
   bootstrapSupabase().then(async () => {
     updateHostFormMode();
-    if (!getCurrentUser()) await initializeLocation();
+    const openedSharedActivity = openSharedActivityFromUrl({ notifyMissing: true });
+    if (!openedSharedActivity && !getCurrentUser()) await initializeLocation();
   });
 } else {
-  initializeLocation().catch(() => {});
+  const openedSharedActivity = openSharedActivityFromUrl({ notifyMissing: true });
+  if (!openedSharedActivity) initializeLocation().catch(() => {});
   repairHostedCoordinates().catch(() => {});
 }
