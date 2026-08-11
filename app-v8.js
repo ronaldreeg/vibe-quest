@@ -2213,7 +2213,7 @@ function openDetail(id) {
         Show on map
       </button>
       <button class="secondary-button" type="button" data-action="share-activity" data-id="${escapeHtml(adventure.id)}" aria-label="Share activity link">
-        Send hint
+        Share link
       </button>
       <button class="primary-button" data-action="toggle-save" data-id="${adventure.id}">
         ${saved ? "Remove from saved" : "Save activity"}
