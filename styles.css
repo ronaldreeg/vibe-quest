@@ -950,22 +950,24 @@ textarea:focus {
 
 .share-page-header {
   display: grid;
-  grid-template-columns: minmax(280px, 0.65fr) minmax(0, 1fr);
-  gap: clamp(24px, 5vw, 72px);
-  align-items: end;
+  grid-template-columns: minmax(0, 760px);
+  justify-content: start;
+  gap: 12px;
+  align-items: start;
   padding: clamp(30px, 4vw, 48px) 0;
   border-top: 1px solid var(--line);
+  text-align: left;
 }
 
 .share-page-header h1 {
   max-width: 13ch;
-  margin: 10px 0 0;
+  margin: 0;
   font-size: clamp(2.35rem, 4vw, 3.8rem);
   line-height: 0.96;
 }
 
 .share-page-header p {
-  max-width: 650px;
+  max-width: 680px;
   margin: 0;
   color: var(--muted-strong);
   font-size: clamp(1rem, 1.7vw, 1.2rem);
