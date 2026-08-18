@@ -29,6 +29,8 @@
   --button-fill: #f8d23d;
   --button-text: #2f3035;
   --shadow: 0 18px 0 rgba(18, 19, 22, 0.2);
+  --font-reading: "Faculty Glyphic", Georgia, serif;
+  --font-interface: "VT323", monospace;
   --gap-xs: 8px;
   --gap: 16px;
   --gap-lg: 24px;
@@ -70,7 +72,7 @@ body {
 body {
   min-width: 320px;
   margin: 0;
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-reading);
   background:
     linear-gradient(rgba(248, 210, 61, 0.035) 1px, transparent 1px),
     linear-gradient(90deg, rgba(248, 210, 61, 0.035) 1px, transparent 1px),
@@ -84,6 +86,37 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+button,
+select,
+option,
+label,
+legend,
+.eyebrow,
+.mini-label,
+.filter-label,
+.chip,
+.badge,
+.card-meta,
+.location-accuracy,
+.detail-location-label,
+.site-footer-links,
+.site-footer-links a,
+.primary-button,
+.secondary-button,
+.text-button,
+.compact-button,
+.out-there-submit-link,
+.map-interaction-button,
+.vv-map-tooltip,
+.toast {
+  font-family: var(--font-interface);
+}
+
+.file-input::file-selector-button,
+.file-input::-webkit-file-upload-button {
+  font-family: var(--font-interface);
 }
 
 button {
@@ -203,7 +236,7 @@ button {
 .nav-tab-label {
   min-width: 104px;
   padding: 0 14px 2px;
-  font-family: "VT323", monospace;
+  font-family: var(--font-interface);
   font-size: 1.65rem;
   font-weight: 400;
   line-height: 1;
@@ -518,7 +551,7 @@ textarea:focus {
 .map-hero-copy h1 {
   max-width: 14ch;
   margin-bottom: 10px;
-  font-family: "Faculty Glyphic", Georgia, serif;
+  font-family: var(--font-reading);
   font-weight: 400;
   font-size: clamp(2rem, 3.2vw, 3.2rem);
   line-height: 1.04;

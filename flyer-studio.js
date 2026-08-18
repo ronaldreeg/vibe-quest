@@ -3,6 +3,8 @@
 
   const WIDTH = 1080;
   const HEIGHT = 1350;
+  const FONT_READING = '"Faculty Glyphic", Georgia, serif';
+  const FONT_INTERFACE = '"VT323", monospace';
   const DEFAULTS = {
     layout: "full",
     accent: "#f8d23d",
@@ -73,8 +75,8 @@
     return (red * 299 + green * 587 + blue * 114) / 1000 > 150 ? "#2f3035" : "#f3e9c4";
   }
 
-  function setFont(size, weight = 800) {
-    context.font = `${weight} ${size}px Inter, Arial, sans-serif`;
+  function setFont(size, weight = 800, family = FONT_READING) {
+    context.font = `${weight} ${size}px ${family}`;
   }
 
   function splitLongWord(word, maxWidth) {
@@ -113,16 +115,16 @@
     return lines.length ? lines : [""];
   }
 
-  function fittedLines(text, maxWidth, maxLines, startSize, minSize, weight = 800) {
+  function fittedLines(text, maxWidth, maxLines, startSize, minSize, weight = 800, family = FONT_READING) {
     let size = startSize;
     let lines = [];
     while (size >= minSize) {
-      setFont(size, weight);
+      setFont(size, weight, family);
       lines = wrapLines(text, maxWidth);
       if (lines.length <= maxLines) return { lines, size };
       size -= 2;
     }
-    setFont(minSize, weight);
+    setFont(minSize, weight, family);
     lines = wrapLines(text, maxWidth).slice(0, maxLines);
     if (wrapLines(text, maxWidth).length > maxLines) {
       let finalLine = lines[maxLines - 1];
@@ -149,9 +151,10 @@
       options.maxLines,
       options.startSize,
       options.minSize,
-      options.weight || 800
+      options.weight || 800,
+      options.family || FONT_READING
     );
-    setFont(result.size, options.weight || 800);
+    setFont(result.size, options.weight || 800, options.family || FONT_READING);
     const lineHeight = result.size * (options.lineHeight || 1);
     return drawLines(result.lines, options.x, options.y, lineHeight, options.color, options.align);
   }
@@ -160,11 +163,11 @@
     let size = options.startSize;
     const value = String(text || "");
     while (size > options.minSize) {
-      setFont(size, options.weight || 800);
+      setFont(size, options.weight || 800, options.family || FONT_INTERFACE);
       if (context.measureText(value).width <= options.maxWidth) break;
       size -= 1;
     }
-    setFont(size, options.weight || 800);
+    setFont(size, options.weight || 800, options.family || FONT_INTERFACE);
     context.fillStyle = options.color;
     context.textAlign = options.align || "left";
     context.textBaseline = options.baseline || "middle";
@@ -250,9 +253,9 @@
     context.textAlign = align;
     context.textBaseline = "top";
     context.fillStyle = color;
-    setFont(34, 800);
+    setFont(34, 800, FONT_INTERFACE);
     context.fillText("VIBE QUEST", x, y);
-    setFont(18, 700);
+    setFont(18, 700, FONT_INTERFACE);
     context.fillText("REAL-WORLD DISCOVERY", x, y + 44);
   }
 
@@ -266,7 +269,7 @@
     drawSymbol(studio.symbol, 940, 108, 96, accent);
 
     context.fillStyle = accent;
-    setFont(28, 800);
+    setFont(28, 800, FONT_INTERFACE);
     context.textAlign = "left";
     context.textBaseline = "top";
     context.fillText(copy.kicker.toUpperCase(), 72, 650);
@@ -318,7 +321,7 @@
     context.fillStyle = "#2f3035";
     context.fillRect(0, 708, WIDTH, HEIGHT - 708);
     context.fillStyle = accent;
-    setFont(26, 800);
+    setFont(26, 800, FONT_INTERFACE);
     context.textAlign = "left";
     context.textBaseline = "top";
     context.fillText(copy.kicker.toUpperCase(), 64, 764);
@@ -374,7 +377,7 @@
     drawSymbol(studio.symbol, panelX + panelWidth - 90, panelY + 105, 108, accent);
 
     context.fillStyle = "#2f3035";
-    setFont(27, 800);
+    setFont(27, 800, FONT_INTERFACE);
     context.textAlign = "left";
     context.textBaseline = "top";
     context.fillText(copy.kicker.toUpperCase(), panelX + 54, panelY + 76);
@@ -414,7 +417,7 @@
     });
 
     context.fillStyle = "#f3e9c4";
-    setFont(21, 700);
+    setFont(21, 700, FONT_INTERFACE);
     context.textAlign = "left";
     context.textBaseline = "bottom";
     context.fillText("CHOOSE A VIBE. BEGIN THE QUEST.", 76, HEIGHT - 62);
