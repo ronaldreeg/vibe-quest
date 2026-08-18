@@ -4,26 +4,42 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Discover pop-ups, meet-ups, classes, local gems, and day-trip-worthy happenings nearby and beyond." />
-    <meta name="theme-color" content="#0d1117" />
+    <meta name="theme-color" content="#2f3035" />
     <title>Vibe Quest</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/brand/vibe-quest-mark.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Jacquard+12&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="./styles.css?v=20260810-send-hint-header-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260817-brand-system-v1" />
   </head>
   <body>
     <div class="app-shell">
       <header class="topbar">
         <button class="brand" data-action="home" aria-label="Vibe Quest home">
-          <img class="brand-logo" src="./assets/vibe-quest-text2.svg" alt="Vibe Quest" width="320" height="116" />
+          <img class="brand-logo" src="./assets/brand/vibe-quest-header.svg" alt="Vibe Quest" width="340" height="160" />
         </button>
         <nav class="nav-tabs" aria-label="Primary">
-          <button class="nav-tab is-active" data-view="discover">Discover</button>
-          <button class="nav-tab" data-view="host">New Quest</button>
-          <button class="nav-tab" data-view="share">Signal</button>
-          <button class="nav-tab" data-view="saved">Inventory</button>
-          <button class="nav-tab" data-view="out-there">Out There</button>
+          <button class="nav-tab is-active" data-view="discover">
+            <span class="nav-tab-icon" aria-hidden="true"><img src="./assets/brand/discover.svg" alt="" width="32" height="32" /></span>
+            <span class="nav-tab-label">Discover</span>
+          </button>
+          <button class="nav-tab" data-view="host">
+            <span class="nav-tab-icon" aria-hidden="true"><img src="./assets/brand/new-quest.svg" alt="" width="32" height="32" /></span>
+            <span class="nav-tab-label">New Quest</span>
+          </button>
+          <button class="nav-tab" data-view="share">
+            <span class="nav-tab-icon" aria-hidden="true"><img src="./assets/brand/signal.svg" alt="" width="32" height="32" /></span>
+            <span class="nav-tab-label">Signal</span>
+          </button>
+          <button class="nav-tab" data-view="saved">
+            <span class="nav-tab-icon" aria-hidden="true"><img src="./assets/brand/inventory.svg" alt="" width="32" height="32" /></span>
+            <span class="nav-tab-label">Inventory</span>
+          </button>
+          <button class="nav-tab" data-view="out-there">
+            <span class="nav-tab-icon" aria-hidden="true"><img src="./assets/brand/out-there.svg" alt="" width="32" height="32" /></span>
+            <span class="nav-tab-label">Out There</span>
+          </button>
         </nav>
         <div class="topbar-actions">
           <button class="icon-button" data-action="toggle-theme" aria-label="Toggle theme">☼</button>
@@ -155,7 +171,7 @@
             <div class="out-there-submit-copy">
               <p>Have a sharp photo, a tiny local legend, a road-trip detour, or a scene that deserves a little more daylight? Send it our way for a chance to be featured in Out There.</p>
               <p>We are looking for high-quality photos, short field notes, overlooked places, makers, markets, groups, rituals, and odd little sparks that make a city feel alive.</p>
-              <a class="primary-button out-there-submit-link" href="mailto:hello@vibeventure.org?subject=Out%20There%20feature%20submission">Submit a field note</a>
+              <a class="primary-button out-there-submit-link" href="mailto:hello@vibe-quest.net?subject=Out%20There%20feature%20submission">Submit a field note</a>
             </div>
           </section>
         </section>
@@ -363,11 +379,11 @@
               <fieldset class="flyer-option-group">
                 <legend>Accent</legend>
                 <div class="flyer-swatch-options" role="group" aria-label="Flyer accent color">
-                  <button class="flyer-swatch is-active" type="button" data-flyer-accent="#6ee7c8" style="--flyer-swatch: #6ee7c8" aria-label="Mint accent" aria-pressed="true"></button>
-                  <button class="flyer-swatch" type="button" data-flyer-accent="#f1c75b" style="--flyer-swatch: #f1c75b" aria-label="Gold accent" aria-pressed="false"></button>
-                  <button class="flyer-swatch" type="button" data-flyer-accent="#e37b67" style="--flyer-swatch: #e37b67" aria-label="Coral accent" aria-pressed="false"></button>
-                  <button class="flyer-swatch" type="button" data-flyer-accent="#75a7d8" style="--flyer-swatch: #75a7d8" aria-label="Blue accent" aria-pressed="false"></button>
-                  <button class="flyer-swatch" type="button" data-flyer-accent="#b9a3db" style="--flyer-swatch: #b9a3db" aria-label="Violet accent" aria-pressed="false"></button>
+                  <button class="flyer-swatch is-active" type="button" data-flyer-accent="#f8d23d" style="--flyer-swatch: #f8d23d" aria-label="Quest yellow accent" aria-pressed="true"></button>
+                  <button class="flyer-swatch" type="button" data-flyer-accent="#f45077" style="--flyer-swatch: #f45077" aria-label="Pink accent" aria-pressed="false"></button>
+                  <button class="flyer-swatch" type="button" data-flyer-accent="#fa622e" style="--flyer-swatch: #fa622e" aria-label="Red orange accent" aria-pressed="false"></button>
+                  <button class="flyer-swatch" type="button" data-flyer-accent="#0f8fb1" style="--flyer-swatch: #0f8fb1" aria-label="Teal accent" aria-pressed="false"></button>
+                  <button class="flyer-swatch" type="button" data-flyer-accent="#f6a938" style="--flyer-swatch: #f6a938" aria-label="Gold accent" aria-pressed="false"></button>
                 </div>
               </fieldset>
 
@@ -411,7 +427,7 @@
           <button type="button" data-view="discover">Scout the map</button>
           <button type="button" data-view="host">Post a quest</button>
           <button type="button" data-view="share">Make a flyer</button>
-          <a href="mailto:hello@vibeventure.org?subject=Hello%20Vibe%20Quest">Contact</a>
+          <a href="mailto:hello@vibe-quest.net?subject=Hello%20Vibe%20Quest">Contact</a>
         </nav>
         <div class="site-footer-signoff">
           <span>Choose a vibe. Begin the quest.</span>
@@ -510,7 +526,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.min.js"></script>
   <script src="./supabase-client.js?v=20260722"></script>
-  <script src="./app-v8.js?v=20260810-share-link-v1"></script>
-  <script src="./flyer-studio.js?v=20260808-flyer-studio-v1"></script>
+  <script src="./app-v8.js?v=20260817-brand-system-v1"></script>
+  <script src="./flyer-studio.js?v=20260817-brand-system-v1"></script>
 </body>
 </html>

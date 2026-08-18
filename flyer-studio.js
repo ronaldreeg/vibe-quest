@@ -5,7 +5,7 @@
   const HEIGHT = 1350;
   const DEFAULTS = {
     layout: "full",
-    accent: "#6ee7c8",
+    accent: "#f8d23d",
     symbol: "spark"
   };
 
@@ -70,7 +70,7 @@
     const red = (number >> 16) & 255;
     const green = (number >> 8) & 255;
     const blue = number & 255;
-    return (red * 299 + green * 587 + blue * 114) / 1000 > 150 ? "#101318" : "#f7f5ef";
+    return (red * 299 + green * 587 + blue * 114) / 1000 > 150 ? "#2f3035" : "#f3e9c4";
   }
 
   function setFont(size, weight = 800) {
@@ -191,7 +191,7 @@
         drawHeight
       );
     } else {
-      context.fillStyle = "#171a20";
+      context.fillStyle = "#2f3035";
       context.fillRect(x, y, width, height);
       context.strokeStyle = rgba(accent, 0.28);
       context.lineWidth = 2;
@@ -204,7 +204,7 @@
       }
       context.fillStyle = accent;
       context.fillRect(x + width * 0.62, y, width * 0.38, height * 0.34);
-      context.fillStyle = "#f3f0e8";
+      context.fillStyle = "#f3e9c4";
       context.fillRect(x, y + height * 0.76, width * 0.46, height * 0.24);
     }
     context.restore();
@@ -262,7 +262,7 @@
     context.fillRect(0, 0, WIDTH, HEIGHT);
     context.fillStyle = accent;
     context.fillRect(0, 0, 22, HEIGHT);
-    drawBrand(72, 64, "#f7f5ef");
+    drawBrand(72, 64, "#f3e9c4");
     drawSymbol(studio.symbol, 940, 108, 96, accent);
 
     context.fillStyle = accent;
@@ -279,7 +279,7 @@
       startSize: 112,
       minSize: 70,
       lineHeight: 0.98,
-      color: "#f7f5ef"
+      color: "#f3e9c4"
     });
     nextY += 28;
     drawFittedText(copy.note, {
@@ -291,7 +291,7 @@
       minSize: 28,
       lineHeight: 1.2,
       weight: 600,
-      color: "#f7f5ef"
+      color: "#f3e9c4"
     });
 
     context.fillStyle = accent;
@@ -307,7 +307,7 @@
   }
 
   function drawSplitFrame(copy, accent) {
-    context.fillStyle = "#f3f0e8";
+    context.fillStyle = "#f3e9c4";
     context.fillRect(0, 0, WIDTH, HEIGHT);
     context.fillStyle = accent;
     context.fillRect(0, 0, WIDTH, 118);
@@ -315,7 +315,7 @@
     drawSymbol(studio.symbol, 950, 59, 72, contrastColor(accent));
     drawMedia(0, 118, WIDTH, 590, accent);
 
-    context.fillStyle = "#111318";
+    context.fillStyle = "#2f3035";
     context.fillRect(0, 708, WIDTH, HEIGHT - 708);
     context.fillStyle = accent;
     setFont(26, 800);
@@ -331,7 +331,7 @@
       startSize: 88,
       minSize: 60,
       lineHeight: 1,
-      color: "#f7f5ef"
+      color: "#f3e9c4"
     });
     nextY += 20;
     drawFittedText(copy.note, {
@@ -343,7 +343,7 @@
       minSize: 25,
       lineHeight: 1.2,
       weight: 600,
-      color: "#c9ced7"
+      color: "#f3e9c4"
     });
 
     drawSingleLine(copy.details.toUpperCase(), {
@@ -352,7 +352,7 @@
       maxWidth: 952,
       startSize: 25,
       minSize: 18,
-      color: "#f7f5ef",
+      color: "#f3e9c4",
       baseline: "bottom"
     });
   }
@@ -361,19 +361,19 @@
     drawMedia(0, 0, WIDTH, HEIGHT, accent);
     context.fillStyle = "rgba(10, 12, 16, 0.68)";
     context.fillRect(0, 0, WIDTH, HEIGHT);
-    drawBrand(64, 54, "#f7f5ef");
+    drawBrand(64, 54, "#f3e9c4");
 
     const panelX = 76;
     const panelY = 250;
     const panelWidth = 928;
     const panelHeight = 850;
-    context.fillStyle = "#f3f0e8";
+    context.fillStyle = "#f3e9c4";
     context.fillRect(panelX, panelY, panelWidth, panelHeight);
     context.fillStyle = accent;
     context.fillRect(panelX, panelY, panelWidth, 24);
     drawSymbol(studio.symbol, panelX + panelWidth - 90, panelY + 105, 108, accent);
 
-    context.fillStyle = "#343943";
+    context.fillStyle = "#2f3035";
     setFont(27, 800);
     context.textAlign = "left";
     context.textBaseline = "top";
@@ -387,7 +387,7 @@
       startSize: 104,
       minSize: 62,
       lineHeight: 0.96,
-      color: "#111318"
+      color: "#2f3035"
     });
     nextY += 34;
     drawFittedText(copy.note, {
@@ -399,7 +399,7 @@
       minSize: 25,
       lineHeight: 1.25,
       weight: 600,
-      color: "#343943"
+      color: "#2f3035"
     });
 
     context.fillStyle = accent;
@@ -413,7 +413,7 @@
       color: contrastColor(accent)
     });
 
-    context.fillStyle = "#f7f5ef";
+    context.fillStyle = "#f3e9c4";
     setFont(21, 700);
     context.textAlign = "left";
     context.textBaseline = "bottom";

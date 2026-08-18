@@ -48,31 +48,31 @@ const DEMO_SCHEDULES = {
 };
 
 const TYPE_STYLE = {
-  "Pop-ups & Events": ["#6ee7c8", "#7c5cff"],
-  Classes: ["#59a8ff", "#6ee7c8"],
-  "Tours & Culture": ["#f6c85f", "#ff7a59"],
-  Markets: ["#34d399", "#f6c85f"],
-  "Food & Drink": ["#f6c85f", "#ff6b7a"],
-  Groups: ["#ff7a59", "#7c5cff"],
-  "Arts & Music": ["#b77cff", "#59a8ff"],
-  Outdoors: ["#34d399", "#59a8ff"],
-  Wellness: ["#6ee7c8", "#34d399"],
-  Nightlife: ["#ff6b7a", "#7c5cff"],
-  Random: ["#8b8277", "#5f6967"]
+  "Pop-ups & Events": ["#f45077", "#fa622e"],
+  Classes: ["#0f8fb1", "#f8d23d"],
+  "Tours & Culture": ["#f6a938", "#f45077"],
+  Markets: ["#f8d23d", "#0f8fb1"],
+  "Food & Drink": ["#fc8a43", "#fa622e"],
+  Groups: ["#f45077", "#0f8fb1"],
+  "Arts & Music": ["#f45077", "#f6a938"],
+  Outdoors: ["#0f8fb1", "#f6a938"],
+  Wellness: ["#f3e9c4", "#0f8fb1"],
+  Nightlife: ["#2f3035", "#f45077"],
+  Random: ["#fc8a43", "#f3e9c4"]
 };
 
 const MARKER_STYLE = {
-  "Pop-ups & Events": "#3f6b64",
-  Classes: "#49677f",
-  "Tours & Culture": "#9a723b",
-  Markets: "#617744",
-  "Food & Drink": "#9a5e52",
-  Groups: "#6b5876",
-  "Arts & Music": "#725e8a",
-  Outdoors: "#3f6950",
-  Wellness: "#4f7777",
-  Nightlife: "#684c5b",
-  Random: "#70675e"
+  "Pop-ups & Events": "#f45077",
+  Classes: "#0f8fb1",
+  "Tours & Culture": "#f6a938",
+  Markets: "#f8d23d",
+  "Food & Drink": "#fa622e",
+  Groups: "#fc8a43",
+  "Arts & Music": "#d93f68",
+  Outdoors: "#087d9c",
+  Wellness: "#d9cda6",
+  Nightlife: "#7a4058",
+  Random: "#8f7854"
 };
 
 const LEGACY_TYPE_MAP = {
@@ -1451,7 +1451,12 @@ function renderViews() {
   els.savedView.hidden = !isSaved;
   els.hostView.hidden = !isHost;
   els.shareView.hidden = !isShare;
-  els.navTabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.view === state.view));
+  els.navTabs.forEach((tab) => {
+    const active = tab.dataset.view === state.view;
+    tab.classList.toggle("is-active", active);
+    if (active) tab.setAttribute("aria-current", "page");
+    else tab.removeAttribute("aria-current");
+  });
   if (isDiscover && map) setTimeout(() => map.invalidateSize(), 50);
   if (isOutThere) {
     initOutThereMap();
