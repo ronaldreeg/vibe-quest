@@ -2155,15 +2155,23 @@ textarea:focus {
     grid-template-columns: 1fr auto;
   }
 
+  .brand {
+    height: 84px;
+  }
+
+  .brand-logo {
+    height: 116px;
+  }
+
   .nav-tabs {
     grid-column: 1 / -1;
     justify-self: stretch;
     justify-content: flex-start;
     order: 3;
     width: 100%;
-    padding-top: 10px;
+    padding-top: 2px;
     overflow-x: auto;
-    border-top: 1px solid rgba(248, 210, 61, 0.2);
+    border-top: 0;
     scrollbar-color: var(--brand-yellow) transparent;
     scrollbar-width: thin;
   }
@@ -2286,7 +2294,7 @@ textarea:focus {
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 4px;
     width: 100%;
-    padding-top: 8px;
+    padding-top: 2px;
     overflow: visible;
   }
 
