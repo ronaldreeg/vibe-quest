@@ -2262,7 +2262,7 @@ textarea:focus {
   }
 
   .nav-tab-label {
-    font-size: clamp(1rem, 1.25vw, 1.25rem);
+    font-size: clamp(1.1rem, 1.45vw, 1.3rem);
   }
 
   .topbar-actions .icon-button {
