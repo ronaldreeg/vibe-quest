@@ -2950,14 +2950,26 @@ els.hostForm.querySelectorAll('input[name="location"], input[name="city"]').forE
 
 document.documentElement.dataset.theme = store.get("vv_theme", "");
 let headerScrollFrame = 0;
+let headerCompactTrigger = 80;
 function updateHeaderScrollState() {
   headerScrollFrame = 0;
-  els.topbar?.classList.toggle("is-scrolled", window.scrollY > 24);
+  if (!els.topbar) return;
+  const isCompact = els.topbar.classList.contains("is-scrolled");
+  if (!isCompact) {
+    headerCompactTrigger = Math.max(80, Math.round(els.topbar.offsetHeight - 48));
+  }
+  const shouldCompact = isCompact
+    ? window.scrollY > 8
+    : window.scrollY > headerCompactTrigger;
+  if (shouldCompact !== isCompact) {
+    els.topbar.classList.toggle("is-scrolled", shouldCompact);
+  }
 }
 window.addEventListener("scroll", () => {
   if (headerScrollFrame) return;
   headerScrollFrame = window.requestAnimationFrame(updateHeaderScrollState);
 }, { passive: true });
+window.addEventListener("resize", updateHeaderScrollState, { passive: true });
 updateHeaderScrollState();
 const handleCompactMapChange = () => updateMapInteractionMode(false);
 if (compactMapQuery.addEventListener) compactMapQuery.addEventListener("change", handleCompactMapChange);

@@ -175,6 +175,7 @@ button {
   padding: 0;
   min-width: 0;
   background: transparent;
+  transition: width 180ms ease, height 180ms ease, margin-right 180ms ease;
 }
 
 .brand-logo {
@@ -241,7 +242,7 @@ button {
   border: 1px solid transparent;
   background: transparent;
   color: var(--brand-yellow);
-  transition: border-color 140ms ease, background-color 140ms ease;
+  transition: border-color 140ms ease, background-color 140ms ease, gap 180ms ease, min-height 180ms ease, padding 180ms ease;
 }
 
 .nav-tab-icon,
@@ -257,6 +258,7 @@ button {
   height: 29px;
   justify-content: center;
   background: transparent;
+  transition: width 180ms ease, height 180ms ease;
 }
 
 .nav-tab-icon img {
@@ -264,6 +266,7 @@ button {
   width: 28px;
   height: 28px;
   filter: brightness(0) saturate(100%) invert(82%) sepia(94%) saturate(632%) hue-rotate(353deg) brightness(103%) contrast(95%);
+  transition: width 180ms ease, height 180ms ease;
 }
 
 .nav-tab-label {
