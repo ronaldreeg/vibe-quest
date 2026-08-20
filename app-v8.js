@@ -446,6 +446,7 @@ const state = {
 };
 
 const els = {
+  topbar: document.querySelector(".topbar"),
   navTabs: document.querySelectorAll(".nav-tab"),
   locationInput: document.querySelector("#locationInput"),
   locationButton: document.querySelector(".location-button"),
@@ -2913,6 +2914,16 @@ els.hostForm.querySelectorAll('input[name="location"], input[name="city"]').forE
 });
 
 document.documentElement.dataset.theme = store.get("vv_theme", "");
+let headerScrollFrame = 0;
+function updateHeaderScrollState() {
+  headerScrollFrame = 0;
+  els.topbar?.classList.toggle("is-scrolled", window.scrollY > 24);
+}
+window.addEventListener("scroll", () => {
+  if (headerScrollFrame) return;
+  headerScrollFrame = window.requestAnimationFrame(updateHeaderScrollState);
+}, { passive: true });
+updateHeaderScrollState();
 const handleCompactMapChange = () => updateMapInteractionMode(false);
 if (compactMapQuery.addEventListener) compactMapQuery.addEventListener("change", handleCompactMapChange);
 else compactMapQuery.addListener?.(handleCompactMapChange);

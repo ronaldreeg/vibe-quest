@@ -78,7 +78,7 @@
 
 html,
 body {
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
@@ -150,6 +150,7 @@ button {
   border: 0;
   background: var(--brand-ocean);
   box-shadow: none;
+  transition: padding 180ms ease, min-height 180ms ease, border-color 180ms ease;
 }
 
 .brand,
@@ -2717,5 +2718,101 @@ textarea:focus {
 
   .out-there-slide-controls {
     bottom: -112px;
+  }
+}
+
+.topbar.is-scrolled {
+  min-height: 0;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(248, 210, 61, 0.28);
+}
+
+.topbar.is-scrolled .brand {
+  width: 150px;
+  height: 64px;
+  margin-right: clamp(12px, 2vw, 28px);
+}
+
+.topbar.is-scrolled .nav-tab {
+  gap: 7px;
+  min-height: 42px;
+  padding: 5px 7px;
+}
+
+.topbar.is-scrolled .nav-tab-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.topbar.is-scrolled .nav-tab-icon img {
+  width: 27px;
+  height: 27px;
+}
+
+.topbar.is-scrolled .nav-tab-label {
+  font-size: 0.95rem;
+}
+
+.topbar.is-scrolled .topbar-actions {
+  margin-right: 0;
+}
+
+.topbar.is-scrolled .topbar-actions .icon-button {
+  width: 42px;
+  height: 42px;
+}
+
+.topbar.is-scrolled .profile-pill {
+  min-width: 118px;
+  min-height: 42px;
+}
+
+@media (max-width: 1070px) {
+  .topbar.is-scrolled {
+    gap: 6px 12px;
+    padding: 6px 12px;
+  }
+
+  .topbar.is-scrolled .brand {
+    width: 140px;
+    height: 60px;
+    margin-right: 0;
+  }
+
+  .topbar.is-scrolled .nav-tab {
+    min-height: 36px;
+    padding: 3px 5px;
+  }
+
+  .topbar.is-scrolled .nav-tab-label {
+    font-size: 0.78rem;
+  }
+
+  .topbar.is-scrolled .nav-tab-icon {
+    width: 23px;
+    height: 23px;
+  }
+
+  .topbar.is-scrolled .nav-tab-icon img {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+@media (max-width: 620px) {
+  .topbar.is-scrolled .brand {
+    width: min(138px, 44vw);
+    height: 58px;
+  }
+
+  .topbar.is-scrolled .topbar-actions .icon-button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .topbar.is-scrolled .profile-pill {
+    min-width: 88px;
+    min-height: 38px;
   }
 }
