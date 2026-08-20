@@ -13,11 +13,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Faculty+Glyphic&family=VT323&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="./styles.css?v=20260819-centered-logo-lock-v5" />
+    <link rel="stylesheet" href="./styles.css?v=20260819-left-logo-header-v3" />
   </head>
   <body>
     <div class="app-shell">
       <header class="topbar">
+        <button class="brand" data-action="home" aria-label="Vibe Quest home">
+          <img class="brand-logo" src="./assets/brand/vibe-quest-aug19.svg" alt="Vibe Quest" width="861" height="367" />
+        </button>
         <nav class="nav-tabs nav-tabs-left" aria-label="Primary">
           <button class="nav-tab is-active" data-view="discover">
             <span class="nav-tab-label">Discover</span>
@@ -32,9 +35,6 @@
             <span class="nav-tab-icon" aria-hidden="true"><img src="./assets/brand/signal.svg" alt="" width="32" height="32" /></span>
           </button>
         </nav>
-        <button class="brand" data-action="home" aria-label="Vibe Quest home">
-          <img class="brand-logo" src="./assets/brand/vibe-quest-aug19.svg" alt="Vibe Quest" width="861" height="367" />
-        </button>
         <div class="topbar-right">
           <nav class="nav-tabs nav-tabs-right" aria-label="Primary continued">
             <button class="nav-tab" data-view="saved">
