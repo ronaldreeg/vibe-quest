@@ -13,13 +13,24 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Faculty+Glyphic&family=VT323&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="./styles.css?v=20260819-sticky-header-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260819-mobile-nav-v1" />
   </head>
   <body>
     <div class="app-shell">
       <header class="topbar">
         <button class="brand" data-action="home" aria-label="Vibe Quest home">
           <img class="brand-logo" src="./assets/brand/vibe-quest-aug19.svg" alt="Vibe Quest" width="861" height="367" />
+        </button>
+        <button
+          class="mobile-nav-toggle"
+          type="button"
+          data-action="toggle-mobile-nav"
+          aria-label="Open navigation"
+          aria-controls="mobileNavigation"
+          aria-expanded="false"
+          title="Open navigation"
+        >
+          <img src="./assets/brand/new-quest.svg" alt="" width="42" height="42" aria-hidden="true" />
         </button>
         <nav class="nav-tabs nav-tabs-left" aria-label="Primary">
           <button class="nav-tab is-active" data-view="discover">
@@ -47,6 +58,34 @@
             </button>
           </nav>
           <div class="topbar-actions">
+            <button class="icon-button" data-action="toggle-theme" aria-label="Toggle theme">☼</button>
+            <button class="profile-pill" data-action="open-profile">Sign in</button>
+          </div>
+        </div>
+        <div class="mobile-nav-panel" id="mobileNavigation" hidden>
+          <nav class="mobile-nav-list" aria-label="Mobile primary navigation">
+            <button class="nav-tab is-active" data-view="discover">
+              <span class="nav-tab-label">Discover</span>
+              <span class="nav-tab-icon" aria-hidden="true"><img src="./assets/brand/discover.svg" alt="" width="32" height="32" /></span>
+            </button>
+            <button class="nav-tab" data-view="host">
+              <span class="nav-tab-label">New Quest</span>
+              <span class="nav-tab-icon" aria-hidden="true"><img src="./assets/brand/new-quest.svg" alt="" width="32" height="32" /></span>
+            </button>
+            <button class="nav-tab" data-view="share">
+              <span class="nav-tab-label">Signal</span>
+              <span class="nav-tab-icon" aria-hidden="true"><img src="./assets/brand/signal.svg" alt="" width="32" height="32" /></span>
+            </button>
+            <button class="nav-tab" data-view="saved">
+              <span class="nav-tab-label">Inventory</span>
+              <span class="nav-tab-icon" aria-hidden="true"><img src="./assets/brand/inventory.svg" alt="" width="32" height="32" /></span>
+            </button>
+            <button class="nav-tab" data-view="out-there">
+              <span class="nav-tab-label">Out There</span>
+              <span class="nav-tab-icon" aria-hidden="true"><img src="./assets/brand/out-there.svg" alt="" width="32" height="32" /></span>
+            </button>
+          </nav>
+          <div class="mobile-nav-actions">
             <button class="icon-button" data-action="toggle-theme" aria-label="Toggle theme">☼</button>
             <button class="profile-pill" data-action="open-profile">Sign in</button>
           </div>
@@ -532,7 +571,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.min.js"></script>
   <script src="./supabase-client.js?v=20260722"></script>
-  <script src="./app-v8.js?v=20260819-sticky-header-v1"></script>
+  <script src="./app-v8.js?v=20260819-mobile-nav-v1"></script>
   <script src="./flyer-studio.js?v=20260817-brand-type-system-v1"></script>
 </body>
 </html>

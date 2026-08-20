@@ -216,6 +216,11 @@ button {
   justify-content: flex-start;
 }
 
+.mobile-nav-toggle,
+.mobile-nav-panel {
+  display: none;
+}
+
 .auth-tabs {
   display: inline-flex;
   align-items: center;
@@ -2814,5 +2819,130 @@ textarea:focus {
   .topbar.is-scrolled .profile-pill {
     min-width: 88px;
     min-height: 38px;
+  }
+}
+
+@media (max-width: 620px) {
+  .topbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0 12px;
+    padding: 8px 12px;
+  }
+
+  .topbar > .nav-tabs-left,
+  .topbar > .topbar-right {
+    display: none;
+  }
+
+  .topbar .brand {
+    grid-column: 1;
+    grid-row: 1;
+    width: min(160px, 50vw);
+    height: 68px;
+  }
+
+  .mobile-nav-toggle {
+    display: inline-grid;
+    grid-column: 2;
+    grid-row: 1;
+    width: 54px;
+    height: 54px;
+    padding: 5px;
+    place-items: center;
+    border: 1px solid var(--brand-yellow);
+    background: transparent;
+  }
+
+  .mobile-nav-toggle img {
+    display: block;
+    width: 42px;
+    height: 42px;
+    filter: brightness(0) saturate(100%) invert(82%) sepia(94%) saturate(632%) hue-rotate(353deg) brightness(103%) contrast(95%);
+  }
+
+  .mobile-nav-toggle:hover,
+  .mobile-nav-toggle[aria-expanded="true"] {
+    background: rgba(248, 210, 61, 0.1);
+  }
+
+  .mobile-nav-panel:not([hidden]) {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    gap: 12px;
+    width: 100%;
+    max-height: calc(100vh - 92px);
+    padding: 12px 0 4px;
+    overflow-y: auto;
+    border-top: 1px solid rgba(248, 210, 61, 0.48);
+    background: var(--brand-ocean);
+  }
+
+  .mobile-nav-list {
+    display: grid;
+    gap: 0;
+  }
+
+  .mobile-nav-panel .nav-tab {
+    justify-content: space-between;
+    width: 100%;
+    min-height: 54px;
+    padding: 8px 12px 8px 14px;
+    border: 0;
+    border-bottom: 1px solid rgba(248, 210, 61, 0.3);
+  }
+
+  .mobile-nav-panel .nav-tab:first-child {
+    border-top: 1px solid rgba(248, 210, 61, 0.3);
+  }
+
+  .mobile-nav-panel .nav-tab.is-active,
+  .mobile-nav-panel .nav-tab:hover {
+    outline: 1px solid var(--brand-yellow);
+    outline-offset: -1px;
+    background: rgba(248, 210, 61, 0.08);
+  }
+
+  .mobile-nav-panel .nav-tab-label {
+    font-size: 1.05rem;
+  }
+
+  .mobile-nav-panel .nav-tab-icon,
+  .mobile-nav-panel .nav-tab-icon img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .mobile-nav-actions {
+    display: grid;
+    grid-template-columns: 54px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .mobile-nav-actions .icon-button,
+  .mobile-nav-actions .profile-pill {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    max-width: none;
+  }
+
+  .topbar.is-scrolled {
+    padding: 6px 12px;
+  }
+
+  .topbar.is-scrolled .brand {
+    width: min(138px, 44vw);
+    height: 58px;
+  }
+
+  .topbar.is-scrolled .mobile-nav-toggle {
+    width: 48px;
+    height: 48px;
+  }
+
+  .topbar.is-scrolled .mobile-nav-toggle img {
+    width: 37px;
+    height: 37px;
   }
 }

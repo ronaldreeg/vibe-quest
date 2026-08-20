@@ -447,6 +447,8 @@ const state = {
 
 const els = {
   topbar: document.querySelector(".topbar"),
+  mobileNavToggle: document.querySelector(".mobile-nav-toggle"),
+  mobileNavPanel: document.querySelector(".mobile-nav-panel"),
   navTabs: document.querySelectorAll(".nav-tab"),
   locationInput: document.querySelector("#locationInput"),
   locationButton: document.querySelector(".location-button"),
@@ -466,7 +468,7 @@ const els = {
   outThereSlideCount: document.querySelector("#outThereSlideCount"),
   hostView: document.querySelector("#hostView"),
   shareView: document.querySelector("#shareView"),
-  profilePill: document.querySelector(".profile-pill"),
+  profilePills: document.querySelectorAll(".profile-pill"),
   authModal: document.querySelector("#authModal"),
   authForm: document.querySelector("#authForm"),
   authTitle: document.querySelector("#authTitle"),
@@ -1437,7 +1439,9 @@ function updateOutThereSlideshow(index = state.outThereSlideIndex) {
 
 function renderStats() {
   const user = getCurrentUser();
-  els.profilePill.textContent = user ? user.name.split(" ")[0] : "Sign in";
+  els.profilePills.forEach((pill) => {
+    pill.textContent = user ? user.name.split(" ")[0] : "Sign in";
+  });
   if (els.shareAuthPrompt) els.shareAuthPrompt.hidden = Boolean(user);
 }
 
@@ -2746,9 +2750,20 @@ async function publishAdventure(event) {
 }
 
 function setView(view) {
+  setMobileNavOpen(false);
   state.view = view;
   render();
   window.scrollTo({ top: 0, behavior: "auto" });
+}
+
+function setMobileNavOpen(open) {
+  if (!els.mobileNavToggle || !els.mobileNavPanel) return;
+  const nextOpen = Boolean(open);
+  els.mobileNavPanel.hidden = !nextOpen;
+  els.mobileNavToggle.setAttribute("aria-expanded", String(nextOpen));
+  els.mobileNavToggle.setAttribute("aria-label", nextOpen ? "Close navigation" : "Open navigation");
+  els.mobileNavToggle.title = nextOpen ? "Close navigation" : "Open navigation";
+  els.topbar?.classList.toggle("is-mobile-nav-open", nextOpen);
 }
 
 document.addEventListener("click", async (event) => {
@@ -2756,6 +2771,7 @@ document.addEventListener("click", async (event) => {
   if (!target) return;
 
   if (target.dataset.view) {
+    setMobileNavOpen(false);
     if (target.dataset.view === "host") {
       startNewPost();
     } else {
@@ -2793,6 +2809,10 @@ document.addEventListener("click", async (event) => {
   }
 
   const action = target.dataset.action;
+  if (action === "toggle-mobile-nav") {
+    setMobileNavOpen(els.mobileNavPanel?.hidden);
+    return;
+  }
   if (action === "home") setView("discover");
   if (action === "focus-search") els.locationInput.focus();
   if (action === "use-location") {
@@ -2831,7 +2851,10 @@ document.addEventListener("click", async (event) => {
       render();
     }
   }
-  if (action === "open-profile") openProfile();
+  if (action === "open-profile") {
+    setMobileNavOpen(false);
+    openProfile();
+  }
   if (action === "open-signup") showAuth("signup");
   if (action === "close-auth") els.authModal.close();
   if (action === "close-profile") els.profileModal.close();
@@ -2857,8 +2880,15 @@ document.addEventListener("click", async (event) => {
     const next = document.documentElement.dataset.theme === "light" ? "" : "light";
     document.documentElement.dataset.theme = next;
     store.set("vv_theme", next);
+    setMobileNavOpen(false);
   }
   if (action === "sign-out") await signOut();
+});
+
+document.addEventListener("click", (event) => {
+  if (els.mobileNavPanel?.hidden) return;
+  if (event.target.closest?.(".mobile-nav-panel, .mobile-nav-toggle")) return;
+  setMobileNavOpen(false);
 });
 
 els.locationInput.addEventListener("input", (event) => {
@@ -2878,6 +2908,11 @@ els.locationInput.addEventListener("keydown", async (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !els.mobileNavPanel?.hidden) {
+    setMobileNavOpen(false);
+    els.mobileNavToggle?.focus();
+    return;
+  }
   if (event.key !== "Enter" && event.key !== " ") return;
   const card = event.target.closest?.('.adventure-card[data-action="open-detail"]');
   if (!card || event.target !== card) return;
@@ -2927,6 +2962,12 @@ updateHeaderScrollState();
 const handleCompactMapChange = () => updateMapInteractionMode(false);
 if (compactMapQuery.addEventListener) compactMapQuery.addEventListener("change", handleCompactMapChange);
 else compactMapQuery.addListener?.(handleCompactMapChange);
+const mobileHeaderQuery = window.matchMedia("(max-width: 620px)");
+const handleMobileHeaderChange = (event) => {
+  if (!event.matches) setMobileNavOpen(false);
+};
+if (mobileHeaderQuery.addEventListener) mobileHeaderQuery.addEventListener("change", handleMobileHeaderChange);
+else mobileHeaderQuery.addListener?.(handleMobileHeaderChange);
 els.realMap?.addEventListener("wheel", handleMapPinchZoom, { passive: false });
 resetHostForm();
 render();
