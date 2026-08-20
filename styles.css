@@ -571,16 +571,16 @@ textarea:focus {
 
 .map-hero-copy {
   min-width: 0;
-  max-width: 620px;
+  max-width: 720px;
   color: var(--brand-cream);
 }
 
 .map-hero-copy h1 {
-  max-width: 16ch;
+  max-width: none;
   margin-bottom: 22px;
   font-family: var(--font-reading);
   font-weight: 400;
-  font-size: clamp(3rem, 4.6vw, 5rem);
+  font-size: clamp(3rem, 4.2vw, 4.5rem);
   line-height: 0.92;
 }
 
