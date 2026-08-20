@@ -2248,6 +2248,10 @@ textarea:focus {
     grid-column: 2;
     justify-self: center;
   }
+
+  .brand-logo {
+    transform: translateX(3.2%);
+  }
 }
 
 @media (min-width: 1101px) {
