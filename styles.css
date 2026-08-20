@@ -1585,7 +1585,7 @@ textarea:focus {
   align-items: start;
   padding: clamp(28px, 5vw, 56px);
   border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--panel-solid) 78%, transparent);
+  background: var(--panel);
 }
 
 .out-there-submit h2 {
