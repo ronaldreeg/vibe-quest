@@ -15,23 +15,23 @@
   --brand-red-orange: #fa622e;
   --brand-charcoal: #2f3035;
   --brand-teal: #0f8fb1;
-  --brand-ocean: #285f73;
+  --brand-ocean: #295b72;
   --brand-orange: #fc8a43;
   --brand-gold: #f6a938;
   --brand-yellow: #f8d23d;
-  --bg: #2f3035;
-  --bg-soft: #292a2f;
-  --panel: rgba(47, 48, 53, 0.9);
-  --panel-solid: #35363b;
-  --line: rgba(243, 233, 196, 0.18);
+  --bg: #295b72;
+  --bg-soft: #295b72;
+  --panel: #295b72;
+  --panel-solid: #295b72;
+  --line: rgba(243, 233, 196, 0.28);
   --text: #f3e9c4;
-  --muted: #b7af95;
-  --muted-strong: #ddd2ae;
+  --muted: rgba(243, 233, 196, 0.72);
+  --muted-strong: rgba(243, 233, 196, 0.9);
   --accent: #f8d23d;
   --accent-text: #f8d23d;
   --accent-strong: #f6a938;
   --detail-label: #f3e9c4;
-  --detail-surface: rgba(243, 233, 196, 0.075);
+  --detail-surface: rgba(243, 233, 196, 0.065);
   --violet: #f45077;
   --coral: #fa622e;
   --gold: #f6a938;
@@ -39,7 +39,7 @@
   --danger: #f45077;
   --button-fill: #f8d23d;
   --button-text: #2f3035;
-  --shadow: 0 18px 0 rgba(18, 19, 22, 0.2);
+  --shadow: none;
   --font-reading: "Faculty Glyphic", Georgia, serif;
   --font-interface: "VT323", monospace;
   --font-header: "MEK Mono", "VT323", monospace;
@@ -49,21 +49,21 @@
 }
 
 :root[data-theme="light"] {
-  color-scheme: light;
-  --bg: #f3e9c4;
-  --bg-soft: #f8f0d4;
-  --panel: rgba(255, 250, 232, 0.9);
-  --panel-solid: #fff8df;
-  --line: rgba(47, 48, 53, 0.18);
-  --text: #2f3035;
-  --muted: #736f63;
-  --muted-strong: #4d4c4c;
-  --accent-text: #735b00;
-  --detail-label: #2f3035;
-  --detail-surface: rgba(47, 48, 53, 0.055);
-  --button-fill: #2f3035;
-  --button-text: #f8d23d;
-  --shadow: 0 18px 0 rgba(47, 48, 53, 0.09);
+  color-scheme: dark;
+  --bg: #295b72;
+  --bg-soft: #295b72;
+  --panel: #295b72;
+  --panel-solid: #295b72;
+  --line: rgba(243, 233, 196, 0.28);
+  --text: #f3e9c4;
+  --muted: rgba(243, 233, 196, 0.72);
+  --muted-strong: rgba(243, 233, 196, 0.9);
+  --accent-text: #f8d23d;
+  --detail-label: #f3e9c4;
+  --detail-surface: rgba(243, 233, 196, 0.065);
+  --button-fill: #f8d23d;
+  --button-text: #2f3035;
+  --shadow: none;
 }
 
 * {
@@ -404,7 +404,7 @@ h1 {
   border: 1px solid var(--line);
   background: var(--panel);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(20px);
+  backdrop-filter: none;
 }
 
 .panel-heading,
@@ -872,15 +872,15 @@ textarea:focus {
   border: 1px solid var(--line);
   border-radius: 0;
   background: var(--panel);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.18);
+  box-shadow: none;
   cursor: pointer;
   transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
 }
 
 .adventure-card:hover {
   border-color: color-mix(in srgb, var(--accent) 46%, var(--line));
-  transform: translateY(-2px);
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
+  transform: none;
+  box-shadow: none;
 }
 
 .adventure-card:focus-visible,
