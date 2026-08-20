@@ -1,3 +1,13 @@
+@font-face {
+  font-family: "MEK Mono";
+  src:
+    url("./assets/fonts/MEK-Mono.woff2") format("woff2"),
+    url("./assets/fonts/MEK-Mono.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
   --brand-cream: #f3e9c4;
@@ -5,6 +15,7 @@
   --brand-red-orange: #fa622e;
   --brand-charcoal: #2f3035;
   --brand-teal: #0f8fb1;
+  --brand-ocean: #285f73;
   --brand-orange: #fc8a43;
   --brand-gold: #f6a938;
   --brand-yellow: #f8d23d;
@@ -31,6 +42,7 @@
   --shadow: 0 18px 0 rgba(18, 19, 22, 0.2);
   --font-reading: "Faculty Glyphic", Georgia, serif;
   --font-interface: "VT323", monospace;
+  --font-header: "MEK Mono", "VT323", monospace;
   --gap-xs: 8px;
   --gap: 16px;
   --gap-lg: 24px;
@@ -73,11 +85,7 @@ body {
   min-width: 320px;
   margin: 0;
   font-family: var(--font-reading);
-  background:
-    linear-gradient(rgba(248, 210, 61, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(248, 210, 61, 0.035) 1px, transparent 1px),
-    var(--bg);
-  background-size: 64px 64px;
+  background: var(--bg);
   color: var(--text);
 }
 
@@ -131,16 +139,17 @@ button {
 
 .topbar {
   position: sticky;
-  top: 12px;
-  z-index: 5;
+  top: 0;
+  z-index: 1002;
   display: grid;
-  grid-template-columns: minmax(250px, 330px) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  gap: 20px;
-  padding: 10px 14px;
-  border: 1px solid rgba(248, 210, 61, 0.26);
-  background: var(--brand-charcoal);
-  box-shadow: 0 12px 0 rgba(18, 19, 22, 0.2);
+  gap: clamp(18px, 2.2vw, 42px);
+  min-height: 150px;
+  padding: 20px clamp(24px, 4vw, 64px);
+  border: 0;
+  background: var(--brand-ocean);
+  box-shadow: none;
 }
 
 .brand,
@@ -156,25 +165,23 @@ button {
 }
 
 .brand {
-  position: relative;
   display: inline-flex;
   align-items: center;
-  justify-self: start;
-  width: 330px;
-  height: 112px;
+  justify-content: center;
+  justify-self: center;
+  width: clamp(230px, 18vw, 300px);
+  height: 116px;
   padding: 0;
   min-width: 0;
   background: transparent;
-  text-align: left;
 }
 
 .brand-logo {
-  position: static;
   display: block;
-  width: 330px;
-  height: 150px;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  object-position: left center;
+  object-position: center;
 }
 
 :root[data-theme="light"] .brand-logo {
@@ -184,12 +191,27 @@ button {
 .nav-tabs {
   display: flex;
   align-items: center;
-  justify-self: center;
-  gap: 12px;
+  gap: clamp(6px, 0.8vw, 14px);
   min-width: 0;
   padding: 0;
   border: 0;
   background: transparent;
+}
+
+.nav-tabs-left {
+  justify-self: start;
+}
+
+.topbar-right {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(16px, 2vw, 34px);
+}
+
+.nav-tabs-right {
+  justify-content: flex-end;
 }
 
 .auth-tabs {
@@ -202,42 +224,45 @@ button {
 }
 
 .nav-tab {
-  display: grid;
-  grid-template-columns: 46px auto;
-  align-items: stretch;
-  gap: 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
   min-width: 0;
-  min-height: 46px;
-  padding: 0;
-  border: 0;
+  min-height: 44px;
+  padding: 7px 9px;
+  border: 1px solid transparent;
   background: transparent;
   color: var(--brand-yellow);
+  transition: border-color 140ms ease, background-color 140ms ease;
 }
 
 .nav-tab-icon,
 .nav-tab-label {
-  display: grid;
-  place-items: center;
-  min-height: 46px;
-  border: 2px solid var(--brand-yellow);
+  display: inline-flex;
+  align-items: center;
+  min-height: 0;
+  border: 0;
 }
 
 .nav-tab-icon {
-  width: 46px;
-  background: var(--brand-yellow);
+  width: 29px;
+  height: 29px;
+  justify-content: center;
+  background: transparent;
 }
 
 .nav-tab-icon img {
   display: block;
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
+  filter: brightness(0) saturate(100%) invert(82%) sepia(94%) saturate(632%) hue-rotate(353deg) brightness(103%) contrast(95%);
 }
 
 .nav-tab-label {
-  min-width: 104px;
-  padding: 0 14px 2px;
-  font-family: var(--font-interface);
-  font-size: 1.65rem;
+  min-width: 0;
+  padding: 0;
+  font-family: var(--font-header);
+  font-size: clamp(0.82rem, 1.05vw, 1.05rem);
   font-weight: 400;
   line-height: 1;
   white-space: nowrap;
@@ -251,10 +276,10 @@ button {
   font-weight: 700;
 }
 
-.nav-tab.is-active .nav-tab-label,
-.nav-tab:hover .nav-tab-label {
-  background: var(--brand-yellow);
-  color: var(--brand-charcoal);
+.nav-tab.is-active,
+.nav-tab:hover {
+  border-color: currentColor;
+  background: rgba(248, 210, 61, 0.055);
 }
 
 .auth-tab.is-active {
@@ -266,7 +291,7 @@ button {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .icon-button {
@@ -296,8 +321,17 @@ button {
 }
 
 .topbar .profile-pill {
-  background: var(--brand-yellow);
-  color: var(--brand-charcoal);
+  min-width: 104px;
+  border: 1px solid transparent;
+  background: var(--brand-teal);
+  color: var(--brand-cream);
+  box-shadow: none;
+  font-family: var(--font-header);
+  font-weight: 400;
+}
+
+.topbar .profile-pill:hover {
+  border-color: var(--brand-yellow);
 }
 
 .secondary-button {
@@ -522,69 +556,63 @@ textarea:focus {
 
 .map-hero {
   display: grid;
-  position: relative;
   gap: 0;
+  background: var(--brand-ocean);
 }
 
 .map-hero-header {
-  position: relative;
-  z-index: 2;
-  grid-area: 1 / 1;
-  align-self: start;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 520px);
-  gap: var(--gap-lg);
-  align-items: start;
-  padding: clamp(20px, 2.5vw, 36px);
-  pointer-events: none;
+  grid-template-columns: minmax(0, 0.95fr) minmax(460px, 0.85fr);
+  gap: clamp(48px, 8vw, 140px);
+  align-items: end;
+  min-height: 330px;
+  padding: clamp(44px, 5vw, 72px) clamp(32px, 4vw, 68px) clamp(48px, 5vw, 76px);
 }
 
 .map-hero-copy {
   min-width: 0;
-  max-width: 560px;
-  color: #101318;
-  text-shadow:
-    0 0 3px rgba(255, 255, 255, 0.96),
-    0 4px 18px rgba(255, 255, 255, 0.9);
+  max-width: 620px;
+  color: var(--brand-cream);
 }
 
 .map-hero-copy h1 {
   max-width: 14ch;
-  margin-bottom: 10px;
+  margin-bottom: 22px;
   font-family: var(--font-reading);
   font-weight: 400;
-  font-size: clamp(2rem, 3.2vw, 3.2rem);
-  line-height: 1.04;
+  font-size: clamp(3rem, 4.6vw, 5rem);
+  line-height: 0.92;
 }
 
 .map-hero-copy .hero-subtitle {
-  max-width: 44ch;
+  max-width: 49ch;
   margin-bottom: 0;
-  color: #242a33;
-  font-size: 0.9rem;
-  line-height: 1.45;
+  color: var(--brand-cream);
+  font-family: var(--font-interface);
+  font-size: clamp(1.02rem, 1.35vw, 1.28rem);
+  line-height: 1.22;
 }
 
 .map-search-panel {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: var(--gap-xs);
+  gap: 10px;
   align-items: end;
-  padding: var(--gap);
-  border: 1px solid var(--line);
-  border-radius: 0;
-  background: color-mix(in srgb, var(--panel-solid) 92%, transparent);
-  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.16);
-  backdrop-filter: blur(20px);
-  pointer-events: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .city-field {
   display: grid;
   gap: 7px;
-  color: var(--muted-strong);
-  font-size: 0.86rem;
-  font-weight: 800;
+  color: var(--brand-cream);
+  font-family: var(--font-header);
+  font-size: 1rem;
+  font-weight: 400;
+  text-transform: uppercase;
 }
 
 .city-input-row {
@@ -598,17 +626,43 @@ textarea:focus {
   min-width: 0;
   height: 44px;
   min-height: 44px;
+  border-color: var(--brand-charcoal);
+  background: rgba(47, 48, 53, 0.1);
+  color: var(--brand-cream);
+  font-family: var(--font-interface);
+  font-size: 1.05rem;
+}
+
+.city-input-row input::placeholder {
+  color: rgba(243, 233, 196, 0.68);
 }
 
 .location-button {
   width: 44px;
   height: 44px;
   padding: 0;
-  border: 1px solid var(--line);
-  background: var(--button-fill);
-  color: var(--button-text);
+  border: 1px solid transparent;
+  background: var(--brand-teal);
+  color: var(--brand-cream);
   font-size: 1.25rem;
   line-height: 1;
+}
+
+.map-search-panel > .primary-button,
+.map-search-panel > .secondary-button {
+  min-height: 44px;
+  border: 1px solid transparent;
+  background: var(--brand-teal);
+  color: var(--brand-cream);
+  box-shadow: none;
+  font-family: var(--font-header);
+  font-weight: 400;
+}
+
+.map-search-panel > .primary-button:hover,
+.map-search-panel > .secondary-button:hover,
+.location-button:hover {
+  border-color: var(--brand-yellow);
 }
 
 .location-button[aria-busy="true"] {
@@ -617,11 +671,12 @@ textarea:focus {
 }
 
 .hero-map {
-  z-index: 1;
-  grid-area: 1 / 1;
-  min-height: clamp(760px, calc(100vh - 112px), 980px);
+  min-height: clamp(560px, calc(100vh - 290px), 720px);
   margin-bottom: 0;
+  border: 0;
+  border-top: 1px solid rgba(243, 233, 196, 0.24);
   border-radius: 0;
+  box-shadow: none;
 }
 
 .hero-map #realMap {
@@ -2183,49 +2238,55 @@ textarea:focus {
   display: none !important;
 }
 
-@media (max-width: 1280px) {
+@media (max-width: 980px) {
   .topbar {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 16px;
+    min-height: 0;
+    padding: 14px 20px;
   }
 
   .brand {
-    height: 84px;
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+    width: 220px;
+    height: 92px;
   }
 
-  .brand-logo {
-    height: 116px;
+  .topbar-right {
+    display: contents;
   }
 
-  .nav-tabs {
-    grid-column: 1 / -1;
-    justify-self: stretch;
-    justify-content: flex-start;
-    order: 3;
-    width: 100%;
-    padding-top: 2px;
-    overflow-x: auto;
-    border-top: 0;
-    scrollbar-color: var(--brand-yellow) transparent;
-    scrollbar-width: thin;
+  .topbar-actions {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
   }
 
-  .nav-tabs::-webkit-scrollbar {
-    height: 4px;
+  .nav-tabs-left {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: end;
   }
 
-  .nav-tabs::-webkit-scrollbar-thumb {
-    background: var(--brand-yellow);
+  .nav-tabs-right {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
   }
 }
 
 @media (max-width: 900px) {
-  .nav-tabs {
-    justify-content: flex-start;
-  }
-
   .map-hero-header,
   .host-layout {
     grid-template-columns: 1fr;
+  }
+
+  .map-hero-header {
+    gap: 34px;
+    min-height: 0;
+    padding: 44px 34px 48px;
   }
 
   .share-page-header,
@@ -2243,7 +2304,7 @@ textarea:focus {
   }
 
   .hero-map {
-    min-height: 820px;
+    min-height: 620px;
   }
 
   .adventure-grid {
@@ -2265,9 +2326,9 @@ textarea:focus {
   }
 
   .topbar {
-    top: 8px;
+    top: 0;
     gap: 8px;
-    padding: 8px;
+    padding: 10px 12px 12px;
   }
 
   .site-footer {
@@ -2287,14 +2348,14 @@ textarea:focus {
   }
 
   .brand {
-    width: 100%;
-    max-width: 245px;
-    height: 82px;
+    width: min(210px, 65vw);
+    max-width: none;
+    height: 86px;
   }
 
   .brand-logo {
     width: 100%;
-    height: 108px;
+    height: 100%;
   }
 
   .profile-pill {
@@ -2315,47 +2376,53 @@ textarea:focus {
   }
 
   .nav-tab {
-    grid-template-columns: 1fr;
-    grid-template-rows: 36px 32px;
-    gap: 4px;
+    gap: 6px;
     min-width: 0;
-    min-height: 72px;
+    min-height: 38px;
+    padding: 5px 6px;
+  }
+
+  .nav-tabs-left,
+  .nav-tabs-right {
+    grid-column: 1 / -1;
+    justify-self: center;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .nav-tabs-left {
+    grid-row: 2;
+  }
+
+  .nav-tabs-right {
+    grid-row: 3;
   }
 
   .nav-tabs {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 4px;
-    width: 100%;
-    padding-top: 2px;
-    overflow: visible;
   }
 
   .nav-tab-icon,
   .nav-tab-label {
     min-height: 0;
-    border-width: 1px;
   }
 
   .nav-tab-icon {
-    width: 100%;
-    height: 36px;
+    width: 24px;
+    height: 24px;
   }
 
   .nav-tab-icon img {
-    width: 28px;
-    height: 28px;
+    width: 23px;
+    height: 23px;
   }
 
   .nav-tab-label {
-    width: 100%;
     min-width: 0;
-    height: 32px;
-    padding: 0 2px 1px;
-    font-size: clamp(0.72rem, 3.8vw, 1rem);
-    line-height: 0.82;
-    text-align: center;
-    white-space: normal;
+    padding: 0;
+    font-size: clamp(0.7rem, 3.2vw, 0.9rem);
+    line-height: 1;
+    white-space: nowrap;
   }
 
   .share-page-header {
@@ -2390,7 +2457,7 @@ textarea:focus {
   }
 
   .hero-map {
-    min-height: 780px;
+    min-height: 520px;
   }
 
   .workspace {
@@ -2403,22 +2470,21 @@ textarea:focus {
   }
 
   .map-hero-copy .hero-subtitle {
-    font-size: 0.82rem;
+    font-size: 1rem;
   }
 
   .map-hero-header {
-    gap: 12px;
-    padding: 12px;
+    gap: 32px;
+    padding: 36px 20px 40px;
   }
 
   .map-hero-copy h1 {
-    margin-bottom: 8px;
-    font-size: clamp(1.9rem, 8vw, 2.35rem);
+    margin-bottom: 18px;
+    font-size: clamp(2.75rem, 14vw, 3.7rem);
   }
 
   .map-search-panel {
     grid-template-columns: 1fr 1fr;
-    padding: 12px;
   }
 
   .map-search-panel .city-field {

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Discover pop-ups, meet-ups, classes, local gems, and day-trip-worthy happenings nearby and beyond." />
-    <meta name="theme-color" content="#2f3035" />
+    <meta name="theme-color" content="#285f73" />
     <title>Vibe Quest</title>
     <link rel="icon" type="image/png" sizes="32x32" href="./assets/brand/favicon-32.png?v=20260818-black-yellow-v1" />
     <link rel="icon" type="image/svg+xml" sizes="any" href="./assets/brand/vibe-quest-mark.svg?v=20260818-black-yellow-v1" />
@@ -13,39 +13,43 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Faculty+Glyphic&family=VT323&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="./styles.css?v=20260817-brand-type-system-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260819-centered-header-v1" />
   </head>
   <body>
     <div class="app-shell">
       <header class="topbar">
-        <button class="brand" data-action="home" aria-label="Vibe Quest home">
-          <img class="brand-logo" src="./assets/brand/vibe-quest-header.svg" alt="Vibe Quest" width="340" height="160" />
-        </button>
-        <nav class="nav-tabs" aria-label="Primary">
+        <nav class="nav-tabs nav-tabs-left" aria-label="Primary">
           <button class="nav-tab is-active" data-view="discover">
-            <span class="nav-tab-icon" aria-hidden="true"><img src="./assets/brand/discover.svg" alt="" width="32" height="32" /></span>
             <span class="nav-tab-label">Discover</span>
+            <span class="nav-tab-icon" aria-hidden="true"><img src="./assets/brand/discover.svg" alt="" width="32" height="32" /></span>
           </button>
           <button class="nav-tab" data-view="host">
-            <span class="nav-tab-icon" aria-hidden="true"><img src="./assets/brand/new-quest.svg" alt="" width="32" height="32" /></span>
             <span class="nav-tab-label">New Quest</span>
+            <span class="nav-tab-icon" aria-hidden="true"><img src="./assets/brand/new-quest.svg" alt="" width="32" height="32" /></span>
           </button>
           <button class="nav-tab" data-view="share">
-            <span class="nav-tab-icon" aria-hidden="true"><img src="./assets/brand/signal.svg" alt="" width="32" height="32" /></span>
             <span class="nav-tab-label">Signal</span>
-          </button>
-          <button class="nav-tab" data-view="saved">
-            <span class="nav-tab-icon" aria-hidden="true"><img src="./assets/brand/inventory.svg" alt="" width="32" height="32" /></span>
-            <span class="nav-tab-label">Inventory</span>
-          </button>
-          <button class="nav-tab" data-view="out-there">
-            <span class="nav-tab-icon" aria-hidden="true"><img src="./assets/brand/out-there.svg" alt="" width="32" height="32" /></span>
-            <span class="nav-tab-label">Out There</span>
+            <span class="nav-tab-icon" aria-hidden="true"><img src="./assets/brand/signal.svg" alt="" width="32" height="32" /></span>
           </button>
         </nav>
-        <div class="topbar-actions">
-          <button class="icon-button" data-action="toggle-theme" aria-label="Toggle theme">☼</button>
-          <button class="profile-pill" data-action="open-profile">Sign in</button>
+        <button class="brand" data-action="home" aria-label="Vibe Quest home">
+          <img class="brand-logo" src="./assets/brand/vibe-quest-aug19.svg" alt="Vibe Quest" width="861" height="367" />
+        </button>
+        <div class="topbar-right">
+          <nav class="nav-tabs nav-tabs-right" aria-label="Primary continued">
+            <button class="nav-tab" data-view="saved">
+              <span class="nav-tab-label">Inventory</span>
+              <span class="nav-tab-icon" aria-hidden="true"><img src="./assets/brand/inventory.svg" alt="" width="32" height="32" /></span>
+            </button>
+            <button class="nav-tab" data-view="out-there">
+              <span class="nav-tab-label">Out There</span>
+              <span class="nav-tab-icon" aria-hidden="true"><img src="./assets/brand/out-there.svg" alt="" width="32" height="32" /></span>
+            </button>
+          </nav>
+          <div class="topbar-actions">
+            <button class="icon-button" data-action="toggle-theme" aria-label="Toggle theme">☼</button>
+            <button class="profile-pill" data-action="open-profile">Sign in</button>
+          </div>
         </div>
       </header>
 
