@@ -2327,6 +2327,23 @@ textarea:focus {
   }
 }
 
+@media (min-width: 621px) and (max-width: 820px) {
+  .nav-tabs-left,
+  .nav-tabs-right {
+    grid-column: 1 / -1;
+    justify-self: center;
+    justify-content: center;
+  }
+
+  .nav-tabs-left {
+    grid-row: 2;
+  }
+
+  .nav-tabs-right {
+    grid-row: 3;
+  }
+}
+
 @media (max-width: 900px) {
   .map-hero-header,
   .host-layout {
