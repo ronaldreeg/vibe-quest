@@ -2239,6 +2239,17 @@ textarea:focus {
   display: none !important;
 }
 
+@media (min-width: 621px) {
+  .topbar {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+
+  .brand {
+    grid-column: 2;
+    justify-self: center;
+  }
+}
+
 @media (min-width: 1101px) {
   .brand {
     width: clamp(210px, 15vw, 245px);
