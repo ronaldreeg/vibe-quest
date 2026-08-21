@@ -617,6 +617,17 @@ textarea:focus {
   backdrop-filter: none;
 }
 
+@media (min-width: 1100px) {
+  .map-hero-header {
+    grid-template-columns: minmax(0, 0.85fr) minmax(600px, 1fr);
+    gap: clamp(40px, 6vw, 100px);
+  }
+
+  .map-search-panel {
+    grid-template-columns: minmax(300px, 1fr) auto auto;
+  }
+}
+
 .city-field {
   display: grid;
   gap: 7px;

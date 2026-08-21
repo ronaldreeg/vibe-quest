@@ -1634,7 +1634,7 @@ function updateLocationUi() {
   if (els.locationInput && !els.locationInput.value) {
     els.locationInput.placeholder = state.locationStatus === "checking"
       ? "Finding your location..."
-      : "City, neighborhood, or ZIP";
+      : "City, town, village";
   }
   if (els.locationButton) {
     els.locationButton.setAttribute("aria-busy", state.locationStatus === "checking" ? "true" : "false");
