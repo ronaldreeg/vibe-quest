@@ -273,7 +273,7 @@ button {
   min-width: 0;
   padding: 0;
   font-family: var(--font-header);
-  font-size: clamp(0.82rem, 1.05vw, 1.05rem);
+  font-size: clamp(0.92rem, 1.15vw, 1.16rem);
   font-weight: 400;
   line-height: 1;
   white-space: nowrap;
@@ -338,6 +338,7 @@ button {
   color: var(--brand-cream);
   box-shadow: none;
   font-family: var(--font-header);
+  font-size: 1.05rem;
   font-weight: 400;
 }
 
@@ -2264,6 +2265,8 @@ textarea:focus {
 @media (min-width: 1501px) {
   .topbar {
     min-height: 0;
+    padding-right: clamp(24px, 3vw, 64px);
+    padding-left: clamp(24px, 3vw, 64px);
     padding-top: 78px;
     padding-bottom: 6px;
   }
@@ -2271,7 +2274,7 @@ textarea:focus {
   .brand {
     width: clamp(260px, 16vw, 320px);
     height: 136px;
-    margin-right: clamp(32px, 4vw, 84px);
+    margin-right: clamp(28px, 3vw, 64px);
   }
 
   .nav-tab {
@@ -2291,7 +2294,7 @@ textarea:focus {
   }
 
   .nav-tab-label {
-    font-size: clamp(1.1rem, 1.45vw, 1.3rem);
+    font-size: clamp(1.2rem, 1.55vw, 1.42rem);
   }
 
   .topbar-actions .icon-button {
@@ -2306,13 +2309,15 @@ textarea:focus {
   .topbar .profile-pill {
     min-width: 190px;
     min-height: 48px;
-    font-size: 1.08rem;
+    font-size: 1.2rem;
   }
 }
 
 @media (min-width: 1071px) and (max-width: 1500px) {
   .topbar {
     gap: clamp(18px, 2vw, 30px);
+    padding-right: clamp(28px, 3vw, 44px);
+    padding-left: clamp(28px, 3vw, 44px);
   }
 
   .brand {
@@ -2759,7 +2764,7 @@ textarea:focus {
 }
 
 .topbar.is-scrolled .nav-tab-label {
-  font-size: 0.95rem;
+  font-size: 1.04rem;
 }
 
 .topbar.is-scrolled .topbar-actions {
@@ -2794,7 +2799,7 @@ textarea:focus {
   }
 
   .topbar.is-scrolled .nav-tab-label {
-    font-size: 0.78rem;
+    font-size: 0.86rem;
   }
 
   .topbar.is-scrolled .nav-tab-icon {
@@ -2907,7 +2912,7 @@ textarea:focus {
   }
 
   .mobile-nav-panel .nav-tab-label {
-    font-size: 1.05rem;
+    font-size: 1.15rem;
   }
 
   .mobile-nav-panel .nav-tab-icon,
@@ -2976,7 +2981,7 @@ textarea:focus {
 @media (min-width: 1501px) {
   .topbar:not(.is-scrolled) .brand {
     margin-right: calc(
-      clamp(32px, 4vw, 84px) +
+      clamp(28px, 3vw, 64px) +
       clamp(24px, 2.8vw, 54px) -
       clamp(6px, 0.8vw, 14px)
     );
