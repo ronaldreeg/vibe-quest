@@ -945,18 +945,14 @@ function filteredAdventures() {
 }
 
 function rollTheDice() {
-  if (!normalize(state.location)) {
-    els.locationInput.focus();
-    toast("Choose a starting point before you roll.");
-    return;
-  }
-
   const candidates = getAdventures()
     .filter(matchesActiveTiming)
     .filter(matchesCurrentLocation);
 
   if (candidates.length === 0) {
-    toast(`No adventures are ready to roll near ${state.location} yet.`);
+    toast(state.location
+      ? `No adventures are ready to roll near ${state.location} yet.`
+      : "No adventures are ready to roll yet.");
     return;
   }
 
