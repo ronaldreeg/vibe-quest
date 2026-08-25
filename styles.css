@@ -840,10 +840,17 @@ textarea:focus {
   font-size: 1.15rem;
 }
 
+.filter-bar .panel-heading > div {
+  display: grid;
+  width: max-content;
+  max-width: 100%;
+}
+
 .roll-dice-button {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  width: 100%;
   min-height: 44px;
   margin-top: 16px;
   padding: 7px 12px;
@@ -862,24 +869,6 @@ textarea:focus {
 .roll-dice-button:focus-visible {
   outline: 2px solid var(--brand-cream);
   outline-offset: 3px;
-}
-
-.roll-dice-icon {
-  display: grid;
-  grid-template-columns: repeat(2, 4px);
-  grid-template-rows: repeat(3, 4px);
-  place-content: center;
-  gap: 3px 5px;
-  width: 27px;
-  height: 27px;
-  flex: 0 0 27px;
-  border: 1px solid currentColor;
-}
-
-.roll-dice-icon > span {
-  width: 4px;
-  height: 4px;
-  background: currentColor;
 }
 
 .filter-groups,
