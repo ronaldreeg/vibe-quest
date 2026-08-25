@@ -12,6 +12,8 @@ const LISTING_TYPES = [
   "Random"
 ];
 
+const TYPE_FILTERS = [...LISTING_TYPES, "Free"];
+
 const VIBE_FILTERS = [
   "Local Lore",
   "Game On",
@@ -77,7 +79,8 @@ const MARKER_STYLE = {
   Outdoors: "#087d9c",
   Wellness: "#d9cda6",
   Nightlife: "#7a4058",
-  Random: "#8f7854"
+  Random: "#8f7854",
+  Free: "#536b57"
 };
 
 const LEGACY_TYPE_MAP = {
@@ -893,6 +896,16 @@ function getListingType(adventure) {
   return LEGACY_TYPE_MAP[raw] || "Pop-ups & Events";
 }
 
+function isFreeListing(adventure) {
+  return normalize(adventure.price).includes("free");
+}
+
+function matchesActiveTypes(adventure) {
+  if (state.activeTypes.length === 0) return true;
+  return state.activeTypes.includes(getListingType(adventure))
+    || (state.activeTypes.includes("Free") && isFreeListing(adventure));
+}
+
 function getListingVibes(adventure) {
   const stored = Array.isArray(adventure.vibes) ? adventure.vibes : [];
   const legacy = LEGACY_VIBE_MAP[String(adventure.category || "").trim()] || [];
@@ -912,7 +925,7 @@ function filteredAdventures() {
       const bucket = getListingSchedule(adventure).bucket;
       return state.activeTiming === "all" ? bucket !== "expired" : bucket === state.activeTiming;
     })
-    .filter((adventure) => state.activeTypes.length === 0 || state.activeTypes.includes(getListingType(adventure)))
+    .filter(matchesActiveTypes)
     .filter((adventure) => {
       if (state.activeVibes.length === 0) return true;
       const listingVibes = getListingVibes(adventure);
@@ -1114,7 +1127,7 @@ function styleVars(source) {
 }
 
 function typeFilterMarkup(activeTypes, dataAttribute) {
-  return ["All", ...LISTING_TYPES].map((type) => {
+  return ["All", ...TYPE_FILTERS].map((type) => {
     const markerColor = MARKER_STYLE[type];
     const active = type === "All" ? activeTypes.length === 0 : activeTypes.includes(type);
     return `
