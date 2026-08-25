@@ -13,18 +13,23 @@ const LISTING_TYPES = [
 ];
 
 const VIBE_FILTERS = [
-  "Free",
-  "Easygoing",
-  "Buzzing",
-  "Meet People",
-  "Make Something",
-  "Get Moving",
-  "Curious",
-  "Offbeat",
   "Local Lore",
-  "Date Quest",
-  "Solo Quest",
-  "Game On"
+  "Game On",
+  "Chill",
+  "Adventure",
+  "Getaway",
+  "Random",
+  "Divey",
+  "Hidden Gem",
+  "Crafty",
+  "Wholesome",
+  "Spooky",
+  "Bazaar",
+  "Creative",
+  "Curious",
+  "Groovy",
+  "Healthy",
+  "Weird"
 ];
 
 const LISTING_MODES = ["one-time", "recurring", "anytime"];
@@ -86,28 +91,37 @@ const LEGACY_TYPE_MAP = {
 };
 
 const LEGACY_VIBE_MAP = {
-  Chill: ["Easygoing"],
-  Thrill: ["Get Moving"],
+  Chill: ["Chill"],
+  Thrill: ["Adventure"],
   Foodie: ["Local Lore"],
-  Artsy: ["Make Something"],
-  Social: ["Meet People"],
-  Nature: ["Get Moving", "Local Lore"]
+  Artsy: ["Creative"],
+  Social: ["Groovy"],
+  Nature: ["Adventure", "Healthy"]
 };
 
 const LEGACY_VIBE_LABEL_MAP = {
-  "Low-key": "Easygoing",
-  Lively: "Buzzing",
-  Social: "Meet People",
-  Creative: "Make Something",
-  Active: "Get Moving",
+  "Low-key": "Chill",
+  Easygoing: "Chill",
+  Lively: "Groovy",
+  Buzzing: "Groovy",
+  Social: "Groovy",
+  "Meet People": "Groovy",
+  Creative: "Creative",
+  "Make Something": "Crafty",
+  Active: "Healthy",
+  "Get Moving": "Healthy",
   Curious: "Curious",
-  Offbeat: "Offbeat",
+  Offbeat: "Weird",
   "Wonder Hunt": "Curious",
-  "Side Quest": "Offbeat",
-  "Date Night": "Date Quest",
-  "Date-worthy": "Date Quest",
-  "Solo-friendly": "Solo Quest",
+  "Side Quest": "Weird",
+  "Date Night": "Getaway",
+  "Date Quest": "Getaway",
+  "Date-worthy": "Getaway",
+  "Solo Quest": "Curious",
+  "Solo-friendly": "Curious",
   Play: "Game On",
+  "Game On": "Game On",
+  "Local Lore": "Local Lore",
   "Local Flavor": "Local Lore"
 };
 
@@ -133,7 +147,7 @@ const DEFAULT_ADVENTURES = [
     area: "East End Lagoon",
     category: "Outdoors",
     type: "Outdoors",
-    vibes: ["Get Moving", "Meet People", "Local Lore"],
+    vibes: ["Adventure", "Chill", "Local Lore"],
     price: "$42",
     seats: 6,
     distance: 2.4,
@@ -156,7 +170,7 @@ const DEFAULT_ADVENTURES = [
     area: "The Strand",
     category: "Food & Drink",
     type: "Food & Drink",
-    vibes: ["Local Lore", "Meet People", "Date Quest"],
+    vibes: ["Local Lore", "Hidden Gem", "Getaway"],
     price: "$58",
     seats: 10,
     distance: 1.1,
@@ -179,7 +193,7 @@ const DEFAULT_ADVENTURES = [
     area: "Downtown",
     category: "Arts & Music",
     type: "Arts & Music",
-    vibes: ["Make Something", "Offbeat", "Curious"],
+    vibes: ["Crafty", "Creative", "Curious"],
     price: "$24",
     seats: 12,
     distance: 1.7,
@@ -202,7 +216,7 @@ const DEFAULT_ADVENTURES = [
     area: "Postoffice District",
     category: "Pop-ups & Events",
     type: "Pop-ups & Events",
-    vibes: ["Easygoing", "Local Lore", "Solo Quest"],
+    vibes: ["Chill", "Local Lore", "Hidden Gem"],
     price: "Free",
     seats: 18,
     distance: 0.8,
@@ -225,7 +239,7 @@ const DEFAULT_ADVENTURES = [
     area: "Pier 21",
     category: "Nightlife",
     type: "Nightlife",
-    vibes: ["Meet People", "Buzzing", "Date Quest"],
+    vibes: ["Groovy", "Getaway", "Divey"],
     price: "$18",
     seats: 20,
     distance: 1.9,
@@ -248,7 +262,7 @@ const DEFAULT_ADVENTURES = [
     area: "Seawall",
     category: "Outdoors",
     type: "Outdoors",
-    vibes: ["Get Moving", "Offbeat", "Game On"],
+    vibes: ["Adventure", "Weird", "Game On"],
     price: "$31",
     seats: 8,
     distance: 3.5,
@@ -271,7 +285,7 @@ const DEFAULT_ADVENTURES = [
     area: "Heights",
     category: "Markets",
     type: "Markets",
-    vibes: ["Local Lore", "Easygoing", "Solo Quest"],
+    vibes: ["Bazaar", "Wholesome", "Local Lore"],
     price: "$16",
     seats: 14,
     distance: 52,
@@ -294,7 +308,7 @@ const DEFAULT_ADVENTURES = [
     area: "East Austin",
     category: "Groups",
     type: "Groups",
-    vibes: ["Easygoing", "Curious", "Solo Quest"],
+    vibes: ["Chill", "Curious", "Wholesome"],
     price: "$8",
     seats: 16,
     distance: 210,
@@ -317,7 +331,7 @@ const DEFAULT_ADVENTURES = [
     area: "East End Historic District",
     category: "Markets",
     type: "Markets",
-    vibes: ["Local Lore", "Offbeat", "Easygoing"],
+    vibes: ["Bazaar", "Hidden Gem", "Local Lore"],
     price: "Free",
     seats: 40,
     distance: 1.4,
@@ -340,7 +354,7 @@ const DEFAULT_ADVENTURES = [
     area: "Historic Strand",
     category: "Tours & Culture",
     type: "Tours & Culture",
-    vibes: ["Curious", "Local Lore", "Solo Quest"],
+    vibes: ["Spooky", "Local Lore", "Curious"],
     price: "$22",
     seats: 14,
     distance: 0.9,
@@ -363,7 +377,7 @@ const DEFAULT_ADVENTURES = [
     area: "Midtown",
     category: "Classes",
     type: "Classes",
-    vibes: ["Make Something", "Meet People"],
+    vibes: ["Crafty", "Creative", "Wholesome"],
     price: "$35",
     seats: 10,
     distance: 2.1,
@@ -386,7 +400,7 @@ const DEFAULT_ADVENTURES = [
     area: "39th Street Seawall",
     category: "Groups",
     type: "Groups",
-    vibes: ["Get Moving", "Meet People", "Game On"],
+    vibes: ["Healthy", "Game On", "Adventure"],
     price: "Free",
     seats: 30,
     distance: 2.8,
@@ -879,10 +893,6 @@ function getListingType(adventure) {
   return LEGACY_TYPE_MAP[raw] || "Pop-ups & Events";
 }
 
-function isFreeListing(adventure) {
-  return normalize(adventure.price).includes("free");
-}
-
 function getListingVibes(adventure) {
   const stored = Array.isArray(adventure.vibes) ? adventure.vibes : [];
   const legacy = LEGACY_VIBE_MAP[String(adventure.category || "").trim()] || [];
@@ -892,8 +902,7 @@ function getListingVibes(adventure) {
       ? adventure.goodFor.map((value) => LEGACY_VIBE_LABEL_MAP[value]).filter(Boolean)
       : [])
   ];
-  const price = isFreeListing(adventure) ? ["Free"] : [];
-  return [...new Set([...price, ...migrated, ...legacy])].filter((vibe) => VIBE_FILTERS.includes(vibe));
+  return [...new Set([...migrated, ...legacy])].filter((vibe) => VIBE_FILTERS.includes(vibe));
 }
 
 function filteredAdventures() {
@@ -1151,7 +1160,7 @@ function renderFilters() {
 function adventureCard(adventure) {
   const saved = getSavedIds().includes(adventure.id);
   const type = getListingType(adventure);
-  const vibes = getListingVibes(adventure).filter((vibe) => vibe !== "Free").slice(0, 3);
+  const vibes = getListingVibes(adventure).slice(0, 3);
   return `
     <article class="adventure-card" style="${styleVars(adventure)}" data-action="open-detail" data-id="${escapeHtml(adventure.id)}" role="button" tabindex="0" aria-label="Open details for ${escapeHtml(adventure.title)}">
       <div class="card-art">
