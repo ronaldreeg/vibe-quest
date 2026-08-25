@@ -462,6 +462,8 @@ const state = {
   remoteSavedIds: []
 };
 
+let lastRolledAdventureId = "";
+
 const els = {
   topbar: document.querySelector(".topbar"),
   mobileNavToggle: document.querySelector(".mobile-nav-toggle"),
@@ -918,24 +920,52 @@ function getListingVibes(adventure) {
   return [...new Set([...migrated, ...legacy])].filter((vibe) => VIBE_FILTERS.includes(vibe));
 }
 
-function filteredAdventures() {
+function matchesActiveTiming(adventure) {
+  const bucket = getListingSchedule(adventure).bucket;
+  return state.activeTiming === "all" ? bucket !== "expired" : bucket === state.activeTiming;
+}
+
+function matchesCurrentLocation(adventure) {
   const location = normalize(state.location);
+  if (!location) return true;
+  return normalize(adventure.city).includes(location) || normalize(adventure.area).includes(location);
+}
+
+function filteredAdventures() {
   return getAdventures()
-    .filter((adventure) => {
-      const bucket = getListingSchedule(adventure).bucket;
-      return state.activeTiming === "all" ? bucket !== "expired" : bucket === state.activeTiming;
-    })
+    .filter(matchesActiveTiming)
     .filter(matchesActiveTypes)
     .filter((adventure) => {
       if (state.activeVibes.length === 0) return true;
       const listingVibes = getListingVibes(adventure);
       return state.activeVibes.some((vibe) => listingVibes.includes(vibe));
     })
-    .filter((adventure) => {
-      if (!location) return true;
-      return normalize(adventure.city).includes(location) || normalize(adventure.area).includes(location);
-    })
+    .filter(matchesCurrentLocation)
     .sort((a, b) => listingRank(a) - listingRank(b));
+}
+
+function rollTheDice() {
+  if (!normalize(state.location)) {
+    els.locationInput.focus();
+    toast("Choose a starting point before you roll.");
+    return;
+  }
+
+  const candidates = getAdventures()
+    .filter(matchesActiveTiming)
+    .filter(matchesCurrentLocation);
+
+  if (candidates.length === 0) {
+    toast(`No adventures are ready to roll near ${state.location} yet.`);
+    return;
+  }
+
+  const pool = candidates.length > 1
+    ? candidates.filter((adventure) => adventure.id !== lastRolledAdventureId)
+    : candidates;
+  const choice = pool[Math.floor(Math.random() * pool.length)];
+  lastRolledAdventureId = choice.id;
+  openDetail(choice.id);
 }
 
 function escapeHtml(value) {
@@ -2837,6 +2867,10 @@ document.addEventListener("click", async (event) => {
   }
   if (action === "home") setView("discover");
   if (action === "focus-search") els.locationInput.focus();
+  if (action === "roll-the-dice") {
+    rollTheDice();
+    return;
+  }
   if (action === "use-location") {
     state.locationIntentVersion += 1;
     await useBrowserLocation({ force: true });

@@ -13,7 +13,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Faculty+Glyphic&family=VT323&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="./styles.css?v=20260821-location-search-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260825-roll-dice-v1" />
   </head>
   <body>
     <div class="app-shell">
@@ -126,6 +126,13 @@
               <div>
                 <span class="mini-label">Discovery filters</span>
                 <h2>Browse the good stuff</h2>
+                <button class="roll-dice-button" type="button" data-action="roll-the-dice">
+                  <span class="roll-dice-icon" aria-hidden="true">
+                    <span></span><span></span><span></span>
+                    <span></span><span></span><span></span>
+                  </span>
+                  <span>or roll the dice</span>
+                </button>
               </div>
             </div>
             <div class="filter-groups">
@@ -577,7 +584,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.min.js"></script>
   <script src="./supabase-client.js?v=20260722"></script>
-  <script src="./app-v8.js?v=20260825-free-type-v1"></script>
+  <script src="./app-v8.js?v=20260825-roll-dice-v1"></script>
   <script src="./flyer-studio.js?v=20260817-brand-type-system-v1"></script>
 </body>
 </html>

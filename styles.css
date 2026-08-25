@@ -840,6 +840,48 @@ textarea:focus {
   font-size: 1.15rem;
 }
 
+.roll-dice-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin-top: 16px;
+  padding: 7px 12px;
+  border: 1px solid var(--brand-yellow);
+  background: transparent;
+  color: var(--brand-yellow);
+  font-family: var(--font-header);
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.roll-dice-button:hover {
+  background: rgba(248, 210, 61, 0.12);
+}
+
+.roll-dice-button:focus-visible {
+  outline: 2px solid var(--brand-cream);
+  outline-offset: 3px;
+}
+
+.roll-dice-icon {
+  display: grid;
+  grid-template-columns: repeat(2, 4px);
+  grid-template-rows: repeat(3, 4px);
+  place-content: center;
+  gap: 3px 5px;
+  width: 27px;
+  height: 27px;
+  flex: 0 0 27px;
+  border: 1px solid currentColor;
+}
+
+.roll-dice-icon > span {
+  width: 4px;
+  height: 4px;
+  background: currentColor;
+}
+
 .filter-groups,
 .filter-group {
   display: grid;
