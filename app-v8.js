@@ -31,7 +31,15 @@ const VIBE_FILTERS = [
   "Curious",
   "Groovy",
   "Healthy",
-  "Weird"
+  "Weird",
+  "Country",
+  "Club",
+  "Swap Meet",
+  "Gig",
+  "Flea",
+  "Tasty",
+  "Shindig",
+  "Expedition"
 ];
 
 const LISTING_MODES = ["one-time", "recurring", "anytime"];
