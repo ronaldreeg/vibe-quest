@@ -34,7 +34,7 @@ const VIBE_FILTERS = [
   "Weird",
   "Country",
   "Club",
-  "Swap Meet",
+  "Underground",
   "Gig",
   "Flea",
   "Tasty",
@@ -133,7 +133,8 @@ const LEGACY_VIBE_LABEL_MAP = {
   Play: "Game On",
   "Game On": "Game On",
   "Local Lore": "Local Lore",
-  "Local Flavor": "Local Lore"
+  "Local Flavor": "Local Lore",
+  "Swap Meet": "Underground"
 };
 
 const CITY_CENTERS = {
