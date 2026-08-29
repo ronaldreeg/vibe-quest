@@ -39,7 +39,7 @@ const VIBE_FILTERS = [
   "Flea",
   "Tasty",
   "Shindig",
-  "Expedition"
+  "Fest"
 ];
 
 const LISTING_MODES = ["one-time", "recurring", "anytime"];
@@ -134,7 +134,8 @@ const LEGACY_VIBE_LABEL_MAP = {
   "Game On": "Game On",
   "Local Lore": "Local Lore",
   "Local Flavor": "Local Lore",
-  "Swap Meet": "Underground"
+  "Swap Meet": "Underground",
+  Expedition: "Fest"
 };
 
 const CITY_CENTERS = {
