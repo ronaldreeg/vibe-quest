@@ -2938,12 +2938,6 @@ document.addEventListener("click", async (event) => {
     state.view = "discover";
     render();
   }
-  if (action === "toggle-theme") {
-    const next = document.documentElement.dataset.theme === "light" ? "" : "light";
-    document.documentElement.dataset.theme = next;
-    store.set("vv_theme", next);
-    setMobileNavOpen(false);
-  }
   if (action === "sign-out") await signOut();
 });
 
@@ -3010,7 +3004,6 @@ els.hostForm.querySelectorAll('input[name="location"], input[name="city"]').forE
   });
 });
 
-document.documentElement.dataset.theme = store.get("vv_theme", "");
 let headerScrollFrame = 0;
 let headerCompactTrigger = 80;
 function updateHeaderScrollState() {
