@@ -576,6 +576,7 @@ textarea:focus {
   font-weight: 400;
   font-size: clamp(3rem, 4.2vw, 4.5rem);
   line-height: 0.92;
+  color: var(--brand-red-orange);
 }
 
 .map-hero-copy .hero-subtitle {
@@ -613,7 +614,7 @@ textarea:focus {
 .city-field {
   display: grid;
   gap: 7px;
-  color: var(--brand-charcoal);
+  color: var(--brand-teal);
   font-family: var(--font-header);
   font-size: 1rem;
   font-weight: 400;
@@ -632,7 +633,7 @@ textarea:focus {
   height: 44px;
   min-height: 44px;
   border-color: var(--brand-charcoal);
-  background: var(--brand-yellow);
+  background: var(--brand-cream);
   color: var(--brand-charcoal);
   font-family: var(--font-interface);
   font-size: 1.05rem;
@@ -647,7 +648,7 @@ textarea:focus {
   height: 44px;
   padding: 0;
   border: 1px solid transparent;
-  background: var(--brand-pink);
+  background: var(--brand-red-orange);
   color: var(--brand-charcoal);
   font-size: 1.25rem;
   line-height: 1;
@@ -657,21 +658,17 @@ textarea:focus {
 .map-search-panel > .secondary-button {
   min-height: 44px;
   border: 1px solid transparent;
-  background: var(--brand-teal);
+  background: var(--brand-red-orange);
   color: var(--brand-charcoal);
   box-shadow: none;
   font-family: var(--font-header);
   font-weight: 400;
 }
 
-.map-search-panel > .secondary-button {
-  background: var(--brand-red-orange);
-}
-
 .map-search-panel > .primary-button:hover,
 .map-search-panel > .secondary-button:hover,
 .location-button:hover {
-  border-color: var(--brand-yellow);
+  border-color: var(--brand-charcoal);
 }
 
 .location-button[aria-busy="true"] {
@@ -819,7 +816,8 @@ textarea:focus {
   margin: var(--gap) 0;
   padding: var(--gap);
   border-radius: 0;
-  background: var(--brand-gold);
+  border: 1px solid var(--line);
+  background: var(--brand-cream);
   color: var(--brand-charcoal);
 }
 
@@ -3048,13 +3046,13 @@ textarea:focus {
 
 .nav-tab-icon img,
 .mobile-nav-toggle img {
-  filter: none;
+  filter: brightness(0) saturate(100%) invert(49%) sepia(95%) saturate(2792%) hue-rotate(341deg) brightness(102%) contrast(96%);
 }
 
 .nav-tab.is-active,
 .nav-tab:hover {
   border-color: var(--brand-charcoal);
-  background: rgba(15, 143, 177, 0.08);
+  background: transparent;
 }
 
 .topbar .profile-pill {
