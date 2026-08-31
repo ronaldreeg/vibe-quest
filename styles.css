@@ -2483,6 +2483,21 @@ textarea:focus {
     padding: 10px;
   }
 
+  .file-input {
+    min-height: 66px;
+    padding: 10px;
+    text-align: left;
+    font-size: 0.86rem;
+  }
+
+  .file-input::file-selector-button,
+  .file-input::-webkit-file-upload-button {
+    display: inline-block;
+    margin: 0 12px 0 0;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+
   .topbar {
     top: 0;
     grid-template-columns: 1fr auto;
