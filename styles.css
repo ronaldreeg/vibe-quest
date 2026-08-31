@@ -728,13 +728,23 @@ textarea:focus {
   height: 100%;
   min-height: 100%;
   border-radius: 0;
+  background: #23252a;
   z-index: 0;
+}
+
+#realMap .leaflet-tile-pane {
+  filter: invert(0.92) hue-rotate(178deg) saturate(0.55) brightness(0.72) contrast(1.08);
 }
 
 #realMap .leaflet-control-attribution {
   border-radius: 0;
-  background: rgba(243, 233, 196, 0.9);
+  background: rgba(47, 48, 53, 0.92);
+  color: rgba(243, 233, 196, 0.76);
   font-size: 0.68rem;
+}
+
+#realMap .leaflet-control-attribution a {
+  color: var(--brand-yellow);
 }
 
 #realMap .leaflet-control,
@@ -743,6 +753,18 @@ textarea:focus {
 #realMap .leaflet-popup-content-wrapper,
 #realMap .leaflet-popup-tip {
   border-radius: 0 !important;
+}
+
+#realMap .leaflet-bar a {
+  border-color: rgba(243, 233, 196, 0.28);
+  background: var(--brand-charcoal);
+  color: var(--brand-yellow);
+}
+
+#realMap .leaflet-bar a:hover,
+#realMap .leaflet-bar a:focus {
+  background: #23252a;
+  color: var(--brand-pink);
 }
 
 #realMap .leaflet-top.leaflet-left {
