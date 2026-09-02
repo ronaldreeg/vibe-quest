@@ -1330,6 +1330,78 @@ function handleMapPinchZoom(event) {
   mapPinchDelta = 0;
 }
 
+const VECTOR_MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/dark";
+const VECTOR_MAP_PAINT = [
+  ["background", "background-color", "#23252a"],
+  ["water", "fill-color", "#102d38"],
+  ["landuse_park", "fill-color", "#18251f"],
+  ["landuse_residential", "fill-color", "#2f3035"],
+  ["building", "fill-color", "#111317"],
+  ["building", "fill-outline-color", "#252c30"],
+  ["highway_path", "line-color", "#304d58"],
+  ["highway_minor", "line-color", "#3d6472"],
+  ["highway_major_casing", "line-color", "#1a252a"],
+  ["highway_major_inner", "line-color", "#6294a5"],
+  ["highway_major_subtle", "line-color", "#4a7888"],
+  ["highway_motorway_casing", "line-color", "#302b1d"],
+  ["highway_motorway_inner", "line-color", "#d09b31"],
+  ["highway_motorway_subtle", "line-color", "#94702a"],
+  ["highway_name_other", "text-color", "#e4dcc0"],
+  ["highway_name_other", "text-halo-color", "#17191d"],
+  ["highway_name_motorway", "text-color", "#f8d23d"],
+  ["place_other", "text-color", "#aaa78f"],
+  ["place_suburb", "text-color", "#aaa78f"],
+  ["place_village", "text-color", "#bdb79d"],
+  ["place_town", "text-color", "#cbc4a9"],
+  ["place_city", "text-color", "#d9d1b3"],
+  ["place_city_large", "text-color", "#e7dec0"]
+];
+
+function addRasterBasemap() {
+  els.realMap.classList.remove("uses-vector-basemap");
+  els.realMap.classList.add("uses-raster-basemap");
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap contributors"
+  }).addTo(map);
+}
+
+function styleVectorBasemap(vectorMap) {
+  VECTOR_MAP_PAINT.forEach(([layerId, property, value]) => {
+    if (vectorMap.getLayer(layerId)) vectorMap.setPaintProperty(layerId, property, value);
+  });
+}
+
+function addPrimaryBasemap() {
+  if (typeof L.maplibreGL !== "function") {
+    addRasterBasemap();
+    return;
+  }
+
+  try {
+    els.realMap.classList.remove("uses-raster-basemap");
+    els.realMap.classList.add("uses-vector-basemap");
+    const vectorLayer = L.maplibreGL({
+      style: VECTOR_MAP_STYLE_URL,
+      interactive: false
+    }).addTo(map);
+    const vectorMap = vectorLayer.getMaplibreMap();
+    vectorMap.on("styleimagemissing", (event) => {
+      if (vectorMap.hasImage(event.id)) return;
+      if (event.id === "circle-11") {
+        vectorMap.addImage(event.id, { width: 1, height: 1, data: new Uint8Array([0, 0, 0, 0]) });
+      }
+      if (event.id === "wood-pattern") {
+        vectorMap.addImage(event.id, { width: 1, height: 1, data: new Uint8Array([24, 37, 31, 255]) });
+      }
+    });
+    vectorMap.once("load", () => styleVectorBasemap(vectorMap));
+  } catch (error) {
+    console.warn("Vector basemap unavailable; using the raster fallback.", error);
+    addRasterBasemap();
+  }
+}
+
 function initMap() {
   if (map || !els.realMap) return Boolean(map);
   if (!window.L) {
@@ -1344,10 +1416,7 @@ function initMap() {
     wheelDebounceTime: 40
   }).setView(state.mapCenter, 13);
   L.control.zoom({ position: "bottomright" }).addTo(map);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: "&copy; OpenStreetMap contributors"
-  }).addTo(map);
+  addPrimaryBasemap();
   updateMapInteractionMode(false);
   setTimeout(() => map.invalidateSize(), 50);
   return true;

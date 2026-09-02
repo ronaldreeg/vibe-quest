@@ -13,7 +13,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Faculty+Glyphic&family=VT323&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="./styles.css?v=20260902-dark-map-contrast-v1" />
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" />
+    <link rel="stylesheet" href="./styles.css?v=20260902-vector-map-v1" />
   </head>
   <body>
     <div class="app-shell">
@@ -585,9 +586,11 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <noscript>This discovery map needs JavaScript enabled to load.</noscript>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.3/leaflet-maplibre-gl.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.min.js"></script>
   <script src="./supabase-client.js?v=20260722"></script>
-  <script src="./app-v8.js?v=20260830-vhs-palette-v1"></script>
+  <script src="./app-v8.js?v=20260902-vector-map-v1"></script>
   <script src="./flyer-studio.js?v=20260817-brand-type-system-v1"></script>
 </body>
 </html>

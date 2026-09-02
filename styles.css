@@ -732,8 +732,13 @@ textarea:focus {
   z-index: 0;
 }
 
-#realMap .leaflet-tile-pane {
+#realMap.uses-raster-basemap .leaflet-tile-pane {
   filter: invert(0.92) hue-rotate(178deg) saturate(0.62) brightness(0.86) contrast(1.22);
+}
+
+#realMap.uses-vector-basemap .maplibregl-map,
+#realMap.uses-vector-basemap .maplibregl-canvas {
+  background: #23252a;
 }
 
 #realMap .leaflet-control-attribution {
