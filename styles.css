@@ -733,7 +733,7 @@ textarea:focus {
 }
 
 #realMap .leaflet-tile-pane {
-  filter: invert(0.92) hue-rotate(178deg) saturate(0.55) brightness(0.72) contrast(1.08);
+  filter: invert(0.92) hue-rotate(178deg) saturate(0.62) brightness(0.86) contrast(1.22);
 }
 
 #realMap .leaflet-control-attribution {
