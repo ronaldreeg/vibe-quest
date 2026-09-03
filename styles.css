@@ -570,7 +570,7 @@ textarea:focus {
   z-index: 2;
   min-width: 0;
   max-width: 720px;
-  color: var(--brand-yellow);
+  color: var(--brand-cream);
 }
 
 .map-hero-copy h1 {
@@ -580,13 +580,13 @@ textarea:focus {
   font-weight: 400;
   font-size: clamp(3rem, 4.2vw, 4.5rem);
   line-height: 0.92;
-  color: var(--brand-teal);
+  color: var(--brand-cream);
 }
 
 .map-hero-copy .hero-subtitle {
   max-width: 49ch;
   margin-bottom: 0;
-  color: var(--brand-yellow);
+  color: var(--brand-cream);
   font-family: var(--font-interface);
   font-size: clamp(1.02rem, 1.35vw, 1.28rem);
   line-height: 1.22;
@@ -660,7 +660,7 @@ textarea:focus {
 .city-field {
   display: grid;
   gap: 7px;
-  color: var(--brand-teal);
+  color: var(--brand-cream);
   font-family: var(--font-header);
   font-size: 1rem;
   font-weight: 400;
@@ -678,8 +678,8 @@ textarea:focus {
   min-width: 0;
   height: 44px;
   min-height: 44px;
-  border-color: var(--brand-teal);
-  background: var(--brand-teal);
+  border-color: var(--brand-cream);
+  background: var(--brand-cream);
   color: var(--brand-charcoal);
   font-family: var(--font-interface);
   font-size: 1.05rem;
@@ -694,7 +694,7 @@ textarea:focus {
   height: 44px;
   padding: 0;
   border: 1px solid transparent;
-  background: var(--brand-teal);
+  background: var(--brand-cream);
   color: var(--brand-charcoal);
   font-size: 1.25rem;
   line-height: 1;
@@ -704,7 +704,7 @@ textarea:focus {
 .map-search-panel > .secondary-button {
   min-height: 44px;
   border: 1px solid transparent;
-  background: var(--brand-teal);
+  background: var(--brand-cream);
   color: var(--brand-charcoal);
   box-shadow: none;
   font-family: var(--font-header);
@@ -714,7 +714,7 @@ textarea:focus {
 .map-search-panel > .primary-button:hover,
 .map-search-panel > .secondary-button:hover,
 .location-button:hover {
-  border-color: var(--brand-charcoal);
+  border-color: var(--brand-red-orange);
 }
 
 .location-button[aria-busy="true"] {
@@ -3164,11 +3164,11 @@ textarea:focus {
 .topbar {
   background: var(--brand-charcoal);
   border-bottom: 0;
-  color: var(--brand-yellow);
+  color: var(--brand-cream);
 }
 
 .nav-tab {
-  color: var(--brand-yellow);
+  color: var(--brand-cream);
 }
 
 .nav-tab-icon img,
@@ -3178,14 +3178,14 @@ textarea:focus {
 
 .nav-tab.is-active,
 .nav-tab:hover {
-  border-color: var(--brand-yellow);
+  border-color: var(--brand-cream);
   background: transparent;
 }
 
 .topbar .profile-pill {
-  border: 1px solid var(--brand-yellow);
+  border: 1px solid var(--brand-cream);
   background: transparent;
-  color: var(--brand-yellow);
+  color: var(--brand-cream);
 }
 
 .topbar .profile-pill:hover {
@@ -3298,7 +3298,7 @@ textarea:focus {
   }
 
   .nav-tab {
-    color: var(--brand-yellow);
+    color: var(--brand-cream);
   }
 
   .topbar.is-scrolled {
@@ -3323,13 +3323,13 @@ textarea:focus {
   }
 
   .mobile-nav-toggle {
-    border-color: var(--brand-yellow);
+    border-color: var(--brand-cream);
     background: transparent;
   }
 
   .mobile-nav-toggle:hover,
   .mobile-nav-toggle[aria-expanded="true"] {
-    background: rgba(15, 143, 177, 0.12);
+    background: rgba(250, 98, 46, 0.1);
   }
 
   .mobile-nav-panel:not([hidden]) {
@@ -3339,14 +3339,14 @@ textarea:focus {
 
   .mobile-nav-panel .nav-tab,
   .mobile-nav-panel .nav-tab:first-child {
-    border-color: rgba(248, 210, 61, 0.28);
-    color: var(--brand-yellow);
+    border-color: rgba(243, 233, 196, 0.28);
+    color: var(--brand-cream);
   }
 
   .mobile-nav-panel .nav-tab.is-active,
   .mobile-nav-panel .nav-tab:hover {
-    outline-color: var(--brand-yellow);
-    background: rgba(248, 210, 61, 0.08);
+    outline-color: var(--brand-cream);
+    background: rgba(243, 233, 196, 0.08);
   }
 
   .topbar.is-scrolled .brand {
