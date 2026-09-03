@@ -597,12 +597,12 @@ textarea:focus {
   z-index: 1;
   top: 30%;
   right: 0;
-  left: clamp(540px, 50vw, 900px);
+  left: clamp(430px, 37vw, 700px);
   height: clamp(96px, 8vw, 126px);
   overflow: hidden;
   pointer-events: none;
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 24%, #000 92%, transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0, #000 24%, #000 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 18%, #000 94%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 18%, #000 94%, transparent 100%);
 }
 
 .hero-icon-stream-track {
