@@ -555,15 +555,19 @@ textarea:focus {
 }
 
 .map-hero-header {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 0.95fr) minmax(460px, 0.85fr);
   gap: clamp(48px, 8vw, 140px);
   align-items: end;
-  min-height: 330px;
+  min-height: 340px;
+  overflow: hidden;
   padding: clamp(44px, 5vw, 72px) clamp(32px, 4vw, 68px) clamp(48px, 5vw, 76px);
 }
 
 .map-hero-copy {
+  position: relative;
+  z-index: 2;
   min-width: 0;
   max-width: 720px;
   color: var(--brand-yellow);
@@ -588,7 +592,49 @@ textarea:focus {
   line-height: 1.22;
 }
 
+.hero-icon-stream {
+  position: absolute;
+  z-index: 1;
+  top: 30%;
+  right: 0;
+  left: clamp(540px, 50vw, 900px);
+  height: clamp(96px, 8vw, 126px);
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 24%, #000 92%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 24%, #000 92%, transparent 100%);
+}
+
+.hero-icon-stream-track {
+  display: flex;
+  width: max-content;
+  height: 100%;
+  align-items: center;
+  animation: hero-icon-drift 60s linear infinite;
+  will-change: transform;
+}
+
+.hero-icon-stream img {
+  display: block;
+  width: auto;
+  height: 100%;
+  flex: 0 0 auto;
+  image-rendering: pixelated;
+}
+
+@keyframes hero-icon-drift {
+  from {
+    transform: translate3d(-50%, 0, 0);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 .map-search-panel {
+  position: relative;
+  z-index: 2;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 10px;
@@ -2319,6 +2365,11 @@ textarea:focus {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
+
+  .hero-icon-stream-track {
+    animation: none;
+    transform: translate3d(-18%, 0, 0);
+  }
 }
 
 [hidden] {
@@ -2472,6 +2523,16 @@ textarea:focus {
     gap: 34px;
     min-height: 0;
     padding: 44px 34px 48px;
+  }
+
+  .hero-icon-stream {
+    position: relative;
+    inset: auto;
+    width: calc(100% + 68px);
+    height: 64px;
+    margin: -4px -34px 0;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 12%, #000 88%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 12%, #000 88%, transparent 100%);
   }
 
   .share-page-header,
@@ -2679,6 +2740,12 @@ textarea:focus {
   .map-hero-header {
     gap: 32px;
     padding: 36px 20px 40px;
+  }
+
+  .hero-icon-stream {
+    width: calc(100% + 40px);
+    height: 52px;
+    margin: -8px -20px 0;
   }
 
   .map-hero-copy h1 {
