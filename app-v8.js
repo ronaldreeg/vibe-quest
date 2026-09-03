@@ -1332,29 +1332,88 @@ function handleMapPinchZoom(event) {
 
 const VECTOR_MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/dark";
 const VECTOR_MAP_PAINT = [
-  ["background", "background-color", "#23252a"],
-  ["water", "fill-color", "#102d38"],
-  ["landuse_park", "fill-color", "#18251f"],
-  ["landuse_residential", "fill-color", "#2f3035"],
-  ["building", "fill-color", "#111317"],
-  ["building", "fill-outline-color", "#252c30"],
-  ["highway_path", "line-color", "#304d58"],
-  ["highway_minor", "line-color", "#3d6472"],
-  ["highway_major_casing", "line-color", "#1a252a"],
-  ["highway_major_inner", "line-color", "#6294a5"],
-  ["highway_major_subtle", "line-color", "#4a7888"],
-  ["highway_motorway_casing", "line-color", "#302b1d"],
-  ["highway_motorway_inner", "line-color", "#d09b31"],
-  ["highway_motorway_subtle", "line-color", "#94702a"],
-  ["highway_name_other", "text-color", "#e4dcc0"],
-  ["highway_name_other", "text-halo-color", "#17191d"],
+  ["background", "background-color", "#2f3035"],
+  ["water", "fill-color", "#123f4b"],
+  ["waterway", "line-color", "#174f5e"],
+  ["landuse_park", "fill-color", "#243a34"],
+  ["landuse_residential", "fill-color", "#292c31"],
+  ["landuse_residential", "fill-opacity", 0.54],
+  ["building", "fill-color", "#15171a"],
+  ["building", "fill-outline-color", "#35383d"],
+  ["building", "fill-opacity", ["interpolate", ["linear"], ["zoom"], 17, 0.2, 19, 0.55]],
+  ["aeroway-area", "fill-color", "#272b30"],
+  ["aeroway-area", "fill-opacity", 0.58],
+  ["aeroway-taxiway", "line-color", "#3b4d54"],
+  ["aeroway-taxiway", "line-opacity", 0.5],
+  ["aeroway-runway-casing", "line-color", "#20252a"],
+  ["aeroway-runway", "line-color", "#52656c"],
+  ["aeroway-runway", "line-opacity", 0.62],
+  ["highway_path", "line-color", "#647176"],
+  ["highway_path", "line-opacity", 0.28],
+  ["highway_minor", "line-color", "#416776"],
+  ["highway_minor", "line-opacity", 0.58],
+  ["highway_minor", "line-width", ["interpolate", ["linear"], ["zoom"], 13, 0.65, 16, 1.25, 19, 3]],
+  ["highway_major_casing", "line-color", "#20252a"],
+  ["highway_major_inner", "line-color", "#0f8fb1"],
+  ["highway_major_subtle", "line-color", "#0b6f89"],
+  ["highway_motorway_casing", "line-color", "#3a2420"],
+  ["highway_motorway_inner", "line-color", "#fa622e"],
+  ["highway_motorway_subtle", "line-color", "#b94726"],
+  ["highway_name_other", "text-color", "#f3e9c4"],
+  ["highway_name_other", "text-halo-color", "#202227"],
+  ["highway_name_other", "text-halo-width", 1.5],
   ["highway_name_motorway", "text-color", "#f8d23d"],
-  ["place_other", "text-color", "#aaa78f"],
-  ["place_suburb", "text-color", "#aaa78f"],
-  ["place_village", "text-color", "#bdb79d"],
-  ["place_town", "text-color", "#cbc4a9"],
-  ["place_city", "text-color", "#d9d1b3"],
-  ["place_city_large", "text-color", "#e7dec0"]
+  ["highway_name_motorway", "text-halo-color", "#2f3035"],
+  ["place_village", "text-color", "#d8d1b4"],
+  ["place_town", "text-color", "#f3e9c4"],
+  ["place_city", "text-color", "#f8d23d"],
+  ["place_city_large", "text-color", "#f8d23d"],
+  ["place_state", "text-color", "#a7a18b"],
+  ["boundary_state", "line-color", "#495057"],
+  ["boundary_state", "line-opacity", 0.42]
+];
+
+const VECTOR_MAP_HIDDEN_LAYERS = [
+  "landcover_wood",
+  "water_name",
+  "road_oneway",
+  "road_oneway_opposite",
+  "railway_transit",
+  "railway_transit_dashline",
+  "railway_minor",
+  "railway_minor_dashline",
+  "railway",
+  "railway_dashline",
+  "place_other",
+  "place_suburb"
+];
+
+const VECTOR_MAP_ZOOM_RANGES = [
+  ["building", 17, 24],
+  ["highway_path", 15, 24],
+  ["highway_minor", 14, 24],
+  ["highway_name_other", 13, 24]
+];
+
+const VECTOR_MAP_MAJOR_ROAD_FILTER = [
+  "all",
+  ["match", ["geometry-type"], ["LineString", "MultiLineString"], true, false],
+  ["match", ["get", "class"], ["primary", "secondary", "trunk"], true, false]
+];
+
+const VECTOR_MAP_FILTERS = [
+  [
+    "highway_minor",
+    [
+      "all",
+      ["match", ["geometry-type"], ["LineString", "MultiLineString"], true, false],
+      ["==", ["get", "class"], "minor"]
+    ]
+  ],
+  ["highway_major_casing", VECTOR_MAP_MAJOR_ROAD_FILTER],
+  ["highway_major_inner", VECTOR_MAP_MAJOR_ROAD_FILTER],
+  ["highway_major_subtle", VECTOR_MAP_MAJOR_ROAD_FILTER],
+  ["highway_name_other", VECTOR_MAP_MAJOR_ROAD_FILTER]
 ];
 
 function addRasterBasemap() {
@@ -1369,6 +1428,15 @@ function addRasterBasemap() {
 function styleVectorBasemap(vectorMap) {
   VECTOR_MAP_PAINT.forEach(([layerId, property, value]) => {
     if (vectorMap.getLayer(layerId)) vectorMap.setPaintProperty(layerId, property, value);
+  });
+  VECTOR_MAP_HIDDEN_LAYERS.forEach((layerId) => {
+    if (vectorMap.getLayer(layerId)) vectorMap.setLayoutProperty(layerId, "visibility", "none");
+  });
+  VECTOR_MAP_ZOOM_RANGES.forEach(([layerId, minZoom, maxZoom]) => {
+    if (vectorMap.getLayer(layerId)) vectorMap.setLayerZoomRange(layerId, minZoom, maxZoom);
+  });
+  VECTOR_MAP_FILTERS.forEach(([layerId, filter]) => {
+    if (vectorMap.getLayer(layerId)) vectorMap.setFilter(layerId, filter);
   });
 }
 
