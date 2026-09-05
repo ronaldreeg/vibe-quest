@@ -610,7 +610,7 @@ textarea:focus {
   width: max-content;
   height: 100%;
   align-items: center;
-  animation: hero-icon-drift 60s linear infinite;
+  animation: hero-icon-drift 78s linear infinite;
   will-change: transform;
 }
 
