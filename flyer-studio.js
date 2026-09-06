@@ -235,8 +235,6 @@
       }
       context.fillStyle = accent;
       context.fillRect(x + width * 0.62, y, width * 0.38, height * 0.34);
-      context.fillStyle = "#f3e9c4";
-      context.fillRect(x, y + height * 0.76, width * 0.46, height * 0.24);
     }
     context.restore();
   }
