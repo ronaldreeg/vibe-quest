@@ -15,6 +15,8 @@
   const form = document.querySelector("#flyerForm");
   const canvas = document.querySelector("#flyerCanvas");
   const photoInput = document.querySelector("#flyerPhotoInput");
+  const noteInput = document.querySelector("#flyerNote");
+  const noteCountOutput = document.querySelector("#flyerNoteCount");
   const subheaderSizeInput = document.querySelector("#flyerSubheaderSize");
   const subheaderSizeOutput = document.querySelector("#flyerSubheaderSizeValue");
   const status = document.querySelector("#flyerStatus");
@@ -64,6 +66,13 @@
   function updateSubheaderSizeOutput() {
     if (!subheaderSizeOutput) return;
     subheaderSizeOutput.value = `${Math.round(Number(subheaderSizeInput?.value || 100))}%`;
+  }
+
+  function updateNoteCount() {
+    if (!noteCountOutput) return;
+    const max = Number(noteInput?.maxLength) > 0 ? Number(noteInput.maxLength) : 150;
+    const used = String(noteInput?.value || "").length;
+    noteCountOutput.value = `${used} / ${max}`;
   }
 
   function setStatus(message, isError = false) {
@@ -528,6 +537,7 @@
     studio.layout = DEFAULTS.layout;
     studio.accent = DEFAULTS.accent;
     studio.symbol = DEFAULTS.symbol;
+    updateNoteCount();
     updateSubheaderSizeOutput();
     updateControlState();
     setStatus("Your photo stays on this device.");
@@ -562,6 +572,7 @@
   form.addEventListener("submit", (event) => event.preventDefault());
   form.addEventListener("input", (event) => {
     if (event.target === photoInput) return;
+    if (event.target === noteInput) updateNoteCount();
     if (event.target === subheaderSizeInput) updateSubheaderSizeOutput();
     render();
   });
@@ -605,6 +616,7 @@
   });
 
   window.vvFlyerStudio = { render };
+  updateNoteCount();
   updateSubheaderSizeOutput();
   updateControlState();
   render();

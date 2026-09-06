@@ -1304,6 +1304,30 @@ textarea:focus {
   resize: vertical;
 }
 
+.flyer-textarea-wrap {
+  position: relative;
+  display: block;
+}
+
+.flyer-textarea-wrap textarea {
+  display: block;
+  padding-bottom: 34px;
+}
+
+.flyer-character-count {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  padding: 2px 5px;
+  background: var(--brand-charcoal);
+  color: var(--brand-orange);
+  font-family: var(--font-interface);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  pointer-events: none;
+}
+
 .flyer-size-control {
   display: grid;
   gap: 8px;

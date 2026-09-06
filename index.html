@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Faculty+Glyphic&family=VT323&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" />
-    <link rel="stylesheet" href="./styles.css?v=20260906-flyer-subheader-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260906-note-count-v1" />
   </head>
   <body>
     <div class="app-shell">
@@ -425,9 +425,12 @@
                   <input name="flyerDetails" maxlength="64" value="Saturday / 6 PM / Galveston" placeholder="Saturday / 6 PM / Galveston" />
                 </label>
               </div>
-              <label class="field">
+              <label class="field" for="flyerNote">
                 <span>Short note</span>
-                <textarea name="flyerNote" maxlength="150" rows="3" placeholder="A quick reason to show up.">Beginner friendly. Bring an appetite and leave with a new recipe.</textarea>
+                <span class="flyer-textarea-wrap">
+                  <textarea id="flyerNote" name="flyerNote" maxlength="150" rows="3" placeholder="A quick reason to show up.">Beginner friendly. Bring an appetite and leave with a new recipe.</textarea>
+                  <output class="flyer-character-count" id="flyerNoteCount" for="flyerNote" aria-label="Short note character count">0 / 150</output>
+                </span>
               </label>
               <label class="flyer-size-control" for="flyerSubheaderSize">
                 <span class="flyer-size-heading">
@@ -604,6 +607,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.min.js"></script>
   <script src="./supabase-client.js?v=20260722"></script>
   <script src="./app-v8.js?v=20260903-minimal-map-v2"></script>
-  <script src="./flyer-studio.js?v=20260906-subheader-fit-v2"></script>
+  <script src="./flyer-studio.js?v=20260906-note-count-v1"></script>
 </body>
 </html>
