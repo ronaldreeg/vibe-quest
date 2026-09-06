@@ -15,6 +15,8 @@
   const form = document.querySelector("#flyerForm");
   const canvas = document.querySelector("#flyerCanvas");
   const photoInput = document.querySelector("#flyerPhotoInput");
+  const subheaderSizeInput = document.querySelector("#flyerSubheaderSize");
+  const subheaderSizeOutput = document.querySelector("#flyerSubheaderSizeValue");
   const status = document.querySelector("#flyerStatus");
   const dropZone = document.querySelector(".flyer-canvas-shell");
   if (!view || !form || !(canvas instanceof HTMLCanvasElement)) return;
@@ -43,12 +45,25 @@
   }
 
   function flyerCopy() {
+    const requestedScale = Number(subheaderSizeInput?.value || 100) / 100;
     return {
       title: fieldValue("flyerTitle", "Untitled Quest"),
       kicker: fieldValue("flyerKicker", "A Vibe Quest"),
       details: fieldValue("flyerDetails", "Somewhere worth going"),
-      note: fieldValue("flyerNote", "Show up curious.")
+      note: fieldValue("flyerNote", "Show up curious."),
+      subheaderScale: Number.isFinite(requestedScale)
+        ? Math.min(1.8, Math.max(0.8, requestedScale))
+        : 1
     };
+  }
+
+  function scaledSubheaderSize(size, copy) {
+    return Math.round(size * copy.subheaderScale);
+  }
+
+  function updateSubheaderSizeOutput() {
+    if (!subheaderSizeOutput) return;
+    subheaderSizeOutput.value = `${Math.round(Number(subheaderSizeInput?.value || 100))}%`;
   }
 
   function setStatus(message, isError = false) {
@@ -290,8 +305,8 @@
       y: nextY,
       maxWidth: 780,
       maxLines: nextY > 1040 ? 1 : 2,
-      startSize: 34,
-      minSize: 28,
+      startSize: scaledSubheaderSize(34, copy),
+      minSize: scaledSubheaderSize(28, copy),
       lineHeight: 1.2,
       weight: 600,
       color: "#f3e9c4"
@@ -342,8 +357,8 @@
       y: nextY,
       maxWidth: 780,
       maxLines: nextY > 1110 ? 1 : 2,
-      startSize: 30,
-      minSize: 25,
+      startSize: scaledSubheaderSize(30, copy),
+      minSize: scaledSubheaderSize(25, copy),
       lineHeight: 1.2,
       weight: 600,
       color: "#f3e9c4"
@@ -398,8 +413,8 @@
       y: nextY,
       maxWidth: panelWidth - 180,
       maxLines: nextY > panelY + 660 ? 2 : 3,
-      startSize: 31,
-      minSize: 25,
+      startSize: scaledSubheaderSize(31, copy),
+      minSize: scaledSubheaderSize(25, copy),
       lineHeight: 1.25,
       weight: 600,
       color: "#2f3035"
@@ -506,6 +521,7 @@
     studio.layout = DEFAULTS.layout;
     studio.accent = DEFAULTS.accent;
     studio.symbol = DEFAULTS.symbol;
+    updateSubheaderSizeOutput();
     updateControlState();
     setStatus("Your photo stays on this device.");
     render();
@@ -539,6 +555,7 @@
   form.addEventListener("submit", (event) => event.preventDefault());
   form.addEventListener("input", (event) => {
     if (event.target === photoInput) return;
+    if (event.target === subheaderSizeInput) updateSubheaderSizeOutput();
     render();
   });
   photoInput?.addEventListener("change", (event) => {
@@ -581,6 +598,7 @@
   });
 
   window.vvFlyerStudio = { render };
+  updateSubheaderSizeOutput();
   updateControlState();
   render();
   document.fonts?.ready.then(render).catch(() => {});

@@ -1304,6 +1304,38 @@ textarea:focus {
   resize: vertical;
 }
 
+.flyer-size-control {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  color: var(--muted-strong);
+  font-family: var(--font-interface);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.flyer-size-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.flyer-size-heading output {
+  color: var(--brand-orange);
+  font-variant-numeric: tabular-nums;
+}
+
+.flyer-size-control .range {
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .flyer-option-group {
   min-width: 0;
   margin: 18px 0 0;

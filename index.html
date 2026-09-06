@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Faculty+Glyphic&family=VT323&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" />
-    <link rel="stylesheet" href="./styles.css?v=20260905-icon-stream-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260906-flyer-subheader-v1" />
   </head>
   <body>
     <div class="app-shell">
@@ -429,6 +429,13 @@
                 <span>Short note</span>
                 <textarea name="flyerNote" maxlength="150" rows="3" placeholder="A quick reason to show up.">Beginner friendly. Bring an appetite and leave with a new recipe.</textarea>
               </label>
+              <label class="flyer-size-control" for="flyerSubheaderSize">
+                <span class="flyer-size-heading">
+                  <span>Subheader size</span>
+                  <output id="flyerSubheaderSizeValue" for="flyerSubheaderSize">100%</output>
+                </span>
+                <input class="range" id="flyerSubheaderSize" name="flyerSubheaderSize" type="range" min="80" max="180" step="10" value="100" />
+              </label>
               <label class="field">
                 <span>Your photo</span>
                 <input class="file-input" id="flyerPhotoInput" name="flyerPhoto" type="file" accept="image/*" />
@@ -597,6 +604,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.min.js"></script>
   <script src="./supabase-client.js?v=20260722"></script>
   <script src="./app-v8.js?v=20260903-minimal-map-v2"></script>
-  <script src="./flyer-studio.js?v=20260817-brand-type-system-v1"></script>
+  <script src="./flyer-studio.js?v=20260906-subheader-size-v1"></script>
 </body>
 </html>
