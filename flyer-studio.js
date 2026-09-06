@@ -130,23 +130,25 @@
     return lines.length ? lines : [""];
   }
 
-  function fittedLines(text, maxWidth, maxLines, startSize, minSize, weight = 800, family = FONT_READING) {
+  function fittedLines(text, maxWidth, maxLines, startSize, minSize, weight = 800, family = FONT_READING, maxHeight = Infinity, lineHeight = 1) {
     let size = startSize;
     let lines = [];
     while (size >= minSize) {
       setFont(size, weight, family);
       lines = wrapLines(text, maxWidth);
-      if (lines.length <= maxLines) return { lines, size };
+      if (lines.length <= maxLines && lines.length * size * lineHeight <= maxHeight) return { lines, size };
       size -= 2;
     }
     setFont(minSize, weight, family);
-    lines = wrapLines(text, maxWidth).slice(0, maxLines);
-    if (wrapLines(text, maxWidth).length > maxLines) {
-      let finalLine = lines[maxLines - 1];
+    const availableLines = Math.max(1, Math.min(maxLines, Math.floor(maxHeight / (minSize * lineHeight))));
+    const wrappedLines = wrapLines(text, maxWidth);
+    lines = wrappedLines.slice(0, availableLines);
+    if (wrappedLines.length > availableLines) {
+      let finalLine = lines[availableLines - 1];
       while (finalLine && context.measureText(`${finalLine}...`).width > maxWidth) {
         finalLine = finalLine.slice(0, -1).trim();
       }
-      lines[maxLines - 1] = `${finalLine}...`;
+      lines[availableLines - 1] = `${finalLine}...`;
     }
     return { lines, size: minSize };
   }
@@ -167,7 +169,9 @@
       options.startSize,
       options.minSize,
       options.weight || 800,
-      options.family || FONT_READING
+      options.family || FONT_READING,
+      options.maxHeight ?? Infinity,
+      options.lineHeight || 1
     );
     setFont(result.size, options.weight || 800, options.family || FONT_READING);
     const lineHeight = result.size * (options.lineHeight || 1);
@@ -303,10 +307,11 @@
     drawFittedText(copy.note, {
       x: 76,
       y: nextY,
-      maxWidth: 780,
-      maxLines: nextY > 1040 ? 1 : 2,
+      maxWidth: 900,
+      maxLines: 5,
+      maxHeight: Math.max(72, HEIGHT - 158 - nextY),
       startSize: scaledSubheaderSize(34, copy),
-      minSize: scaledSubheaderSize(28, copy),
+      minSize: 22,
       lineHeight: 1.2,
       weight: 600,
       color: "#f3e9c4"
@@ -355,10 +360,11 @@
     drawFittedText(copy.note, {
       x: 68,
       y: nextY,
-      maxWidth: 780,
-      maxLines: nextY > 1110 ? 1 : 2,
+      maxWidth: 930,
+      maxLines: 5,
+      maxHeight: Math.max(72, HEIGHT - 115 - nextY),
       startSize: scaledSubheaderSize(30, copy),
-      minSize: scaledSubheaderSize(25, copy),
+      minSize: 22,
       lineHeight: 1.2,
       weight: 600,
       color: "#f3e9c4"
@@ -411,10 +417,11 @@
     drawFittedText(copy.note, {
       x: panelX + 58,
       y: nextY,
-      maxWidth: panelWidth - 180,
-      maxLines: nextY > panelY + 660 ? 2 : 3,
+      maxWidth: panelWidth - 116,
+      maxLines: 5,
+      maxHeight: Math.max(72, panelY + panelHeight - 140 - nextY),
       startSize: scaledSubheaderSize(31, copy),
-      minSize: scaledSubheaderSize(25, copy),
+      minSize: 22,
       lineHeight: 1.25,
       weight: 600,
       color: "#2f3035"
