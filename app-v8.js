@@ -2100,6 +2100,21 @@ async function copyShareUrl(url) {
   }
 }
 
+async function copyActivityLink(id) {
+  const adventure = getAdventures().find((item) => item.id === id);
+  if (!adventure) {
+    toast("That activity is not available right now.");
+    return;
+  }
+
+  const url = activityShareUrl(adventure.id);
+  if (await copyShareUrl(url)) {
+    toast("Activity link copied.");
+  } else {
+    window.prompt("Copy this activity link:", url);
+  }
+}
+
 async function shareActivity(id) {
   const adventure = getAdventures().find((item) => item.id === id);
   if (!adventure) {
@@ -2422,6 +2437,9 @@ function openDetail(id) {
       </button>
       <button class="secondary-button" type="button" data-action="share-activity" data-id="${escapeHtml(adventure.id)}" aria-label="Share activity link">
         Share link
+      </button>
+      <button class="secondary-button" type="button" data-action="copy-activity-link" data-id="${escapeHtml(adventure.id)}" aria-label="Copy activity URL">
+        Copy link
       </button>
       <button class="primary-button" data-action="toggle-save" data-id="${adventure.id}">
         ${saved ? "Remove from saved" : "Save activity"}
@@ -3065,6 +3083,7 @@ document.addEventListener("click", async (event) => {
   if (action === "close-detail") els.detailModal.close();
   if (action === "show-on-map") showAdventureOnMap(target.dataset.id);
   if (action === "share-activity") await shareActivity(target.dataset.id);
+  if (action === "copy-activity-link") await copyActivityLink(target.dataset.id);
   if (action === "toggle-map-interaction") updateMapInteractionMode(!mobileMapInteractionEnabled);
   if (action === "out-there-prev") updateOutThereSlideshow(state.outThereSlideIndex - 1);
   if (action === "out-there-next") updateOutThereSlideshow(state.outThereSlideIndex + 1);
