@@ -1274,7 +1274,7 @@ textarea:focus {
 
 .workshop-mode-switch {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-bottom: var(--gap);
   border: 1px solid var(--line);
 }
@@ -1443,7 +1443,14 @@ textarea:focus {
   gap: var(--gap-xs);
 }
 
-.vibetinerary-layout-options .flyer-option {
+.vibe-code-layout-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gap-xs);
+}
+
+.vibetinerary-layout-options .flyer-option,
+.vibe-code-layout-options .flyer-option {
   display: grid;
   min-height: 62px;
   gap: 3px;
@@ -1452,11 +1459,13 @@ textarea:focus {
   text-align: left;
 }
 
-.vibetinerary-layout-options .flyer-option span {
+.vibetinerary-layout-options .flyer-option span,
+.vibe-code-layout-options .flyer-option span {
   font-size: 0.9rem;
 }
 
-.vibetinerary-layout-options .flyer-option small {
+.vibetinerary-layout-options .flyer-option small,
+.vibe-code-layout-options .flyer-option small {
   color: var(--muted);
   font-size: 0.7rem;
   font-weight: 700;
@@ -1521,6 +1530,10 @@ textarea:focus {
   grid-template-columns: minmax(110px, 0.4fr) minmax(0, 1fr);
   gap: var(--gap-xs);
   margin-top: 24px;
+}
+
+.vibe-code-actions {
+  grid-template-columns: minmax(82px, 0.7fr) minmax(100px, 0.9fr) minmax(150px, 1.5fr);
 }
 
 .flyer-status {
@@ -1671,12 +1684,21 @@ textarea:focus {
 }
 
 #flyerCanvas,
-#vibetineraryCanvas {
+#vibetineraryCanvas,
+#vibeCodeCanvas {
   display: block;
   width: 100%;
   height: auto;
   aspect-ratio: 4 / 5;
   background: var(--brand-charcoal);
+}
+
+.vibe-code-canvas-shell {
+  width: min(100%, 650px);
+}
+
+#vibeCodeCanvas {
+  aspect-ratio: 1;
 }
 
 .site-footer {

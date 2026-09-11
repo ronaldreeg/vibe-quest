@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Faculty+Glyphic&family=VT323&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" />
-    <link rel="stylesheet" href="./styles.css?v=20260911-field-note-photos-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260911-vibe-code-v1" />
   </head>
   <body>
     <div class="app-shell">
@@ -436,6 +436,10 @@
               <span>Vibetinerary</span>
               <small>A mini adventure</small>
             </button>
+            <button class="workshop-mode-button" type="button" data-workshop-mode="vibe-code" aria-pressed="false">
+              <span>Vibe code generator</span>
+              <small>A scannable signal</small>
+            </button>
           </div>
 
           <div data-workshop-panel="flyer">
@@ -600,6 +604,71 @@
               </section>
             </div>
           </div>
+
+          <div data-workshop-panel="vibe-code" hidden>
+            <div class="flyer-studio vibe-code-studio">
+              <form class="flyer-controls vibe-code-controls" id="vibeCodeForm">
+                <div class="flyer-controls-heading">
+                  <span class="mini-label">Build your vibe code</span>
+                  <strong>1080 x 1080 PNG</strong>
+                </div>
+
+                <label class="field">
+                  <span>Destination</span>
+                  <input id="vibeCodeDestination" name="vibeCodeDestination" type="text" inputmode="url" autocomplete="url" maxlength="2048" value="https://www.vibe-quest.net/" placeholder="Website, sign-up page, map..." />
+                </label>
+                <label class="field">
+                  <span>Signal headline</span>
+                  <input name="vibeCodeTitle" maxlength="58" value="A good thing is hiding here." placeholder="A good thing is hiding here." />
+                </label>
+                <label class="field">
+                  <span>Scan prompt</span>
+                  <input name="vibeCodePrompt" maxlength="64" value="Scan to follow the signal" placeholder="Scan to follow the signal" />
+                </label>
+
+                <fieldset class="flyer-option-group">
+                  <legend>Layout</legend>
+                  <div class="vibe-code-layout-options" role="group" aria-label="Vibe code layout">
+                    <button class="flyer-option is-active" type="button" data-vibe-code-layout="signal" aria-pressed="true">
+                      <span>Field signal</span>
+                      <small>Editorial split</small>
+                    </button>
+                    <button class="flyer-option" type="button" data-vibe-code-layout="portal" aria-pressed="false">
+                      <span>Portal</span>
+                      <small>Centered code</small>
+                    </button>
+                  </div>
+                </fieldset>
+
+                <fieldset class="flyer-option-group">
+                  <legend>Accent</legend>
+                  <div class="flyer-swatch-options" role="group" aria-label="Vibe code accent color">
+                    <button class="flyer-swatch is-active" type="button" data-vibe-code-accent="#fa622e" style="--flyer-swatch: #fa622e" aria-label="Red orange accent" aria-pressed="true"></button>
+                    <button class="flyer-swatch" type="button" data-vibe-code-accent="#f45077" style="--flyer-swatch: #f45077" aria-label="Pink accent" aria-pressed="false"></button>
+                    <button class="flyer-swatch" type="button" data-vibe-code-accent="#0f8fb1" style="--flyer-swatch: #0f8fb1" aria-label="Teal accent" aria-pressed="false"></button>
+                    <button class="flyer-swatch" type="button" data-vibe-code-accent="#f8d23d" style="--flyer-swatch: #f8d23d" aria-label="Quest yellow accent" aria-pressed="false"></button>
+                  </div>
+                </fieldset>
+
+                <div class="flyer-actions vibe-code-actions">
+                  <button class="secondary-button" type="button" data-vibe-code-action="reset">Reset</button>
+                  <button class="secondary-button" type="button" data-vibe-code-action="copy">Copy URL</button>
+                  <button class="primary-button" type="button" data-vibe-code-action="download">Download vibe code</button>
+                </div>
+                <p class="flyer-status" id="vibeCodeStatus" role="status" aria-live="polite">Your destination stays on this device.</p>
+              </form>
+
+              <section class="flyer-preview-panel" aria-labelledby="vibeCodePreviewTitle">
+                <div class="flyer-preview-heading">
+                  <span class="mini-label" id="vibeCodePreviewTitle">Live preview</span>
+                  <span>Square QR card</span>
+                </div>
+                <div class="flyer-canvas-shell vibe-code-canvas-shell">
+                  <canvas id="vibeCodeCanvas" width="1080" height="1080" aria-label="Preview of your branded Vibe Quest QR code"></canvas>
+                </div>
+              </section>
+            </div>
+          </div>
         </section>
       </main>
 
@@ -715,7 +784,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.min.js"></script>
   <script src="./supabase-client.js?v=20260722"></script>
   <script src="./app-v8.js?v=20260911-out-there-map-v1"></script>
+  <script src="./vendor/qrcode.min.js?v=1.5.4"></script>
   <script src="./flyer-studio.js?v=20260911-logo-mark-v2"></script>
-  <script src="./vibetinerary-studio.js?v=20260911-background-v1"></script>
+  <script src="./vibetinerary-studio.js?v=20260911-vibe-code-v1"></script>
+  <script src="./vibe-code-studio.js?v=20260911-v1"></script>
 </body>
 </html>
