@@ -3229,6 +3229,10 @@ textarea:focus {
 
 .nav-tab-icon img,
 .mobile-nav-toggle img {
+  filter: none;
+}
+
+.nav-tab-icon img[src*="/signal.svg"] {
   filter: brightness(0) saturate(100%) invert(49%) sepia(95%) saturate(2792%) hue-rotate(341deg) brightness(102%) contrast(96%);
 }
 
