@@ -3043,7 +3043,7 @@ textarea:focus {
   }
 }
 
-@media (max-width: 620px) {
+@media (max-width: 900px) {
   .topbar {
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 0 12px;
@@ -3232,10 +3232,6 @@ textarea:focus {
   filter: none;
 }
 
-.nav-tab-icon img[src*="/signal.svg"] {
-  filter: brightness(0) saturate(100%) invert(49%) sepia(95%) saturate(2792%) hue-rotate(341deg) brightness(102%) contrast(96%);
-}
-
 .nav-tab.is-active,
 .nav-tab:hover {
   border-color: var(--brand-cream);
@@ -3412,5 +3408,108 @@ textarea:focus {
   .topbar.is-scrolled .brand {
     width: min(150px, 48vw);
     height: 64px;
+  }
+}
+
+/* Keep the full navigation beside the logo until it switches to the compact menu. */
+@media (min-width: 901px) and (max-width: 1070px) {
+  .topbar,
+  .topbar.is-scrolled {
+    grid-template-columns: auto auto minmax(0, 1fr);
+    grid-template-rows: auto;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+  }
+
+  .topbar .brand,
+  .topbar:not(.is-scrolled) .brand {
+    grid-column: 1;
+    grid-row: 1;
+    width: clamp(174px, 19vw, 205px);
+    height: 88px;
+    margin-right: 4px;
+  }
+
+  .topbar.is-scrolled .brand {
+    width: 150px;
+    height: 64px;
+    margin-right: 4px;
+  }
+
+  .nav-tabs-left {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: start;
+  }
+
+  .topbar-right {
+    display: flex;
+    grid-column: 3;
+    grid-row: 1;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+  }
+
+  .nav-tabs,
+  .nav-tabs-right {
+    gap: 2px;
+  }
+
+  .nav-tabs-right {
+    justify-content: flex-start;
+  }
+
+  .nav-tab,
+  .topbar.is-scrolled .nav-tab {
+    gap: 5px;
+    min-height: 40px;
+    padding: 5px;
+  }
+
+  .nav-tab-label,
+  .topbar.is-scrolled .nav-tab-label {
+    font-size: clamp(0.78rem, 1.15vw, 0.92rem);
+  }
+
+  .nav-tab-icon,
+  .nav-tab-icon img,
+  .topbar.is-scrolled .nav-tab-icon,
+  .topbar.is-scrolled .nav-tab-icon img {
+    width: 25px;
+    height: 25px;
+  }
+
+  .topbar-actions {
+    margin-left: auto;
+  }
+
+  .topbar .profile-pill,
+  .topbar.is-scrolled .profile-pill {
+    min-width: 82px;
+    min-height: 40px;
+    padding-inline: 10px;
+    font-size: 0.88rem;
+  }
+}
+
+@media (min-width: 621px) and (max-width: 900px) {
+  .topbar,
+  .topbar.is-scrolled {
+    gap: 0 16px;
+    padding: 10px 16px;
+  }
+
+  .topbar .brand,
+  .topbar:not(.is-scrolled) .brand {
+    width: 210px;
+    height: 88px;
+    margin-right: 0;
+  }
+
+  .topbar.is-scrolled .brand {
+    width: 164px;
+    height: 68px;
   }
 }
