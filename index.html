@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Faculty+Glyphic&family=VT323&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" />
-    <link rel="stylesheet" href="./styles.css?v=20260911-vibe-filter-colors-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260911-vibetinerary-v1" />
   </head>
   <body>
     <div class="app-shell">
@@ -399,12 +399,24 @@
 
         <section class="share-view" id="shareView" hidden>
           <header class="share-page-header">
-            <span class="mini-label">Quest Flyer Studio</span>
-            <h1>Make a flyer worth sharing.</h1>
-            <p>Turn your photo and event details into a Vibe Quest flyer built for the feed, the group chat, and wherever your people are looking.</p>
+            <span class="mini-label" id="workshopEyebrow">Quest Flyer Studio</span>
+            <h1 id="workshopTitle">Make a flyer worth sharing.</h1>
+            <p id="workshopIntro">Turn your photo and event details into a Vibe Quest flyer built for the feed, the group chat, and wherever your people are looking.</p>
           </header>
 
-          <div class="flyer-studio">
+          <div class="workshop-mode-switch" role="group" aria-label="Workshop project type">
+            <button class="workshop-mode-button is-active" type="button" data-workshop-mode="flyer" aria-pressed="true">
+              <span>Event flyer</span>
+              <small>One discovery</small>
+            </button>
+            <button class="workshop-mode-button" type="button" data-workshop-mode="vibetinerary" aria-pressed="false">
+              <span>Vibetinerary</span>
+              <small>A mini adventure</small>
+            </button>
+          </div>
+
+          <div data-workshop-panel="flyer">
+            <div class="flyer-studio">
             <form class="flyer-controls" id="flyerForm">
               <div class="flyer-controls-heading">
                 <span class="mini-label">Build your flyer</span>
@@ -491,6 +503,74 @@
                 <canvas id="flyerCanvas" width="1080" height="1350" aria-label="Preview of your Vibe Quest event flyer"></canvas>
               </div>
             </section>
+            </div>
+          </div>
+
+          <div data-workshop-panel="vibetinerary" hidden>
+            <div class="flyer-studio vibetinerary-studio">
+              <form class="flyer-controls vibetinerary-controls" id="vibetineraryForm">
+                <div class="flyer-controls-heading">
+                  <span class="mini-label">Build your route</span>
+                  <strong>1080 x 1350 PNG</strong>
+                </div>
+
+                <label class="field">
+                  <span>Vibetinerary title</span>
+                  <input name="vibetineraryTitle" maxlength="58" value="A Saturday worth wandering" placeholder="A Saturday worth wandering" />
+                </label>
+                <label class="field">
+                  <span>Opening note</span>
+                  <textarea name="vibetineraryIntro" maxlength="120" rows="2" placeholder="Set the tone for the route.">A few local stops. No rigid schedule. Follow the good signs.</textarea>
+                </label>
+
+                <fieldset class="flyer-option-group">
+                  <legend>Layout</legend>
+                  <div class="vibetinerary-layout-options" role="group" aria-label="Vibetinerary layout">
+                    <button class="flyer-option is-active" type="button" data-vibetinerary-layout="list" aria-pressed="true">
+                      <span>Vibe combo</span>
+                      <small>Ordered stop list</small>
+                    </button>
+                    <button class="flyer-option" type="button" data-vibetinerary-layout="map" aria-pressed="false">
+                      <span>Treasure map</span>
+                      <small>Playful route</small>
+                    </button>
+                  </div>
+                </fieldset>
+
+                <fieldset class="vibetinerary-points-group">
+                  <legend>Route points</legend>
+                  <output id="vibetineraryPointCount" aria-live="polite">3 / 5</output>
+                  <div class="vibetinerary-points" id="vibetineraryPoints"></div>
+                  <button class="secondary-button vibetinerary-add-point" type="button" data-vibetinerary-action="add">+ Add point</button>
+                </fieldset>
+
+                <fieldset class="flyer-option-group">
+                  <legend>Accent</legend>
+                  <div class="flyer-swatch-options" role="group" aria-label="Vibetinerary accent color">
+                    <button class="flyer-swatch is-active" type="button" data-vibetinerary-accent="#f8d23d" style="--flyer-swatch: #f8d23d" aria-label="Quest yellow accent" aria-pressed="true"></button>
+                    <button class="flyer-swatch" type="button" data-vibetinerary-accent="#f45077" style="--flyer-swatch: #f45077" aria-label="Pink accent" aria-pressed="false"></button>
+                    <button class="flyer-swatch" type="button" data-vibetinerary-accent="#fa622e" style="--flyer-swatch: #fa622e" aria-label="Red orange accent" aria-pressed="false"></button>
+                    <button class="flyer-swatch" type="button" data-vibetinerary-accent="#0f8fb1" style="--flyer-swatch: #0f8fb1" aria-label="Teal accent" aria-pressed="false"></button>
+                  </div>
+                </fieldset>
+
+                <div class="flyer-actions">
+                  <button class="secondary-button" type="button" data-vibetinerary-action="reset">Reset</button>
+                  <button class="primary-button" type="button" data-vibetinerary-action="download">Download Vibetinerary</button>
+                </div>
+                <p class="flyer-status" id="vibetineraryStatus" role="status" aria-live="polite">Build a route with up to five points.</p>
+              </form>
+
+              <section class="flyer-preview-panel" aria-labelledby="vibetineraryPreviewTitle">
+                <div class="flyer-preview-heading">
+                  <span class="mini-label" id="vibetineraryPreviewTitle">Live preview</span>
+                  <span>4:5 social post</span>
+                </div>
+                <div class="flyer-canvas-shell">
+                  <canvas id="vibetineraryCanvas" width="1080" height="1350" aria-label="Preview of your Vibe Quest Vibetinerary"></canvas>
+                </div>
+              </section>
+            </div>
           </div>
         </section>
       </main>
@@ -606,7 +686,8 @@
   <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.3/leaflet-maplibre-gl.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.min.js"></script>
   <script src="./supabase-client.js?v=20260722"></script>
-  <script src="./app-v8.js?v=20260911-vibe-filter-colors-v1"></script>
+  <script src="./app-v8.js?v=20260911-vibetinerary-v1"></script>
   <script src="./flyer-studio.js?v=20260911-logo-mark-v2"></script>
+  <script src="./vibetinerary-studio.js?v=20260911-v1"></script>
 </body>
 </html>

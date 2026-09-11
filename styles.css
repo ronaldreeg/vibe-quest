@@ -1272,6 +1272,54 @@ textarea:focus {
   line-height: 1.65;
 }
 
+.workshop-mode-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: var(--gap);
+  border: 1px solid var(--line);
+}
+
+.workshop-mode-button {
+  display: grid;
+  min-width: 0;
+  min-height: 74px;
+  gap: 4px;
+  align-content: center;
+  justify-items: start;
+  padding: 12px clamp(18px, 3vw, 34px);
+  border: 0;
+  background: transparent;
+  color: var(--muted-strong);
+  text-align: left;
+}
+
+.workshop-mode-button + .workshop-mode-button {
+  border-left: 1px solid var(--line);
+}
+
+.workshop-mode-button span {
+  font-family: var(--font-reading);
+  font-size: clamp(1.15rem, 2vw, 1.55rem);
+  line-height: 1;
+}
+
+.workshop-mode-button small {
+  color: var(--muted);
+  font-family: var(--font-interface);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.workshop-mode-button:hover,
+.workshop-mode-button.is-active {
+  background: rgba(243, 233, 196, 0.07);
+  color: var(--text);
+}
+
+.workshop-mode-button.is-active {
+  box-shadow: inset 0 -4px 0 var(--brand-orange);
+}
+
 .flyer-studio {
   display: grid;
   grid-template-columns: minmax(340px, 460px) minmax(0, 1fr);
@@ -1389,6 +1437,31 @@ textarea:focus {
   gap: var(--gap-xs);
 }
 
+.vibetinerary-layout-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gap-xs);
+}
+
+.vibetinerary-layout-options .flyer-option {
+  display: grid;
+  min-height: 62px;
+  gap: 3px;
+  align-content: center;
+  justify-items: start;
+  text-align: left;
+}
+
+.vibetinerary-layout-options .flyer-option span {
+  font-size: 0.9rem;
+}
+
+.vibetinerary-layout-options .flyer-option small {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
 .flyer-option,
 .flyer-symbol,
 .flyer-swatch {
@@ -1462,6 +1535,115 @@ textarea:focus {
   color: var(--danger);
 }
 
+.vibetinerary-points-group {
+  position: relative;
+  min-width: 0;
+  margin: 20px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.vibetinerary-points-group > legend {
+  margin-bottom: 9px;
+  color: var(--muted-strong);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.vibetinerary-points-group > output {
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: var(--brand-orange);
+  font-family: var(--font-interface);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.vibetinerary-points {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+
+.vibetinerary-point {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 40px;
+  gap: 10px;
+  align-items: start;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.vibetinerary-point-number {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid var(--brand-orange);
+  color: var(--brand-orange);
+  font-family: var(--font-interface);
+  font-size: 1.1rem;
+}
+
+.vibetinerary-point-fields {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+}
+
+.vibetinerary-point-fields label {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+  color: var(--muted);
+  font-family: var(--font-interface);
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.vibetinerary-point-fields input,
+.vibetinerary-point-fields textarea {
+  min-height: 42px;
+  padding: 9px 10px;
+  font-family: var(--font-reading);
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
+.vibetinerary-point-fields textarea {
+  height: 60px;
+  resize: vertical;
+}
+
+.vibetinerary-remove-point {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted-strong);
+  font-family: var(--font-interface);
+  font-size: 1rem;
+}
+
+.vibetinerary-remove-point:hover {
+  border-color: var(--brand-pink);
+  color: var(--brand-pink);
+}
+
+.vibetinerary-add-point {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.vibetinerary-add-point:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
 .flyer-preview-panel {
   min-width: 0;
   padding: clamp(20px, 3vw, 36px);
@@ -1483,7 +1665,8 @@ textarea:focus {
     0 0 0 3px var(--accent);
 }
 
-#flyerCanvas {
+#flyerCanvas,
+#vibetineraryCanvas {
   display: block;
   width: 100%;
   height: auto;
@@ -2770,6 +2953,30 @@ textarea:focus {
 
   .flyer-option {
     font-size: 0.7rem;
+  }
+
+  .workshop-mode-button {
+    min-height: 68px;
+    padding: 10px 14px;
+  }
+
+  .workshop-mode-button span {
+    font-size: 1rem;
+  }
+
+  .workshop-mode-button small {
+    font-size: 0.66rem;
+  }
+
+  .vibetinerary-point {
+    grid-template-columns: 34px minmax(0, 1fr) 34px;
+    gap: 8px;
+  }
+
+  .vibetinerary-point-number,
+  .vibetinerary-remove-point {
+    width: 34px;
+    height: 34px;
   }
 
   .flyer-actions {

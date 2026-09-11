@@ -1699,7 +1699,10 @@ function renderViews() {
     initOutThereMap();
     updateOutThereSlideshow();
   }
-  if (isShare) window.vvFlyerStudio?.render();
+  if (isShare) {
+    window.vvFlyerStudio?.render();
+    window.vvVibetineraryStudio?.render();
+  }
 }
 
 function renderAdventures() {
