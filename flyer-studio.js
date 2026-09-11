@@ -5,6 +5,7 @@
   const HEIGHT = 1350;
   const FONT_READING = '"Faculty Glyphic", Georgia, serif';
   const FONT_INTERFACE = '"VT323", monospace';
+  const BRAND_MARK_URL = "./assets/brand/logo-mark-signal.svg?v=20260911-flyer-v1";
   const DEFAULTS = {
     layout: "full",
     accent: "#f8d23d",
@@ -31,6 +32,9 @@
     }
     return;
   }
+
+  const brandMark = new Image();
+  brandMark.decoding = "async";
 
   const studio = {
     layout: DEFAULTS.layout,
@@ -273,14 +277,21 @@
     context.restore();
   }
 
-  function drawBrand(x, y, color, align = "left") {
-    context.textAlign = align;
+  function drawBrand(x, y, color, markSize) {
     context.textBaseline = "top";
+    context.textAlign = "left";
+
+    if (brandMark.complete && brandMark.naturalWidth > 0) {
+      context.drawImage(brandMark, x, y, markSize, markSize);
+    } else {
+      context.fillStyle = color;
+      setFont(Math.round(markSize * 0.38), 800, FONT_INTERFACE);
+      context.fillText("VIBE QUEST", x, y + Math.round(markSize * 0.2));
+    }
+
     context.fillStyle = color;
-    setFont(34, 800, FONT_INTERFACE);
-    context.fillText("VIBE QUEST", x, y);
-    setFont(18, 700, FONT_INTERFACE);
-    context.fillText("REAL-WORLD DISCOVERY", x, y + 44);
+    setFont(Math.max(14, Math.round(markSize * 0.2)), 700, FONT_INTERFACE);
+    context.fillText("REAL-WORLD DISCOVERY", x, y + markSize + 8);
   }
 
   function drawFullFrame(copy, accent) {
@@ -289,7 +300,7 @@
     context.fillRect(0, 0, WIDTH, HEIGHT);
     context.fillStyle = accent;
     context.fillRect(0, 0, 22, HEIGHT);
-    drawBrand(72, 64, "#f3e9c4");
+    drawBrand(72, 48, "#f3e9c4", 88);
     drawSymbol(studio.symbol, 940, 108, 96, accent);
 
     context.fillStyle = accent;
@@ -337,10 +348,12 @@
   function drawSplitFrame(copy, accent) {
     context.fillStyle = "#f3e9c4";
     context.fillRect(0, 0, WIDTH, HEIGHT);
-    context.fillStyle = accent;
+    context.fillStyle = "#2f3035";
     context.fillRect(0, 0, WIDTH, 118);
-    drawBrand(64, 24, contrastColor(accent));
-    drawSymbol(studio.symbol, 950, 59, 72, contrastColor(accent));
+    context.fillStyle = accent;
+    context.fillRect(0, 108, WIDTH, 10);
+    drawBrand(64, 10, "#f3e9c4", 60);
+    drawSymbol(studio.symbol, 950, 55, 72, accent);
     drawMedia(0, 118, WIDTH, 590, accent);
 
     context.fillStyle = "#2f3035";
@@ -390,7 +403,7 @@
     drawMedia(0, 0, WIDTH, HEIGHT, accent);
     context.fillStyle = "rgba(10, 12, 16, 0.68)";
     context.fillRect(0, 0, WIDTH, HEIGHT);
-    drawBrand(64, 54, "#f3e9c4");
+    drawBrand(64, 40, "#f3e9c4", 88);
 
     const panelX = 76;
     const panelY = 250;
@@ -612,6 +625,8 @@
   });
 
   window.vvFlyerStudio = { render };
+  brandMark.addEventListener("load", render);
+  brandMark.src = BRAND_MARK_URL;
   updateNoteCount();
   updateSubheaderSizeOutput();
   updateControlState();
