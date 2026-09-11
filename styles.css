@@ -1639,6 +1639,11 @@ textarea:focus {
   margin-top: 10px;
 }
 
+.vibetinerary-remove-background {
+  width: 100%;
+  margin-top: 8px;
+}
+
 .vibetinerary-add-point:disabled {
   cursor: not-allowed;
   opacity: 0.4;

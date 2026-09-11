@@ -39,6 +39,7 @@
   const canvas = document.querySelector("#vibetineraryCanvas");
   const pointsContainer = document.querySelector("#vibetineraryPoints");
   const pointCount = document.querySelector("#vibetineraryPointCount");
+  const photoInput = document.querySelector("#vibetineraryPhotoInput");
   const status = document.querySelector("#vibetineraryStatus");
   if (!view || !form || !pointsContainer || !(canvas instanceof HTMLCanvasElement)) return;
 
@@ -51,7 +52,10 @@
     workshopMode: "flyer",
     layout: "list",
     accent: COLORS.yellow,
-    points: DEFAULT_POINTS.map((point) => ({ ...point }))
+    points: DEFAULT_POINTS.map((point) => ({ ...point })),
+    photo: null,
+    photoUrl: "",
+    photoRequest: 0
   };
 
   function rgba(hex, alpha) {
@@ -171,6 +175,27 @@
     drawSingleLine("REAL-WORLD DISCOVERY", x, y + 48, size * 1.6, 16, 12, COLORS.cream);
   }
 
+  function drawBackground(overlayOpacity) {
+    context.fillStyle = COLORS.charcoal;
+    context.fillRect(0, 0, WIDTH, HEIGHT);
+    if (!studio.photo) return;
+
+    const sourceWidth = studio.photo.naturalWidth || studio.photo.width;
+    const sourceHeight = studio.photo.naturalHeight || studio.photo.height;
+    const scale = Math.max(WIDTH / sourceWidth, HEIGHT / sourceHeight);
+    const drawWidth = sourceWidth * scale;
+    const drawHeight = sourceHeight * scale;
+    context.drawImage(
+      studio.photo,
+      (WIDTH - drawWidth) / 2,
+      (HEIGHT - drawHeight) / 2,
+      drawWidth,
+      drawHeight
+    );
+    context.fillStyle = rgba(COLORS.charcoal, overlayOpacity);
+    context.fillRect(0, 0, WIDTH, HEIGHT);
+  }
+
   function fieldValue(name, fallback) {
     const field = form.elements.namedItem(name);
     return String(field?.value || fallback).trim();
@@ -189,8 +214,7 @@
 
   function drawListLayout(copy) {
     const accent = studio.accent;
-    context.fillStyle = COLORS.charcoal;
-    context.fillRect(0, 0, WIDTH, HEIGHT);
+    drawBackground(0.72);
     context.fillStyle = accent;
     context.fillRect(0, 0, 22, HEIGHT);
     drawBrand(58, 28, 148);
@@ -395,8 +419,7 @@
 
   function drawMapLayout(copy) {
     const accent = studio.accent;
-    context.fillStyle = COLORS.charcoal;
-    context.fillRect(0, 0, WIDTH, HEIGHT);
+    drawBackground(0.72);
     drawBrand(54, 26, 138);
     drawSingleLine("VIBETINERARY / TREASURE MAP", 232, 68, 770, 28, 19, accent);
 
@@ -427,7 +450,7 @@
 
     const mapTop = 420;
     const mapBottom = 1190;
-    context.fillStyle = COLORS.charcoalDeep;
+    context.fillStyle = studio.photo ? rgba(COLORS.charcoalDeep, 0.52) : COLORS.charcoalDeep;
     context.fillRect(46, mapTop, 988, mapBottom - mapTop);
     context.strokeStyle = accent;
     context.lineWidth = 4;
@@ -543,14 +566,66 @@
     else window.vvFlyerStudio?.render();
   }
 
+  function setStatus(message, isError = false) {
+    if (!status) return;
+    status.textContent = message;
+    status.classList.toggle("is-error", isError);
+  }
+
+  function clearPhoto() {
+    studio.photoRequest += 1;
+    studio.photo = null;
+    if (studio.photoUrl) URL.revokeObjectURL(studio.photoUrl);
+    studio.photoUrl = "";
+    if (photoInput) photoInput.value = "";
+    const removeButton = view.querySelector('[data-vibetinerary-action="clear-photo"]');
+    if (removeButton) removeButton.hidden = true;
+  }
+
+  function loadPhoto(file) {
+    const isImage = file instanceof File && (
+      String(file.type || "").startsWith("image/")
+      || /\.(avif|gif|heic|heif|jpe?g|png|webp)$/i.test(String(file.name || ""))
+    );
+    if (!isImage) {
+      setStatus("Choose a JPG, HEIC, PNG, or WebP background image.", true);
+      return;
+    }
+
+    const request = ++studio.photoRequest;
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.addEventListener("load", () => {
+      if (request !== studio.photoRequest) {
+        URL.revokeObjectURL(objectUrl);
+        return;
+      }
+      if (studio.photoUrl) URL.revokeObjectURL(studio.photoUrl);
+      studio.photo = image;
+      studio.photoUrl = objectUrl;
+      const removeButton = view.querySelector('[data-vibetinerary-action="clear-photo"]');
+      if (removeButton) removeButton.hidden = false;
+      setStatus("Background added. It stays on this device.");
+      render();
+    });
+    image.addEventListener("error", () => {
+      URL.revokeObjectURL(objectUrl);
+      if (request === studio.photoRequest) {
+        setStatus("That image could not be opened. Try a standard JPG, PNG, or WebP file.", true);
+      }
+    });
+    image.src = objectUrl;
+  }
+
   function reset() {
     form.reset();
+    clearPhoto();
     studio.layout = "list";
     studio.accent = COLORS.yellow;
     studio.points = DEFAULT_POINTS.map((point) => ({ ...point }));
     renderPointEditors();
     updateControlState();
-    if (status) status.textContent = "Build a route with up to five points.";
+    setStatus("Build a route with up to five points.");
     render();
   }
 
@@ -581,6 +656,7 @@
 
   form.addEventListener("submit", (event) => event.preventDefault());
   form.addEventListener("input", (event) => {
+    if (event.target === photoInput) return;
     const row = event.target.closest("[data-vibetinerary-point]");
     const field = event.target.dataset.pointField;
     if (row && field) {
@@ -588,6 +664,10 @@
       if (studio.points[index]) studio.points[index][field] = event.target.value;
     }
     render();
+  });
+  photoInput?.addEventListener("change", (event) => {
+    const file = event.target.files?.[0];
+    if (file) loadPhoto(file);
   });
 
   view.addEventListener("click", (event) => {
@@ -602,6 +682,12 @@
     if (target.dataset.vibetineraryAction === "add" && studio.points.length < MAX_POINTS) {
       studio.points.push({ name: `New point ${studio.points.length + 1}`, note: "Add a small reason to stop here." });
       renderPointEditors();
+    }
+    if (target.dataset.vibetineraryAction === "clear-photo") {
+      clearPhoto();
+      setStatus("Background removed. Your itinerary is unchanged.");
+      render();
+      return;
     }
     if (target.dataset.vibetineraryRemove !== undefined && studio.points.length > 1) {
       studio.points.splice(Number(target.dataset.vibetineraryRemove), 1);
@@ -620,6 +706,9 @@
   });
 
   window.vvVibetineraryStudio = { render, setWorkshopMode };
+  window.addEventListener("beforeunload", () => {
+    if (studio.photoUrl) URL.revokeObjectURL(studio.photoUrl);
+  });
   brandMark.addEventListener("load", render);
   brandMark.src = BRAND_MARK_URL;
   renderPointEditors();

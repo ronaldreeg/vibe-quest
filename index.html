@@ -522,6 +522,11 @@
                   <span>Opening note</span>
                   <textarea name="vibetineraryIntro" maxlength="120" rows="2" placeholder="Set the tone for the route.">A few local stops. No rigid schedule. Follow the good signs.</textarea>
                 </label>
+                <label class="field">
+                  <span>Background image (optional)</span>
+                  <input class="file-input" id="vibetineraryPhotoInput" name="vibetineraryPhoto" type="file" accept="image/*" />
+                </label>
+                <button class="secondary-button vibetinerary-remove-background" type="button" data-vibetinerary-action="clear-photo" hidden>Remove background</button>
 
                 <fieldset class="flyer-option-group">
                   <legend>Layout</legend>
@@ -688,6 +693,6 @@
   <script src="./supabase-client.js?v=20260722"></script>
   <script src="./app-v8.js?v=20260911-vibetinerary-v1"></script>
   <script src="./flyer-studio.js?v=20260911-logo-mark-v2"></script>
-  <script src="./vibetinerary-studio.js?v=20260911-v1"></script>
+  <script src="./vibetinerary-studio.js?v=20260911-background-v1"></script>
 </body>
 </html>
