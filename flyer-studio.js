@@ -5,7 +5,7 @@
   const HEIGHT = 1350;
   const FONT_READING = '"Faculty Glyphic", Georgia, serif';
   const FONT_INTERFACE = '"VT323", monospace';
-  const BRAND_MARK_URL = "./assets/brand/logo-mark-signal.svg?v=20260911-flyer-v1";
+  const BRAND_MARK_URL = "./assets/brand/logo-mark-signal.svg?v=20260911-flyer-v2";
   const DEFAULTS = {
     layout: "full",
     accent: "#f8d23d",
@@ -285,13 +285,11 @@
       context.drawImage(brandMark, x, y, markSize, markSize);
     } else {
       context.fillStyle = color;
-      setFont(Math.round(markSize * 0.38), 800, FONT_INTERFACE);
-      context.fillText("VIBE QUEST", x, y + Math.round(markSize * 0.2));
+      setFont(34, 800, FONT_INTERFACE);
+      context.fillText("VIBE QUEST", x, y);
+      setFont(18, 700, FONT_INTERFACE);
+      context.fillText("REAL-WORLD DISCOVERY", x, y + 44);
     }
-
-    context.fillStyle = color;
-    setFont(Math.max(14, Math.round(markSize * 0.2)), 700, FONT_INTERFACE);
-    context.fillText("REAL-WORLD DISCOVERY", x, y + markSize + 8);
   }
 
   function drawFullFrame(copy, accent) {
@@ -300,7 +298,7 @@
     context.fillRect(0, 0, WIDTH, HEIGHT);
     context.fillStyle = accent;
     context.fillRect(0, 0, 22, HEIGHT);
-    drawBrand(72, 48, "#f3e9c4", 88);
+    drawBrand(72, 32, "#f3e9c4", 160);
     drawSymbol(studio.symbol, 940, 108, 96, accent);
 
     context.fillStyle = accent;
@@ -352,7 +350,7 @@
     context.fillRect(0, 0, WIDTH, 118);
     context.fillStyle = accent;
     context.fillRect(0, 108, WIDTH, 10);
-    drawBrand(64, 10, "#f3e9c4", 60);
+    drawBrand(64, 5, "#f3e9c4", 108);
     drawSymbol(studio.symbol, 950, 55, 72, accent);
     drawMedia(0, 118, WIDTH, 590, accent);
 
@@ -403,7 +401,7 @@
     drawMedia(0, 0, WIDTH, HEIGHT, accent);
     context.fillStyle = "rgba(10, 12, 16, 0.68)";
     context.fillRect(0, 0, WIDTH, HEIGHT);
-    drawBrand(64, 40, "#f3e9c4", 88);
+    drawBrand(64, 28, "#f3e9c4", 160);
 
     const panelX = 76;
     const panelY = 250;
