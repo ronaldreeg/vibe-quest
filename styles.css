@@ -917,6 +917,15 @@ textarea:focus {
   color: var(--brand-charcoal);
 }
 
+.filter-bar .vibe-chip.is-active:not(.vibe-all) {
+  border-color: var(--vibe-color);
+  background: var(--vibe-color);
+  color: var(--vibe-text);
+  box-shadow:
+    inset 0 0 0 2px rgba(243, 233, 196, 0.72),
+    0 3px 8px rgba(13, 17, 23, 0.14);
+}
+
 .filter-bar .panel-heading > div {
   display: grid;
   width: max-content;

@@ -91,6 +91,34 @@ const MARKER_STYLE = {
   Free: "#536b57"
 };
 
+const VIBE_FILTER_STYLE = {
+  "Local Lore": ["#f6a938", "#2f3035"],
+  "Game On": ["#f45077", "#2f3035"],
+  Chill: ["#0f8fb1", "#f3e9c4"],
+  Adventure: ["#fa622e", "#2f3035"],
+  Getaway: ["#087d9c", "#f3e9c4"],
+  Random: ["#fc8a43", "#2f3035"],
+  Divey: ["#8f7854", "#f3e9c4"],
+  "Hidden Gem": ["#f8d23d", "#2f3035"],
+  Crafty: ["#d93f68", "#f3e9c4"],
+  Wholesome: ["#d9cda6", "#2f3035"],
+  Spooky: ["#7a4058", "#f3e9c4"],
+  Bazaar: ["#f6a938", "#2f3035"],
+  Creative: ["#f45077", "#2f3035"],
+  Curious: ["#0f8fb1", "#f3e9c4"],
+  Groovy: ["#fc8a43", "#2f3035"],
+  Healthy: ["#536b57", "#f3e9c4"],
+  Weird: ["#fa622e", "#2f3035"],
+  Country: ["#8f7854", "#f3e9c4"],
+  Club: ["#f45077", "#2f3035"],
+  Underground: ["#7a4058", "#f3e9c4"],
+  Gig: ["#d93f68", "#f3e9c4"],
+  Flea: ["#d9cda6", "#2f3035"],
+  Tasty: ["#fa622e", "#2f3035"],
+  Shindig: ["#f6a938", "#2f3035"],
+  Fest: ["#f8d23d", "#2f3035"]
+};
+
 const LEGACY_TYPE_MAP = {
   Chill: "Wellness",
   Thrill: "Outdoors",
@@ -1181,9 +1209,15 @@ function typeFilterMarkup(activeTypes, dataAttribute) {
 
 function vibeFilterMarkup(activeVibes, dataAttribute) {
   return ["All", ...VIBE_FILTERS].map((vibe) => {
+    const [background, text] = VIBE_FILTER_STYLE[vibe] || [];
     const active = vibe === "All" ? activeVibes.length === 0 : activeVibes.includes(vibe);
     return `
-      <button class="chip ${active ? "is-active" : ""}" data-${dataAttribute}="${escapeHtml(vibe)}" aria-pressed="${active}">
+      <button
+        class="chip vibe-chip ${vibe === "All" ? "vibe-all" : ""} ${active ? "is-active" : ""}"
+        data-${dataAttribute}="${escapeHtml(vibe)}"
+        aria-pressed="${active}"
+        ${background ? `style="--vibe-color:${background};--vibe-text:${text}"` : ""}
+      >
         ${escapeHtml(vibe)}
       </button>
     `;
