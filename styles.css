@@ -1823,6 +1823,10 @@ textarea:focus {
   opacity: 1;
 }
 
+.out-there-slide-portrait {
+  object-position: center 50%;
+}
+
 .out-there-slide-controls {
   position: absolute;
   z-index: 3;

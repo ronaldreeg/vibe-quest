@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Faculty+Glyphic&family=VT323&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" />
-    <link rel="stylesheet" href="./styles.css?v=20260911-out-there-map-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260911-field-note-photos-v1" />
   </head>
   <body>
     <div class="app-shell">
@@ -183,9 +183,10 @@
           </header>
           <figure class="out-there-feature" data-out-there-slideshow>
             <div class="out-there-slides" aria-live="polite">
-              <img class="out-there-slide is-active" data-out-there-slide src="https://upload.wikimedia.org/wikipedia/commons/0/03/Sunset_Over_Kemah_Bridge.jpg" alt="Sunset over the channel from Clear Lake toward Galveston Bay" />
-              <img class="out-there-slide" data-out-there-slide src="https://images.unsplash.com/photo-1701972184355-d7de7849ee26?auto=format&fit=crop&w=2200&q=88" alt="Soft evening waves along the Galveston shore" loading="lazy" aria-hidden="true" />
-              <img class="out-there-slide" data-out-there-slide src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2200&q=88" alt="Wide coastal water and open sky" loading="lazy" aria-hidden="true" />
+              <img class="out-there-slide is-active" data-out-there-slide src="./assets/out-there/field-note-001-sunset.jpg" alt="People gathered beside calm bay water as the sun sets near Galveston" />
+              <img class="out-there-slide out-there-slide-portrait" data-out-there-slide src="./assets/out-there/field-note-001-martini.jpg" alt="Vintage blue-toned photograph of the Martini Theatre facade in Galveston" loading="lazy" aria-hidden="true" />
+              <img class="out-there-slide" data-out-there-slide src="./assets/out-there/field-note-001-harbor.jpg" alt="Shrimp boat returning across Galveston harbor with seabirds overhead" loading="lazy" aria-hidden="true" />
+              <img class="out-there-slide" data-out-there-slide src="./assets/out-there/field-note-001-maceo.jpg" alt="Black-and-white view of Maceo Spice and Import Company beneath storm clouds" loading="lazy" aria-hidden="true" />
             </div>
             <div class="out-there-slide-controls" aria-label="Out There photo slideshow">
               <button class="out-there-slide-button" type="button" data-action="out-there-prev" aria-label="Previous photo">&larr;</button>
@@ -193,41 +194,39 @@
                 <button class="out-there-slide-dot is-active" type="button" data-action="out-there-slide" data-slide-index="0" aria-label="Show photo 1"></button>
                 <button class="out-there-slide-dot" type="button" data-action="out-there-slide" data-slide-index="1" aria-label="Show photo 2"></button>
                 <button class="out-there-slide-dot" type="button" data-action="out-there-slide" data-slide-index="2" aria-label="Show photo 3"></button>
+                <button class="out-there-slide-dot" type="button" data-action="out-there-slide" data-slide-index="3" aria-label="Show photo 4"></button>
               </div>
               <button class="out-there-slide-button" type="button" data-action="out-there-next" aria-label="Next photo">&rarr;</button>
             </div>
             <figcaption class="editorial-map-window">
               <div class="editorial-map-titlebar">
                 <span class="mini-label">Photo location</span>
-                <strong>Galveston Bay, TX</strong>
+                <strong>Galveston Island, TX</strong>
               </div>
-              <div class="editorial-map" id="outThereMap" role="img" aria-label="Stylized map showing the photo location near Kemah on Galveston Bay">
+              <div class="editorial-map" id="outThereMap" role="img" aria-label="Stylized map showing the field note location on Galveston Island">
                 <svg class="editorial-map-art" viewBox="0 0 660 350" aria-hidden="true" focusable="false">
                   <rect class="editorial-map-water" width="660" height="350" />
-                  <path class="editorial-map-land" d="M0 0h660v76l-76 19-35 31-74 13-54-23-72-42-66 2-52 35-45 41-74 27-55-20L0 167Z" />
-                  <path class="editorial-map-land" d="M0 293l76-27 61 8 59 34 76 4 51-18 73-12 70 17 76 2 118-31v80H0Z" />
-                  <path class="editorial-map-channel" d="M268 79c22 34 52 49 88 63 34 13 54 32 62 62" />
-                  <path class="editorial-map-road" d="M28 42c108 22 199 35 306 45 92 9 183 4 298-21" />
-                  <path class="editorial-map-road" d="M84 0c27 69 47 114 83 164" />
-                  <path class="editorial-map-road editorial-map-road-major" d="M405 0c-15 61-25 111-30 178" />
-                  <path class="editorial-map-road" d="M498 0c-9 58-2 99 24 137" />
-                  <path class="editorial-map-road" d="M14 320c102-20 204-26 319-15 103 10 198 8 311-13" />
+                  <path class="editorial-map-land" d="M-35 266C66 232 144 211 236 188c114-29 221-65 307-101l152-61v116l-125 47c-95 36-203 71-322 101-93 24-176 45-283 81Z" />
+                  <path class="editorial-map-channel" d="M90 242c122-35 246-68 376-116 63-23 121-49 184-78" />
+                  <path class="editorial-map-road editorial-map-road-major" d="M-12 304c150-42 279-74 411-119 97-33 173-64 268-105" />
+                  <path class="editorial-map-road" d="M22 278c151-43 267-70 390-112 91-31 162-61 240-95" />
+                  <path class="editorial-map-road" d="M133 232l33 96M221 208l32 95M310 181l31 94M399 151l30 93M489 116l30 92M575 81l31 91" />
                   <g class="editorial-map-grid">
-                    <path d="M0 225h660" />
-                    <path d="M220 167v183" />
-                    <path d="M520 140v210" />
+                    <path d="M0 245c143-37 278-73 421-123 83-29 153-58 239-94" />
+                    <path d="M63 314c142-38 269-69 402-116 72-25 130-50 195-78" />
                   </g>
-                  <text class="editorial-map-label" x="224" y="62">CLEAR LAKE</text>
-                  <text class="editorial-map-label editorial-map-label-small" x="398" y="129">KEMAH</text>
-                  <text class="editorial-map-water-label" x="438" y="245">GALVESTON BAY</text>
-                  <g class="editorial-map-marker" transform="translate(385 161)">
+                  <text class="editorial-map-label" x="327" y="145">HISTORIC DOWNTOWN</text>
+                  <text class="editorial-map-label editorial-map-label-small" x="466" y="84">THE PORT</text>
+                  <text class="editorial-map-water-label" x="73" y="119">GALVESTON BAY</text>
+                  <text class="editorial-map-water-label editorial-map-label-small" x="420" y="292">SEAWALL</text>
+                  <g class="editorial-map-marker" transform="translate(393 166)">
                     <rect x="-16" y="-16" width="32" height="32" />
                     <path d="M0 16v23" />
                   </g>
                 </svg>
               </div>
               <div class="editorial-map-footer">
-                <p>Bay side light near the Clear Lake channel.</p>
+                <p>Around the island, from the harbor to the seawall.</p>
                 <button class="text-button editorial-map-link" type="button" data-action="explore-galveston">
                   Explore Galveston vibes →
                 </button>
