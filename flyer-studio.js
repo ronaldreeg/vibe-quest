@@ -233,8 +233,6 @@
         context.lineTo(gridX + height, y + height);
         context.stroke();
       }
-      context.fillStyle = accent;
-      context.fillRect(x + width * 0.62, y, width * 0.38, height * 0.34);
     }
     context.restore();
   }
