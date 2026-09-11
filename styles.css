@@ -1357,6 +1357,27 @@ textarea:focus {
   margin-top: 14px;
 }
 
+.vibe-code-print-note {
+  display: grid;
+  gap: 7px;
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-left: 4px solid var(--brand-orange);
+  background: rgba(243, 233, 196, 0.06);
+}
+
+.vibe-code-print-note .mini-label {
+  color: var(--brand-yellow);
+}
+
+.vibe-code-print-note p {
+  max-width: 46ch;
+  margin: 0;
+  color: var(--muted-strong);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
 .flyer-controls textarea {
   resize: vertical;
 }
