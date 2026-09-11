@@ -1275,7 +1275,6 @@ function adventureCard(adventure) {
 
 let map;
 let mapMarkers = [];
-let outThereMap;
 let mobileMapInteractionEnabled = false;
 const compactMapQuery = window.matchMedia("(max-width: 900px), (pointer: coarse)");
 let mapPinchDelta = 0;
@@ -1616,33 +1615,6 @@ function showAdventureOnMap(id) {
   }, 120);
 }
 
-function initOutThereMap() {
-  const mapElement = document.querySelector("#outThereMap");
-  if (!mapElement || !window.L) return;
-  if (!outThereMap) {
-    const photoLocation = [29.5465, -95.0192];
-    outThereMap = L.map(mapElement, {
-      attributionControl: false,
-      scrollWheelZoom: false,
-      zoomControl: false
-    }).setView(photoLocation, 13);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution: "&copy; OpenStreetMap contributors"
-    }).addTo(outThereMap);
-    L.marker(photoLocation, {
-      icon: L.divIcon({
-        className: "editorial-location-marker-shell",
-        html: `<span class="editorial-location-marker" aria-hidden="true"></span>`,
-        iconSize: [20, 20],
-        iconAnchor: [10, 10]
-      }),
-      title: "Galveston Bay"
-    }).addTo(outThereMap);
-  }
-  setTimeout(() => outThereMap.invalidateSize(), 50);
-}
-
 function updateOutThereSlideshow(index = state.outThereSlideIndex) {
   const slides = [...document.querySelectorAll("[data-out-there-slide]")];
   if (!slides.length) return;
@@ -1696,7 +1668,6 @@ function renderViews() {
   });
   if (isDiscover && map) setTimeout(() => map.invalidateSize(), 50);
   if (isOutThere) {
-    initOutThereMap();
     updateOutThereSlideshow();
   }
   if (isShare) {
