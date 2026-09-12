@@ -65,14 +65,13 @@
     charcoal: "#2f3035",
     charcoalDeep: "#22242a",
     cream: "#f3e9c4",
-    orange: "#fa622e",
     pink: "#f45077",
     teal: "#0f8fb1",
     yellow: "#f8d23d"
   };
   const DEFAULTS = {
     layout: "signal",
-    accent: COLORS.orange,
+    accent: COLORS.teal,
     mark: "key"
   };
 
@@ -91,10 +90,6 @@
   brandCanvas.width = 500;
   brandCanvas.height = 500;
   const brandContext = brandCanvas.getContext("2d");
-  const iconTintCanvas = document.createElement("canvas");
-  iconTintCanvas.width = 128;
-  iconTintCanvas.height = 128;
-  const iconTintContext = iconTintCanvas.getContext("2d");
   const brandMark = new Image();
   brandMark.decoding = "async";
   const iconLibrary = new Image();
@@ -162,24 +157,6 @@
     const green = (value >> 8) & 255;
     const blue = value & 255;
     return (red * 299 + green * 587 + blue * 114) / 1000 > 150 ? COLORS.charcoalDeep : COLORS.cream;
-  }
-
-  function highContrastColor(hex) {
-    const toLuminance = (color) => {
-      const normalized = String(color).replace("#", "").padEnd(6, "0").slice(0, 6);
-      const value = Number.parseInt(normalized, 16);
-      const channels = [(value >> 16) & 255, (value >> 8) & 255, value & 255].map((channel) => {
-        const sample = channel / 255;
-        return sample <= 0.03928 ? sample / 12.92 : ((sample + 0.055) / 1.055) ** 2.4;
-      });
-      return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
-    };
-    const background = toLuminance(hex);
-    const cream = toLuminance(COLORS.cream);
-    const charcoal = toLuminance(COLORS.charcoalDeep);
-    const creamContrast = (Math.max(background, cream) + 0.05) / (Math.min(background, cream) + 0.05);
-    const charcoalContrast = (Math.max(background, charcoal) + 0.05) / (Math.min(background, charcoal) + 0.05);
-    return creamContrast > charcoalContrast ? COLORS.cream : COLORS.charcoalDeep;
   }
 
   function setFont(size, weight = 700, family = FONT_READING) {
@@ -355,62 +332,31 @@
     context.restore();
   }
 
-  function drawTintedLibraryIcon(markName, x, y, maxWidth, maxHeight, color, alpha = 1) {
-    const mark = CODE_MARKS[markName];
-    if (!mark || mark.asset || !iconTintContext || !iconLibrary.complete || iconLibrary.naturalWidth <= 0) {
-      drawPixelSpark(x + maxWidth / 2, y + maxHeight / 2, Math.min(maxWidth, maxHeight) * 0.56, color);
-      return;
-    }
-
-    const bufferSize = iconTintCanvas.width;
-    const inset = 6;
-    const available = bufferSize - inset * 2;
-    const ratio = mark.width / mark.height;
-    let width = available;
-    let height = width / ratio;
-    if (height > available) {
-      height = available;
-      width = height * ratio;
-    }
-
-    const scaleX = iconLibrary.naturalWidth / ICON_LIBRARY_SIZE.width;
-    const scaleY = iconLibrary.naturalHeight / ICON_LIBRARY_SIZE.height;
-    iconTintContext.clearRect(0, 0, bufferSize, bufferSize);
-    iconTintContext.globalCompositeOperation = "source-over";
-    iconTintContext.imageSmoothingEnabled = false;
-    iconTintContext.drawImage(
-      iconLibrary,
-      mark.x * scaleX,
-      mark.y * scaleY,
-      mark.width * scaleX,
-      mark.height * scaleY,
-      (bufferSize - width) / 2,
-      (bufferSize - height) / 2,
-      width,
-      height
-    );
-    iconTintContext.globalCompositeOperation = "source-in";
-    iconTintContext.fillStyle = color;
-    iconTintContext.fillRect(0, 0, bufferSize, bufferSize);
-    iconTintContext.globalCompositeOperation = "source-over";
+  function drawIconField(x, y, width, height) {
+    const rows = 3;
+    const rowHeight = height / rows;
+    const offsets = [-28, 5, -46];
+    const yOffsets = [-7, 2, 5];
+    const sizes = [54, 45, 60, 49, 57, 47, 62, 51];
+    let iconIndex = 0;
 
     context.save();
-    context.globalAlpha = alpha;
-    context.imageSmoothingEnabled = false;
-    context.drawImage(iconTintCanvas, x, y, maxWidth, maxHeight);
-    context.restore();
-  }
+    context.beginPath();
+    context.rect(x, y, width, height);
+    context.clip();
 
-  function drawIconRibbon(names, x, y, width, height, gap = 5, alpha = 1, tintColor = "") {
-    const iconSize = Math.min(height, (width - gap * (names.length - 1)) / names.length);
-    const ribbonWidth = iconSize * names.length + gap * (names.length - 1);
-    const startX = x + (width - ribbonWidth) / 2;
-    names.forEach((name, index) => {
-      const iconX = startX + index * (iconSize + gap);
-      const iconY = y + (height - iconSize) / 2;
-      if (tintColor) drawTintedLibraryIcon(name, iconX, iconY, iconSize, iconSize, tintColor, alpha);
-      else drawLibraryIcon(name, iconX, iconY, iconSize, iconSize, alpha);
-    });
+    for (let row = 0; row < rows; row += 1) {
+      let iconX = x + offsets[row];
+      while (iconX < x + width + 40) {
+        const size = sizes[(iconIndex + row * 3) % sizes.length];
+        const iconY = y + row * rowHeight + (rowHeight - size) / 2 + yOffsets[row];
+        drawLibraryIcon(ICON_RIBBON[iconIndex % ICON_RIBBON.length], iconX, iconY, size, size);
+        iconX += size + 3 + ((iconIndex + row) % 3) * 2;
+        iconIndex += 1;
+      }
+    }
+
+    context.restore();
   }
 
   function drawCodeMark(centerX, centerY, qrSize) {
@@ -508,8 +454,8 @@
     });
 
     context.fillStyle = accent;
-    context.fillRect(0, 930, SIZE, 150);
-    drawIconRibbon(ICON_RIBBON.slice(0, 22), 62, 978, 956, 50, 5, 1, highContrastColor(accent));
+    context.fillRect(0, 918, SIZE, 162);
+    drawIconField(0, 918, SIZE, 162);
   }
 
   function drawPortalLayout(copy, qr) {
@@ -518,7 +464,7 @@
     context.fillRect(0, 0, SIZE, SIZE);
     context.fillStyle = accent;
     context.fillRect(0, 0, SIZE, 24);
-    context.fillRect(0, 930, SIZE, 150);
+    context.fillRect(0, 918, SIZE, 162);
 
     drawBrand(36, 24, 160, accent);
     fittedText(copy.title, {
@@ -538,16 +484,16 @@
     drawQrFrame(290, 345, 500, qr, accent);
     drawSingleLine(copy.prompt.toUpperCase(), {
       x: SIZE / 2,
-      y: 944,
+      y: 882,
       maxWidth: 860,
       startSize: 29,
       minSize: 20,
       weight: 700,
       family: FONT_INTERFACE,
-      color: highContrastColor(accent),
+      color: accent,
       align: "center"
     });
-    drawIconRibbon(ICON_RIBBON.slice(18, 40), 66, 1008, 948, 44, 5, 1, highContrastColor(accent));
+    drawIconField(0, 918, SIZE, 162);
   }
 
   function drawInvalidState(message) {
