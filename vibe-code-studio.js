@@ -9,15 +9,58 @@
   const GEM_MARK_URL = "./assets/brand/inventory.svg?v=20260912-v1";
   const ICON_LIBRARY_SIZE = { width: 2718.39, height: 115.56 };
   const CODE_MARKS = {
-    tent: { x: 2, y: 33, width: 56, height: 58 },
-    key: { x: 436, y: 36, width: 50, height: 55 },
+    tent: { x: 6, y: 36.8, width: 48, height: 50.8 },
+    racketBall: { x: 65.2, y: 38, width: 49.6, height: 49.6 },
+    confetti: { x: 132, y: 40.4, width: 44.8, height: 44.8 },
+    bowl: { x: 196, y: 39.6, width: 56, height: 45.6 },
+    beer: { x: 273.2, y: 36.8, width: 43.2, height: 47.6 },
     sparkles: { x: 327.6, y: 41.2, width: 40.4, height: 40.4 },
+    gift: { x: 381.2, y: 41.2, width: 43.2, height: 43.2 },
+    key: { x: 440.4, y: 40, width: 41.2, height: 46.4 },
     gem: { asset: "gem" },
-    flag: { x: 494, y: 35, width: 52, height: 56 },
-    skull: { x: 554, y: 35, width: 54, height: 53 },
-    palette: { x: 1073, y: 36, width: 55, height: 54 },
-    mushroom: { x: 1296, y: 38, width: 57, height: 54 }
+    flag: { x: 499.6, y: 40, width: 40.8, height: 46.8 },
+    skull: { x: 559.6, y: 39.6, width: 42.8, height: 44.4 },
+    scooter: { x: 615.2, y: 42.8, width: 62.4, height: 44.4 },
+    lounge: { x: 695.6, y: 34.8, width: 50.4, height: 50.4 },
+    mask: { x: 763.6, y: 41.6, width: 41.2, height: 44.4 },
+    dice: { x: 824.8, y: 39.2, width: 47.6, height: 48 },
+    music: { x: 890, y: 40, width: 46.4, height: 46.8 },
+    bandage: { x: 955.6, y: 44, width: 51.2, height: 44.4 },
+    fruit: { x: 1020.8, y: 34.4, width: 44.4, height: 50.8 },
+    palette: { x: 1078.8, y: 42, width: 43.2, height: 40.4 },
+    burger: { x: 1136.8, y: 40.4, width: 43.6, height: 43.6 },
+    baseball: { x: 1196.8, y: 42.4, width: 43.6, height: 43.6 },
+    sword: { x: 1253.6, y: 42, width: 34.8, height: 44 },
+    mushroom: { x: 1302, y: 44.4, width: 45.2, height: 42.4 },
+    dumbbell: { x: 1359.2, y: 47.2, width: 50, height: 34.4 },
+    cup: { x: 1421.2, y: 46.8, width: 34.4, height: 36.8 },
+    utensils: { x: 1468.8, y: 40.4, width: 27.6, height: 45.6 },
+    orb: { x: 1509.2, y: 40.4, width: 46, height: 46.4 },
+    pill: { x: 1572, y: 42, width: 41.2, height: 41.2 },
+    hotdog: { x: 1625.2, y: 42.8, width: 43.6, height: 52.4 },
+    basketball: { x: 1679.2, y: 42.4, width: 45.6, height: 40 },
+    bird: { x: 1739.6, y: 44.8, width: 43.2, height: 40.4 },
+    cauldron: { x: 1798.8, y: 44.8, width: 38.8, height: 41.2 },
+    parcels: { x: 1858.4, y: 47.6, width: 39.6, height: 37.2 },
+    cart: { x: 1918.8, y: 41.2, width: 52.4, height: 42.4 },
+    lightning: { x: 1989.2, y: 43.2, width: 35.6, height: 40.4 },
+    cassette: { x: 2046, y: 48.4, width: 44.4, height: 33.2 },
+    ski: { x: 2114.4, y: 40.8, width: 43.2, height: 46 },
+    invader: { x: 2178.4, y: 42, width: 45.6, height: 40 },
+    puzzle: { x: 2244, y: 38.4, width: 42.4, height: 42.4 },
+    horse: { x: 2305.6, y: 39.2, width: 42.8, height: 42.8 },
+    trophy: { x: 2366.4, y: 43.2, width: 37.6, height: 37.6 },
+    racket: { x: 2427.2, y: 41.6, width: 42, height: 39.6 },
+    swim: { x: 2486.8, y: 38, width: 38, height: 43.6 },
+    building: { x: 2544, y: 40.4, width: 40.8, height: 40.8 },
+    wand: { x: 2602.8, y: 42, width: 38.8, height: 38.8 }
   };
+  const ICON_RIBBON = [
+    "tent", "racketBall", "confetti", "bowl", "beer", "sparkles", "gift", "key", "flag", "skull",
+    "scooter", "lounge", "mask", "dice", "music", "bandage", "fruit", "palette", "burger", "baseball",
+    "sword", "mushroom", "dumbbell", "cup", "utensils", "orb", "pill", "hotdog", "basketball", "bird",
+    "cauldron", "parcels", "cart", "lightning", "cassette", "ski", "invader", "puzzle", "horse", "trophy"
+  ];
   const COLORS = {
     charcoal: "#2f3035",
     charcoalDeep: "#22242a",
@@ -289,6 +332,15 @@
     context.restore();
   }
 
+  function drawIconRibbon(names, x, y, width, height, gap = 5, alpha = 1) {
+    const iconSize = Math.min(height, (width - gap * (names.length - 1)) / names.length);
+    const ribbonWidth = iconSize * names.length + gap * (names.length - 1);
+    const startX = x + (width - ribbonWidth) / 2;
+    names.forEach((name, index) => {
+      drawLibraryIcon(name, startX + index * (iconSize + gap), y + (height - iconSize) / 2, iconSize, iconSize, alpha);
+    });
+  }
+
   function drawCodeMark(centerX, centerY, qrSize) {
     const badgeSize = Math.round(qrSize * 0.14);
     const inset = Math.max(8, Math.round(badgeSize * 0.09));
@@ -370,9 +422,7 @@
       family: FONT_INTERFACE,
       color: accent
     });
-    drawLibraryIcon("tent", 78, 790, 66, 66, 0.92);
-    drawLibraryIcon("flag", 184, 803, 56, 56, 0.92);
-    drawLibraryIcon("palette", 290, 790, 64, 64, 0.92);
+    drawIconRibbon(ICON_RIBBON.slice(0, 11), 456, 145, 564, 42, 7, 0.96);
 
     drawQrFrame(460, 230, 556, qr, accent);
     drawSingleLine("SCAN THE SIGNAL", {
@@ -386,6 +436,7 @@
       color: COLORS.cream,
       align: "center"
     });
+    drawIconRibbon(ICON_RIBBON.slice(11, 31), 62, 858, 956, 43, 5, 0.96);
 
     context.fillStyle = accent;
     context.fillRect(0, 930, SIZE, 150);
@@ -425,17 +476,15 @@
       align: "center"
     });
 
-    drawQrFrame(270, 345, 540, qr, accent);
-    drawLibraryIcon("tent", 78, 392, 72, 72, 0.95);
-    drawLibraryIcon("skull", 914, 482, 68, 68, 0.95);
-    drawLibraryIcon("palette", 92, 770, 62, 62, 0.95);
-    drawLibraryIcon("mushroom", 912, 804, 74, 74, 0.95);
+    drawIconRibbon(ICON_RIBBON.slice(0, 20), 66, 278, 948, 40, 5, 0.96);
+    drawQrFrame(290, 345, 500, qr, accent);
+    drawIconRibbon(ICON_RIBBON.slice(20, 40), 66, 883, 948, 40, 5, 0.96);
     drawSingleLine(copy.prompt.toUpperCase(), {
       x: SIZE / 2,
-      y: 928,
+      y: 944,
       maxWidth: 860,
-      startSize: 32,
-      minSize: 21,
+      startSize: 29,
+      minSize: 20,
       weight: 700,
       family: FONT_INTERFACE,
       color: accent,
@@ -443,10 +492,10 @@
     });
     drawSingleLine(copy.destinationLabel.toUpperCase(), {
       x: SIZE / 2,
-      y: 982,
+      y: 996,
       maxWidth: 850,
-      startSize: 25,
-      minSize: 18,
+      startSize: 23,
+      minSize: 17,
       weight: 700,
       family: FONT_INTERFACE,
       color: COLORS.charcoalDeep,

@@ -1478,10 +1478,11 @@ textarea:focus {
 
 .vibe-code-mark {
   display: grid;
+  height: 52px;
   min-width: 0;
-  min-height: 54px;
+  min-height: 52px;
   place-items: center;
-  padding: 8px;
+  padding: 5px 3px;
   border: 1px solid var(--line);
   background: rgba(243, 233, 196, 0.035);
   color: var(--text);
@@ -1503,9 +1504,10 @@ textarea:focus {
 .vibe-code-mark svg,
 .vibe-code-mark img {
   display: block;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
+  object-position: center;
   overflow: hidden;
 }
 
