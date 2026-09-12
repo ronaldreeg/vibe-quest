@@ -87,6 +87,14 @@
   if (!context) return;
 
   const qrCanvas = document.createElement("canvas");
+  const brandCanvas = document.createElement("canvas");
+  brandCanvas.width = 500;
+  brandCanvas.height = 500;
+  const brandContext = brandCanvas.getContext("2d");
+  const iconTintCanvas = document.createElement("canvas");
+  iconTintCanvas.width = 128;
+  iconTintCanvas.height = 128;
+  const iconTintContext = iconTintCanvas.getContext("2d");
   const brandMark = new Image();
   brandMark.decoding = "async";
   const iconLibrary = new Image();
@@ -154,6 +162,24 @@
     const green = (value >> 8) & 255;
     const blue = value & 255;
     return (red * 299 + green * 587 + blue * 114) / 1000 > 150 ? COLORS.charcoalDeep : COLORS.cream;
+  }
+
+  function highContrastColor(hex) {
+    const toLuminance = (color) => {
+      const normalized = String(color).replace("#", "").padEnd(6, "0").slice(0, 6);
+      const value = Number.parseInt(normalized, 16);
+      const channels = [(value >> 16) & 255, (value >> 8) & 255, value & 255].map((channel) => {
+        const sample = channel / 255;
+        return sample <= 0.03928 ? sample / 12.92 : ((sample + 0.055) / 1.055) ** 2.4;
+      });
+      return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+    };
+    const background = toLuminance(hex);
+    const cream = toLuminance(COLORS.cream);
+    const charcoal = toLuminance(COLORS.charcoalDeep);
+    const creamContrast = (Math.max(background, cream) + 0.05) / (Math.min(background, cream) + 0.05);
+    const charcoalContrast = (Math.max(background, charcoal) + 0.05) / (Math.min(background, charcoal) + 0.05);
+    return creamContrast > charcoalContrast ? COLORS.cream : COLORS.charcoalDeep;
   }
 
   function setFont(size, weight = 700, family = FONT_READING) {
@@ -235,9 +261,26 @@
     context.fillText(text, options.x, options.y, options.maxWidth);
   }
 
-  function drawBrand(x, y, size, textColor, accent) {
-    if (brandMark.complete && brandMark.naturalWidth > 0) {
-      context.drawImage(brandMark, x, y, size, size);
+  function drawBrand(x, y, size, accent) {
+    if (brandMark.complete && brandMark.naturalWidth > 0 && brandContext) {
+      brandContext.clearRect(0, 0, brandCanvas.width, brandCanvas.height);
+      brandContext.drawImage(brandMark, 0, 0, brandCanvas.width, brandCanvas.height);
+      const cropX = brandCanvas.width * 0.18;
+      const cropY = brandCanvas.height * 0.09;
+      const cropWidth = brandCanvas.width * 0.67;
+      const cropHeight = brandCanvas.height * 0.71;
+      const width = size * (cropWidth / cropHeight);
+      context.drawImage(
+        brandCanvas,
+        cropX,
+        cropY,
+        cropWidth,
+        cropHeight,
+        x + (size - width) / 2,
+        y,
+        width,
+        size
+      );
     } else {
       context.fillStyle = accent;
       context.fillRect(x, y, size, size);
@@ -254,26 +297,6 @@
         baseline: "middle"
       });
     }
-    drawSingleLine("VIBE CODE / REAL-WORLD DISCOVERY", {
-      x: x + size + 28,
-      y: y + 28,
-      maxWidth: 650,
-      startSize: 28,
-      minSize: 20,
-      weight: 700,
-      family: FONT_INTERFACE,
-      color: accent
-    });
-    drawSingleLine("VIBE QUEST", {
-      x: x + size + 28,
-      y: y + 66,
-      maxWidth: 650,
-      startSize: 22,
-      minSize: 16,
-      weight: 700,
-      family: FONT_INTERFACE,
-      color: textColor
-    });
   }
 
   function drawPixelSpark(x, y, size, color) {
@@ -332,12 +355,61 @@
     context.restore();
   }
 
-  function drawIconRibbon(names, x, y, width, height, gap = 5, alpha = 1) {
+  function drawTintedLibraryIcon(markName, x, y, maxWidth, maxHeight, color, alpha = 1) {
+    const mark = CODE_MARKS[markName];
+    if (!mark || mark.asset || !iconTintContext || !iconLibrary.complete || iconLibrary.naturalWidth <= 0) {
+      drawPixelSpark(x + maxWidth / 2, y + maxHeight / 2, Math.min(maxWidth, maxHeight) * 0.56, color);
+      return;
+    }
+
+    const bufferSize = iconTintCanvas.width;
+    const inset = 6;
+    const available = bufferSize - inset * 2;
+    const ratio = mark.width / mark.height;
+    let width = available;
+    let height = width / ratio;
+    if (height > available) {
+      height = available;
+      width = height * ratio;
+    }
+
+    const scaleX = iconLibrary.naturalWidth / ICON_LIBRARY_SIZE.width;
+    const scaleY = iconLibrary.naturalHeight / ICON_LIBRARY_SIZE.height;
+    iconTintContext.clearRect(0, 0, bufferSize, bufferSize);
+    iconTintContext.globalCompositeOperation = "source-over";
+    iconTintContext.imageSmoothingEnabled = false;
+    iconTintContext.drawImage(
+      iconLibrary,
+      mark.x * scaleX,
+      mark.y * scaleY,
+      mark.width * scaleX,
+      mark.height * scaleY,
+      (bufferSize - width) / 2,
+      (bufferSize - height) / 2,
+      width,
+      height
+    );
+    iconTintContext.globalCompositeOperation = "source-in";
+    iconTintContext.fillStyle = color;
+    iconTintContext.fillRect(0, 0, bufferSize, bufferSize);
+    iconTintContext.globalCompositeOperation = "source-over";
+
+    context.save();
+    context.globalAlpha = alpha;
+    context.imageSmoothingEnabled = false;
+    context.drawImage(iconTintCanvas, x, y, maxWidth, maxHeight);
+    context.restore();
+  }
+
+  function drawIconRibbon(names, x, y, width, height, gap = 5, alpha = 1, tintColor = "") {
     const iconSize = Math.min(height, (width - gap * (names.length - 1)) / names.length);
     const ribbonWidth = iconSize * names.length + gap * (names.length - 1);
     const startX = x + (width - ribbonWidth) / 2;
     names.forEach((name, index) => {
-      drawLibraryIcon(name, startX + index * (iconSize + gap), y + (height - iconSize) / 2, iconSize, iconSize, alpha);
+      const iconX = startX + index * (iconSize + gap);
+      const iconY = y + (height - iconSize) / 2;
+      if (tintColor) drawTintedLibraryIcon(name, iconX, iconY, iconSize, iconSize, tintColor, alpha);
+      else drawLibraryIcon(name, iconX, iconY, iconSize, iconSize, alpha);
     });
   }
 
@@ -397,7 +469,7 @@
       context.stroke();
     }
 
-    drawBrand(58, 46, 122, COLORS.cream, accent);
+    drawBrand(38, 24, 160, accent);
     fittedText(copy.title, {
       x: 66,
       y: 250,
@@ -422,8 +494,6 @@
       family: FONT_INTERFACE,
       color: accent
     });
-    drawIconRibbon(ICON_RIBBON.slice(0, 11), 456, 145, 564, 42, 7, 0.96);
-
     drawQrFrame(460, 230, 556, qr, accent);
     drawSingleLine("SCAN THE SIGNAL", {
       x: 738,
@@ -436,21 +506,10 @@
       color: COLORS.cream,
       align: "center"
     });
-    drawIconRibbon(ICON_RIBBON.slice(11, 31), 62, 858, 956, 43, 5, 0.96);
 
     context.fillStyle = accent;
     context.fillRect(0, 930, SIZE, 150);
-    drawSingleLine(copy.destinationLabel.toUpperCase(), {
-      x: 64,
-      y: 978,
-      maxWidth: 850,
-      startSize: 31,
-      minSize: 21,
-      weight: 700,
-      family: FONT_INTERFACE,
-      color: contrastColor(accent)
-    });
-    drawPixelSpark(992, 1006, 46, contrastColor(accent));
+    drawIconRibbon(ICON_RIBBON.slice(0, 22), 62, 978, 956, 50, 5, 1, highContrastColor(accent));
   }
 
   function drawPortalLayout(copy, qr) {
@@ -459,12 +518,12 @@
     context.fillRect(0, 0, SIZE, SIZE);
     context.fillStyle = accent;
     context.fillRect(0, 0, SIZE, 24);
-    context.fillRect(0, SIZE - 24, SIZE, 24);
+    context.fillRect(0, 930, SIZE, 150);
 
-    drawBrand(54, 44, 108, COLORS.charcoalDeep, accent);
+    drawBrand(36, 24, 160, accent);
     fittedText(copy.title, {
       x: SIZE / 2,
-      y: 175,
+      y: 190,
       maxWidth: 900,
       maxLines: 2,
       startSize: 67,
@@ -476,9 +535,7 @@
       align: "center"
     });
 
-    drawIconRibbon(ICON_RIBBON.slice(0, 20), 66, 278, 948, 40, 5, 0.96);
     drawQrFrame(290, 345, 500, qr, accent);
-    drawIconRibbon(ICON_RIBBON.slice(20, 40), 66, 883, 948, 40, 5, 0.96);
     drawSingleLine(copy.prompt.toUpperCase(), {
       x: SIZE / 2,
       y: 944,
@@ -487,20 +544,10 @@
       minSize: 20,
       weight: 700,
       family: FONT_INTERFACE,
-      color: accent,
+      color: highContrastColor(accent),
       align: "center"
     });
-    drawSingleLine(copy.destinationLabel.toUpperCase(), {
-      x: SIZE / 2,
-      y: 996,
-      maxWidth: 850,
-      startSize: 23,
-      minSize: 17,
-      weight: 700,
-      family: FONT_INTERFACE,
-      color: COLORS.charcoalDeep,
-      align: "center"
-    });
+    drawIconRibbon(ICON_RIBBON.slice(18, 40), 66, 1008, 948, 44, 5, 1, highContrastColor(accent));
   }
 
   function drawInvalidState(message) {
@@ -508,7 +555,7 @@
     context.fillRect(0, 0, SIZE, SIZE);
     context.fillStyle = studio.accent;
     context.fillRect(0, 0, 24, SIZE);
-    drawBrand(58, 46, 122, COLORS.cream, studio.accent);
+    drawBrand(38, 24, 160, studio.accent);
     fittedText("Your signal needs somewhere to go.", {
       x: 76,
       y: 340,
