@@ -6,10 +6,13 @@
   const FONT_INTERFACE = '"VT323", monospace';
   const BRAND_MARK_URL = "./assets/brand/logo-mark-signal.svg?v=20260911-flyer-v2";
   const ICON_LIBRARY_URL = "./assets/brand/master-icon-library.svg?v=20260912-v2";
+  const GEM_MARK_URL = "./assets/brand/inventory.svg?v=20260912-v1";
   const ICON_LIBRARY_SIZE = { width: 2718.39, height: 115.56 };
   const CODE_MARKS = {
     tent: { x: 2, y: 33, width: 56, height: 58 },
     key: { x: 436, y: 36, width: 50, height: 55 },
+    sparkles: { x: 327.6, y: 41.2, width: 40.4, height: 40.4 },
+    gem: { asset: "gem" },
     flag: { x: 494, y: 35, width: 52, height: 56 },
     skull: { x: 554, y: 35, width: 54, height: 53 },
     palette: { x: 1073, y: 36, width: 55, height: 54 },
@@ -45,6 +48,8 @@
   brandMark.decoding = "async";
   const iconLibrary = new Image();
   iconLibrary.decoding = "async";
+  const gemMark = new Image();
+  gemMark.decoding = "async";
   const studio = {
     layout: DEFAULTS.layout,
     accent: DEFAULTS.accent,
@@ -239,6 +244,19 @@
 
   function drawLibraryIcon(markName, x, y, maxWidth, maxHeight, alpha = 1) {
     const mark = CODE_MARKS[markName] || CODE_MARKS[DEFAULTS.mark];
+    if (mark.asset === "gem") {
+      if (!gemMark.complete || gemMark.naturalWidth <= 0) {
+        drawPixelSpark(x + maxWidth / 2, y + maxHeight / 2, Math.min(maxWidth, maxHeight) * 0.56, studio.accent);
+        return;
+      }
+      context.save();
+      context.globalAlpha = alpha;
+      context.imageSmoothingEnabled = false;
+      context.drawImage(gemMark, x, y, maxWidth, maxHeight);
+      context.restore();
+      return;
+    }
+
     if (!iconLibrary.complete || iconLibrary.naturalWidth <= 0) {
       drawPixelSpark(x + maxWidth / 2, y + maxHeight / 2, Math.min(maxWidth, maxHeight) * 0.56, studio.accent);
       return;
@@ -636,6 +654,8 @@
   brandMark.src = BRAND_MARK_URL;
   iconLibrary.addEventListener("load", render);
   iconLibrary.src = ICON_LIBRARY_URL;
+  gemMark.addEventListener("load", render);
+  gemMark.src = GEM_MARK_URL;
   updateControlState();
   render();
   document.fonts?.ready.then(render).catch(() => {});

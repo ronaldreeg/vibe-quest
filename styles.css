@@ -1472,7 +1472,7 @@ textarea:focus {
 
 .vibe-code-mark-options {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(8, minmax(0, 1fr));
   gap: 7px;
 }
 
@@ -1500,11 +1500,19 @@ textarea:focus {
   box-shadow: inset 0 -4px 0 var(--brand-orange);
 }
 
-.vibe-code-mark svg {
+.vibe-code-mark svg,
+.vibe-code-mark img {
   display: block;
   width: 34px;
   height: 34px;
+  object-fit: contain;
   overflow: hidden;
+}
+
+@media (max-width: 620px) {
+  .vibe-code-mark-options {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .vibetinerary-layout-options .flyer-option,
