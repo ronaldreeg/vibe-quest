@@ -5,6 +5,16 @@
   const FONT_READING = '"Faculty Glyphic", Georgia, serif';
   const FONT_INTERFACE = '"VT323", monospace';
   const BRAND_MARK_URL = "./assets/brand/logo-mark-signal.svg?v=20260911-flyer-v2";
+  const ICON_LIBRARY_URL = "./assets/brand/master-icon-library.svg?v=20260912-v2";
+  const ICON_LIBRARY_SIZE = { width: 2718.39, height: 115.56 };
+  const CODE_MARKS = {
+    tent: { x: 2, y: 33, width: 56, height: 58 },
+    key: { x: 436, y: 36, width: 50, height: 55 },
+    flag: { x: 494, y: 35, width: 52, height: 56 },
+    skull: { x: 554, y: 35, width: 54, height: 53 },
+    palette: { x: 1073, y: 36, width: 55, height: 54 },
+    mushroom: { x: 1296, y: 38, width: 57, height: 54 }
+  };
   const COLORS = {
     charcoal: "#2f3035",
     charcoalDeep: "#22242a",
@@ -16,7 +26,8 @@
   };
   const DEFAULTS = {
     layout: "signal",
-    accent: COLORS.orange
+    accent: COLORS.orange,
+    mark: "key"
   };
 
   const view = document.querySelector("#shareView");
@@ -32,9 +43,12 @@
   const qrCanvas = document.createElement("canvas");
   const brandMark = new Image();
   brandMark.decoding = "async";
+  const iconLibrary = new Image();
+  iconLibrary.decoding = "async";
   const studio = {
     layout: DEFAULTS.layout,
     accent: DEFAULTS.accent,
+    mark: DEFAULTS.mark,
     renderRequest: 0,
     renderTimer: 0,
     currentDestination: ""
@@ -223,12 +237,66 @@
     context.fillRect(x + unit * 0.5, y + unit * 0.5, unit, unit);
   }
 
+  function drawLibraryIcon(markName, x, y, maxWidth, maxHeight, alpha = 1) {
+    const mark = CODE_MARKS[markName] || CODE_MARKS[DEFAULTS.mark];
+    if (!iconLibrary.complete || iconLibrary.naturalWidth <= 0) {
+      drawPixelSpark(x + maxWidth / 2, y + maxHeight / 2, Math.min(maxWidth, maxHeight) * 0.56, studio.accent);
+      return;
+    }
+
+    const ratio = mark.width / mark.height;
+    let width = maxWidth;
+    let height = width / ratio;
+    if (height > maxHeight) {
+      height = maxHeight;
+      width = height * ratio;
+    }
+
+    const scaleX = iconLibrary.naturalWidth / ICON_LIBRARY_SIZE.width;
+    const scaleY = iconLibrary.naturalHeight / ICON_LIBRARY_SIZE.height;
+    context.save();
+    context.globalAlpha = alpha;
+    context.imageSmoothingEnabled = false;
+    context.drawImage(
+      iconLibrary,
+      mark.x * scaleX,
+      mark.y * scaleY,
+      mark.width * scaleX,
+      mark.height * scaleY,
+      x + (maxWidth - width) / 2,
+      y + (maxHeight - height) / 2,
+      width,
+      height
+    );
+    context.restore();
+  }
+
+  function drawCodeMark(centerX, centerY, qrSize) {
+    const badgeSize = Math.round(qrSize * 0.14);
+    const inset = Math.max(8, Math.round(badgeSize * 0.09));
+    const x = Math.round(centerX - badgeSize / 2);
+    const y = Math.round(centerY - badgeSize / 2);
+
+    context.fillStyle = COLORS.cream;
+    context.fillRect(x, y, badgeSize, badgeSize);
+    context.fillStyle = COLORS.charcoalDeep;
+    context.fillRect(x + inset, y + inset, badgeSize - inset * 2, badgeSize - inset * 2);
+    drawLibraryIcon(
+      studio.mark,
+      x + inset * 1.7,
+      y + inset * 1.7,
+      badgeSize - inset * 3.4,
+      badgeSize - inset * 3.4
+    );
+  }
+
   function drawQrFrame(x, y, size, qr, accent) {
     context.fillStyle = rgba(COLORS.charcoalDeep, 0.42);
     context.fillRect(x + 18, y + 18, size, size);
     context.fillStyle = accent;
     context.fillRect(x - 12, y - 12, size + 24, size + 24);
     context.drawImage(qr, x, y, size, size);
+    drawCodeMark(x + size / 2, y + size / 2, size);
 
     const corner = 58;
     const stroke = 10;
@@ -284,9 +352,9 @@
       family: FONT_INTERFACE,
       color: accent
     });
-    drawPixelSpark(116, 820, 54, accent);
-    drawPixelSpark(216, 850, 28, COLORS.cream);
-    drawPixelSpark(322, 804, 38, accent);
+    drawLibraryIcon("tent", 78, 790, 66, 66, 0.92);
+    drawLibraryIcon("flag", 184, 803, 56, 56, 0.92);
+    drawLibraryIcon("palette", 290, 790, 64, 64, 0.92);
 
     drawQrFrame(460, 230, 556, qr, accent);
     drawSingleLine("SCAN THE SIGNAL", {
@@ -340,10 +408,10 @@
     });
 
     drawQrFrame(270, 345, 540, qr, accent);
-    drawPixelSpark(112, 420, 46, accent);
-    drawPixelSpark(950, 526, 32, COLORS.charcoalDeep);
-    drawPixelSpark(132, 790, 30, COLORS.charcoalDeep);
-    drawPixelSpark(930, 844, 52, accent);
+    drawLibraryIcon("tent", 78, 392, 72, 72, 0.95);
+    drawLibraryIcon("skull", 914, 482, 68, 68, 0.95);
+    drawLibraryIcon("palette", 92, 770, 62, 62, 0.95);
+    drawLibraryIcon("mushroom", 912, 804, 74, 74, 0.95);
     drawSingleLine(copy.prompt.toUpperCase(), {
       x: SIZE / 2,
       y: 928,
@@ -468,12 +536,18 @@
       button.classList.toggle("is-active", active);
       button.setAttribute("aria-pressed", active ? "true" : "false");
     });
+    view.querySelectorAll("[data-vibe-code-mark]").forEach((button) => {
+      const active = button.dataset.vibeCodeMark === studio.mark;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
   }
 
   function reset() {
     form.reset();
     studio.layout = DEFAULTS.layout;
     studio.accent = DEFAULTS.accent;
+    studio.mark = DEFAULTS.mark;
     updateControlState();
     render();
   }
@@ -536,10 +610,11 @@
   form.addEventListener("submit", (event) => event.preventDefault());
   form.addEventListener("input", scheduleRender);
   view.addEventListener("click", (event) => {
-    const target = event.target.closest("[data-vibe-code-layout], [data-vibe-code-accent], [data-vibe-code-action]");
+    const target = event.target.closest("[data-vibe-code-layout], [data-vibe-code-accent], [data-vibe-code-mark], [data-vibe-code-action]");
     if (!target) return;
     if (target.dataset.vibeCodeLayout) studio.layout = target.dataset.vibeCodeLayout;
     if (target.dataset.vibeCodeAccent) studio.accent = target.dataset.vibeCodeAccent;
+    if (target.dataset.vibeCodeMark) studio.mark = target.dataset.vibeCodeMark;
     if (target.dataset.vibeCodeAction === "reset") {
       reset();
       return;
@@ -559,6 +634,8 @@
   window.vvVibeCodeStudio = { render };
   brandMark.addEventListener("load", render);
   brandMark.src = BRAND_MARK_URL;
+  iconLibrary.addEventListener("load", render);
+  iconLibrary.src = ICON_LIBRARY_URL;
   updateControlState();
   render();
   document.fonts?.ready.then(render).catch(() => {});
