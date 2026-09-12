@@ -66,9 +66,10 @@
     charcoalDeep: "#22242a",
     cream: "#f3e9c4",
     qrOrange: "#fa622e",
-    pink: "#f45077",
-    teal: "#0f8fb1",
-    yellow: "#f8d23d"
+    teal: "#174f63",
+    wine: "#642f45",
+    indigo: "#343b5e",
+    olive: "#4d5231"
   };
   const DEFAULTS = {
     layout: "signal",
@@ -448,7 +449,7 @@
       lineHeight: 1.12,
       weight: 700,
       family: FONT_INTERFACE,
-      color: accent
+      color: COLORS.cream
     });
     drawQrFrame(460, 230, 556, qr, accent);
     drawSingleLine("SCAN THE SIGNAL", {
