@@ -65,6 +65,7 @@
     charcoal: "#2f3035",
     charcoalDeep: "#22242a",
     cream: "#f3e9c4",
+    qrOrange: "#fa622e",
     pink: "#f45077",
     teal: "#0f8fb1",
     yellow: "#f8d23d"
@@ -399,6 +400,11 @@
     context.fillRect(x + size + 16, y + size - corner + 26, stroke, corner);
   }
 
+  function drawBareQr(x, y, size, qr) {
+    context.drawImage(qr, x, y, size, size);
+    drawCodeMark(x + size / 2, y + size / 2, size);
+  }
+
   function drawSignalLayout(copy, qr) {
     const accent = studio.accent;
     context.fillStyle = COLORS.charcoal;
@@ -466,13 +472,12 @@
     context.fillRect(0, 0, SIZE, 24);
     context.fillRect(0, 918, SIZE, 162);
 
-    drawBrand(36, 24, 160, accent);
     fittedText(copy.title, {
       x: SIZE / 2,
-      y: 190,
+      y: 82,
       maxWidth: 900,
       maxLines: 2,
-      startSize: 67,
+      startSize: 72,
       minSize: 46,
       lineHeight: 0.98,
       weight: 700,
@@ -481,10 +486,10 @@
       align: "center"
     });
 
-    drawQrFrame(290, 345, 500, qr, accent);
+    drawBareQr(265, 270, 550, qr);
     drawSingleLine(copy.prompt.toUpperCase(), {
       x: SIZE / 2,
-      y: 882,
+      y: 846,
       maxWidth: 860,
       startSize: 29,
       minSize: 20,
@@ -561,7 +566,7 @@
         margin: 4,
         width: 600,
         color: {
-          dark: COLORS.charcoalDeep,
+          dark: studio.layout === "portal" ? COLORS.qrOrange : COLORS.charcoalDeep,
           light: COLORS.cream
         }
       });
