@@ -221,8 +221,12 @@
     context.textBaseline = "top";
     setFont(size, options.weight, options.family);
     const lineHeight = size * (options.lineHeight || 1.05);
-    lines.forEach((line, index) => context.fillText(line, options.x, options.y + index * lineHeight));
-    return options.y + lines.length * lineHeight;
+    const textHeight = lines.length * lineHeight;
+    const startY = options.blockHeight
+      ? options.y + Math.max(0, (options.blockHeight - textHeight) / 2)
+      : options.y;
+    lines.forEach((line, index) => context.fillText(line, options.x, startY + index * lineHeight));
+    return startY + textHeight;
   }
 
   function drawSingleLine(text, options) {
@@ -480,6 +484,7 @@
       startSize: 72,
       minSize: 46,
       lineHeight: 0.98,
+      blockHeight: 142,
       weight: 700,
       family: FONT_READING,
       color: COLORS.charcoalDeep,
