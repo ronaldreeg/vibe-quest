@@ -6,6 +6,7 @@
   const FONT_INTERFACE = '"VT323", monospace';
   const BRAND_MARK_URL = "./assets/brand/logo-mark-signal.svg?v=20260911-flyer-v2";
   const ICON_LIBRARY_URL = "./assets/brand/master-icon-library.svg?v=20260912-v2";
+  const ICON_PATTERN_URL = "./assets/brand/icon-pattern.png?v=20260913-v1";
   const GEM_MARK_URL = "./assets/brand/inventory.svg?v=20260912-v1";
   const ICON_LIBRARY_SIZE = { width: 2718.39, height: 115.56 };
   const CODE_MARKS = {
@@ -96,6 +97,8 @@
   brandMark.decoding = "async";
   const iconLibrary = new Image();
   iconLibrary.decoding = "async";
+  const iconPattern = new Image();
+  iconPattern.decoding = "async";
   const gemMark = new Image();
   gemMark.decoding = "async";
   const studio = {
@@ -365,6 +368,35 @@
     context.restore();
   }
 
+  function drawIconPatternRegion(x, y, width, height, offsetX = 0, offsetY = -28) {
+    context.save();
+    context.beginPath();
+    context.rect(x, y, width, height);
+    context.clip();
+    context.fillStyle = COLORS.charcoalDeep;
+    context.fillRect(x, y, width, height);
+
+    if (!iconPattern.complete || iconPattern.naturalWidth <= 0) {
+      context.restore();
+      drawIconField(x, y, width, height);
+      return;
+    }
+
+    const scale = SIZE / iconPattern.naturalWidth;
+    const tileWidth = iconPattern.naturalWidth * scale;
+    const tileHeight = iconPattern.naturalHeight * scale;
+    const startX = x + offsetX;
+    const startY = y + offsetY;
+    context.imageSmoothingEnabled = false;
+
+    for (let tileY = startY; tileY < y + height; tileY += tileHeight) {
+      for (let tileX = startX; tileX < x + width; tileX += tileWidth) {
+        context.drawImage(iconPattern, tileX, tileY, tileWidth, tileHeight);
+      }
+    }
+    context.restore();
+  }
+
   function drawCodeMark(centerX, centerY, qrSize) {
     const badgeSize = Math.round(qrSize * 0.14);
     const inset = Math.max(8, Math.round(badgeSize * 0.09));
@@ -426,7 +458,8 @@
       context.stroke();
     }
 
-    drawBrand(38, 24, 160, accent);
+    drawIconPatternRegion(0, 0, 32, 900, 0, -28);
+    drawBrand(46, 24, 160, accent);
     fittedText(copy.title, {
       x: 66,
       y: 250,
@@ -464,9 +497,7 @@
       align: "center"
     });
 
-    context.fillStyle = accent;
-    context.fillRect(0, 918, SIZE, 162);
-    drawIconField(0, 918, SIZE, 162);
+    drawIconPatternRegion(0, 900, SIZE, 180, -18, -28);
   }
 
   function drawPortalLayout(copy, qr) {
@@ -475,7 +506,6 @@
     context.fillRect(0, 0, SIZE, SIZE);
     context.fillStyle = accent;
     context.fillRect(0, 0, SIZE, 24);
-    context.fillRect(0, 918, SIZE, 162);
 
     fittedText(copy.title, {
       x: SIZE / 2,
@@ -504,7 +534,7 @@
       color: accent,
       align: "center"
     });
-    drawIconField(0, 918, SIZE, 162);
+    drawIconPatternRegion(0, 900, SIZE, 180, -18, -28);
   }
 
   function drawInvalidState(message) {
@@ -707,6 +737,8 @@
   brandMark.src = BRAND_MARK_URL;
   iconLibrary.addEventListener("load", render);
   iconLibrary.src = ICON_LIBRARY_URL;
+  iconPattern.addEventListener("load", render);
+  iconPattern.src = ICON_PATTERN_URL;
   gemMark.addEventListener("load", render);
   gemMark.src = GEM_MARK_URL;
   updateControlState();
