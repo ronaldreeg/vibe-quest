@@ -489,6 +489,8 @@ const state = {
   locationIntentVersion: 0,
   mapCenter: DEFAULT_MAP_CENTER,
   mapNeedsFit: true,
+  mapBounds: null,
+  mapBrowseActive: false,
   session: store.get("vv_session", null),
   authBusy: false,
   editingAdventureId: null,
@@ -754,7 +756,7 @@ async function syncRemoteSession(session) {
     createdAt: profile?.created_at || authUser.created_at
   };
   state.location = state.remoteUser.city || state.location;
-  state.mapCenter = knownCenterForLocation(state.location) || state.mapCenter;
+  prepareMapFocus(knownCenterForLocation(state.location) || state.mapCenter);
   els.locationInput.value = state.location;
   await loadRemoteSavedIds();
   render();
@@ -969,6 +971,23 @@ function matchesCurrentLocation(adventure) {
   return normalize(adventure.city).includes(location) || normalize(adventure.area).includes(location);
 }
 
+function isWithinMapBounds(adventure, bounds) {
+  const latitude = Number(adventure.lat);
+  const longitude = Number(adventure.lng);
+  if (!bounds || !Number.isFinite(latitude) || !Number.isFinite(longitude)) return false;
+  const withinLongitude = bounds.west <= bounds.east
+    ? longitude >= bounds.west && longitude <= bounds.east
+    : longitude >= bounds.west || longitude <= bounds.east;
+  return latitude >= bounds.south && latitude <= bounds.north && withinLongitude;
+}
+
+function matchesDiscoveryArea(adventure) {
+  if (state.mapBrowseActive && state.mapBounds && !state.mapNeedsFit) {
+    return isWithinMapBounds(adventure, state.mapBounds);
+  }
+  return matchesCurrentLocation(adventure);
+}
+
 function filteredAdventures() {
   return getAdventures()
     .filter(matchesActiveTiming)
@@ -978,17 +997,19 @@ function filteredAdventures() {
       const listingVibes = getListingVibes(adventure);
       return state.activeVibes.some((vibe) => listingVibes.includes(vibe));
     })
-    .filter(matchesCurrentLocation)
+    .filter(matchesDiscoveryArea)
     .sort((a, b) => listingRank(a) - listingRank(b));
 }
 
 function rollTheDice() {
   const candidates = getAdventures()
     .filter(matchesActiveTiming)
-    .filter(matchesCurrentLocation);
+    .filter(matchesDiscoveryArea);
 
   if (candidates.length === 0) {
-    toast(state.location
+    toast(state.mapBrowseActive
+      ? "No adventures are pinned in this map area yet. Try zooming out."
+      : state.location
       ? `No adventures are ready to roll near ${state.location} yet.`
       : "No adventures are ready to roll yet.");
     return;
@@ -1277,8 +1298,11 @@ let map;
 let mapMarkers = [];
 let mobileMapInteractionEnabled = false;
 const compactMapQuery = window.matchMedia("(max-width: 900px), (pointer: coarse)");
+const MAX_MAP_MARKERS = 150;
 let mapPinchDelta = 0;
 let mapPinchResetTimer;
+let mapViewportRenderTimer;
+let suppressMapViewportSync = false;
 let latestLocationSearchRequest = 0;
 const geocodeCache = new Map();
 
@@ -1312,6 +1336,50 @@ const ROAD_GEOCODE_TYPES = new Set([
 function knownCenterForLocation(location) {
   const key = normalize(location);
   return CITY_CENTERS[key] || null;
+}
+
+function prepareMapFocus(center = state.mapCenter) {
+  if (Array.isArray(center) && center.length === 2) state.mapCenter = center;
+  state.mapBounds = null;
+  state.mapBrowseActive = false;
+  state.mapNeedsFit = true;
+}
+
+function visibleMapBounds() {
+  if (!map) return null;
+  const bounds = map.getBounds();
+  if (!bounds?.isValid()) return null;
+  return {
+    south: bounds.getSouth(),
+    west: bounds.getWest(),
+    north: bounds.getNorth(),
+    east: bounds.getEast()
+  };
+}
+
+function mapBoundsMatch(first, second) {
+  if (!first || !second) return false;
+  return ["south", "west", "north", "east"]
+    .every((edge) => Math.abs(first[edge] - second[edge]) < 0.000001);
+}
+
+function syncResultsToMapViewport({ force = false } = {}) {
+  if (!map || suppressMapViewportSync || state.view !== "discover") return;
+  const nextBounds = visibleMapBounds();
+  if (!nextBounds) return;
+  if (!force && state.mapBrowseActive && mapBoundsMatch(state.mapBounds, nextBounds)) return;
+
+  const center = map.getCenter();
+  state.mapBounds = nextBounds;
+  state.mapBrowseActive = true;
+  state.mapCenter = [center.lat, center.lng];
+  renderAdventures();
+}
+
+function scheduleMapViewportSync() {
+  if (suppressMapViewportSync || state.view !== "discover") return;
+  window.clearTimeout(mapViewportRenderTimer);
+  mapViewportRenderTimer = window.setTimeout(() => syncResultsToMapViewport(), 90);
 }
 
 function updateMapInteractionMode(enabled = mobileMapInteractionEnabled) {
@@ -1521,6 +1589,7 @@ function initMap() {
   }).setView(state.mapCenter, 13);
   L.control.zoom({ position: "bottomright" }).addTo(map);
   addPrimaryBasemap();
+  map.on("moveend", scheduleMapViewportSync);
   updateMapInteractionMode(false);
   setTimeout(() => map.invalidateSize(), 50);
   return true;
@@ -1549,7 +1618,7 @@ function renderMap(adventures) {
   mapMarkers = [];
 
   const points = adventures.filter((adventure) => Number.isFinite(adventure.lat) && Number.isFinite(adventure.lng));
-  points.slice(0, 40).forEach((adventure) => {
+  points.slice(0, MAX_MAP_MARKERS).forEach((adventure) => {
     const marker = L.marker([adventure.lat, adventure.lng], {
       icon: markerIcon(adventure),
       title: adventure.title,
@@ -1574,16 +1643,22 @@ function renderMap(adventures) {
   });
 
   if (state.mapNeedsFit) {
-    if (state.locationSource === "geolocation" && !state.location) {
-      map.setView(state.mapCenter, 12);
-    } else if (points.length > 1) {
-      map.fitBounds(points.map((item) => [item.lat, item.lng]), { padding: [34, 34], maxZoom: 14 });
-    } else if (points.length === 1) {
-      map.setView([points[0].lat, points[0].lng], 14);
-    } else {
-      map.setView(state.mapCenter, 12);
-    }
     state.mapNeedsFit = false;
+    suppressMapViewportSync = true;
+    window.clearTimeout(mapViewportRenderTimer);
+    if (state.locationSource === "geolocation" && !state.location) {
+      map.setView(state.mapCenter, 12, { animate: false });
+    } else if (points.length > 1) {
+      map.fitBounds(points.map((item) => [item.lat, item.lng]), { padding: [34, 34], maxZoom: 14, animate: false });
+    } else if (points.length === 1) {
+      map.setView([points[0].lat, points[0].lng], 14, { animate: false });
+    } else {
+      map.setView(state.mapCenter, 12, { animate: false });
+    }
+    window.setTimeout(() => {
+      suppressMapViewportSync = false;
+      syncResultsToMapViewport({ force: true });
+    }, 80);
   }
   setTimeout(() => map.invalidateSize(), 50);
 }
@@ -1598,8 +1673,7 @@ function showAdventureOnMap(id) {
   if (els.detailModal.open) els.detailModal.close();
   state.view = "discover";
   state.location = adventure.city || "";
-  state.mapCenter = [adventure.lat, adventure.lng];
-  state.mapNeedsFit = true;
+  prepareMapFocus([adventure.lat, adventure.lng]);
   state.activeTypes = [];
   state.activeVibes = [];
   state.activeTiming = "all";
@@ -1680,12 +1754,15 @@ function renderAdventures() {
   const adventures = filteredAdventures();
   els.adventureGrid.innerHTML = adventures.length
     ? adventures.map(adventureCard).join("")
-    : `<div class="empty-state">Nothing matches this moment yet. Try another timing tab, city, type, or vibe.</div>`;
+    : state.mapBrowseActive
+      ? `<div class="empty-state">Nothing is pinned in this map area yet. Move the map or zoom out to keep exploring.</div>`
+      : `<div class="empty-state">Nothing matches this moment yet. Try another timing tab, city, type, or vibe.</div>`;
   renderMap(adventures);
   const timingMeta = state.activeTiming === "today"
     ? "Happening today"
     : state.activeTiming === "coming-up" ? "Worth planning for" : "Nearby finds";
-  els.resultsMeta.textContent = state.location ? `${timingMeta} · ${state.location}` : timingMeta;
+  const areaMeta = state.mapBrowseActive ? "This map area" : state.location;
+  els.resultsMeta.textContent = areaMeta ? `${timingMeta} · ${areaMeta}` : timingMeta;
   const timingTitle = state.activeTiming === "today"
     ? "What’s happening today"
     : state.activeTiming === "coming-up" ? "Coming up" : "Local happenings";
@@ -1830,8 +1907,7 @@ function applyStoredLocationPreference() {
   if (!preference) return false;
   state.location = preference.label;
   state.locationSource = "manual";
-  state.mapCenter = preference.center || knownCenterForLocation(preference.label) || DEFAULT_MAP_CENTER;
-  state.mapNeedsFit = true;
+  prepareMapFocus(preference.center || knownCenterForLocation(preference.label) || DEFAULT_MAP_CENTER);
   els.locationInput.value = state.location;
   return true;
 }
@@ -1862,8 +1938,7 @@ async function useBrowserLocation({ force = false } = {}) {
     state.location = label;
     state.locationSource = "geolocation";
     state.locationStatus = "ready";
-    state.mapCenter = [latitude, longitude];
-    state.mapNeedsFit = true;
+    prepareMapFocus([latitude, longitude]);
     store.set(LOCATION_STORAGE_KEY, null);
     els.locationInput.value = label;
     render();
@@ -1881,8 +1956,7 @@ async function initializeLocation() {
   if (user?.city) {
     state.location = user.city;
     state.locationSource = "profile";
-    state.mapCenter = knownCenterForLocation(user.city) || state.mapCenter;
-    state.mapNeedsFit = true;
+    prepareMapFocus(knownCenterForLocation(user.city) || state.mapCenter);
     els.locationInput.value = user.city;
     render();
     return;
@@ -2028,8 +2102,7 @@ async function applyFilters() {
   if (requestId !== latestLocationSearchRequest) return;
   state.locationSource = state.location ? "manual" : "";
   state.locationStatus = state.location ? "ready" : "idle";
-  state.mapCenter = nextCenter;
-  state.mapNeedsFit = true;
+  prepareMapFocus(nextCenter);
   if (state.location) {
     store.set(LOCATION_STORAGE_KEY, {
       label: state.location,
@@ -2064,7 +2137,7 @@ async function repairHostedCoordinates() {
   }
   if (changed) {
     store.set("vv_adventures", repaired);
-    state.mapNeedsFit = true;
+    prepareMapFocus();
     render();
   }
 }
@@ -2294,8 +2367,7 @@ async function handleAuthSubmitWork(event) {
       return;
     }
     state.location = user.city;
-    state.mapCenter = knownCenterForLocation(user.city) || state.mapCenter;
-    state.mapNeedsFit = true;
+    prepareMapFocus(knownCenterForLocation(user.city) || state.mapCenter);
     els.locationInput.value = user.city;
     els.authModal.close();
     toast("Profile created and saved on this device.");
@@ -2325,8 +2397,7 @@ async function handleAuthSubmitWork(event) {
     return;
   }
   state.location = user.city || "";
-  state.mapCenter = knownCenterForLocation(state.location) || state.mapCenter;
-  state.mapNeedsFit = true;
+  prepareMapFocus(knownCenterForLocation(state.location) || state.mapCenter);
   els.locationInput.value = state.location;
   els.authModal.close();
   toast(`Welcome back, ${user.name.split(" ")[0]}.`);
@@ -2495,8 +2566,7 @@ async function saveProfile(event) {
       createdAt: data.created_at
     };
     state.location = city;
-    state.mapCenter = knownCenterForLocation(state.location) || state.mapCenter;
-    state.mapNeedsFit = true;
+    prepareMapFocus(knownCenterForLocation(state.location) || state.mapCenter);
     els.locationInput.value = state.location;
     els.profileModal.close();
     toast("Profile updated.");
@@ -2516,8 +2586,7 @@ async function saveProfile(event) {
     return;
   }
   state.location = els.profileForm.elements.city.value.trim();
-  state.mapCenter = knownCenterForLocation(state.location) || state.mapCenter;
-  state.mapNeedsFit = true;
+  prepareMapFocus(knownCenterForLocation(state.location) || state.mapCenter);
   els.locationInput.value = state.location;
   els.profileModal.close();
   toast("Profile updated.");
@@ -2921,8 +2990,7 @@ async function publishAdventure(event) {
       resetHostForm();
       state.view = "discover";
       state.location = city;
-      state.mapCenter = center;
-      state.mapNeedsFit = true;
+      prepareMapFocus(center);
       state.activeTypes = [type];
       state.activeVibes = [];
       const publishedBucket = getListingSchedule(adventure).bucket;
@@ -2949,8 +3017,7 @@ async function publishAdventure(event) {
     resetHostForm();
     state.view = "discover";
     state.location = city;
-    state.mapCenter = center;
-    state.mapNeedsFit = true;
+    prepareMapFocus(center);
     state.activeTypes = [type];
     state.activeVibes = [];
     const publishedBucket = getListingSchedule(adventure).bucket;
@@ -3052,8 +3119,7 @@ document.addEventListener("click", async (event) => {
     state.location = "Galveston, TX";
     state.locationSource = "manual";
     state.locationStatus = "ready";
-    state.mapCenter = CITY_CENTERS["galveston, tx"];
-    state.mapNeedsFit = true;
+    prepareMapFocus(CITY_CENTERS["galveston, tx"]);
     state.activeTypes = [];
     state.activeVibes = [];
     state.activeTiming = "all";
@@ -3073,8 +3139,7 @@ document.addEventListener("click", async (event) => {
       state.location = user.city;
       state.locationSource = "profile";
       state.locationStatus = "ready";
-      state.mapCenter = knownCenterForLocation(user.city) || state.mapCenter;
-      state.mapNeedsFit = true;
+      prepareMapFocus(knownCenterForLocation(user.city) || state.mapCenter);
       els.locationInput.value = user.city;
       render();
     }
@@ -3119,9 +3184,7 @@ els.locationInput.addEventListener("input", (event) => {
   state.location = event.target.value;
   state.locationSource = state.location ? "manual" : "";
   state.locationStatus = state.location ? "idle" : "idle";
-  state.mapCenter = knownCenterForLocation(state.location) || state.mapCenter;
   clearTimeout(window.vvLocationFilterTimer);
-  window.vvLocationFilterTimer = setTimeout(() => renderAdventures(), 180);
 });
 
 els.locationInput.addEventListener("keydown", async (event) => {
