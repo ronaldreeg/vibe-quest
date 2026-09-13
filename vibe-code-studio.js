@@ -6,7 +6,7 @@
   const FONT_INTERFACE = '"VT323", monospace';
   const BRAND_MARK_URL = "./assets/brand/logo-mark-signal.svg?v=20260911-flyer-v2";
   const ICON_LIBRARY_URL = "./assets/brand/master-icon-library.svg?v=20260912-v2";
-  const ICON_PATTERN_URL = "./assets/brand/icon-pattern.png?v=20260913-v1";
+  const ICON_PATTERN_URL = "./assets/brand/icon-pattern.png?v=20260913-v2";
   const GEM_MARK_URL = "./assets/brand/inventory.svg?v=20260912-v1";
   const ICON_LIBRARY_SIZE = { width: 2718.39, height: 115.56 };
   const CODE_MARKS = {
@@ -368,12 +368,12 @@
     context.restore();
   }
 
-  function drawIconPatternRegion(x, y, width, height, offsetX = 0, offsetY = -28) {
+  function drawIconPatternRegion(x, y, width, height, offsetX = 0, offsetY = -6) {
     context.save();
     context.beginPath();
     context.rect(x, y, width, height);
     context.clip();
-    context.fillStyle = COLORS.charcoalDeep;
+    context.fillStyle = studio.accent;
     context.fillRect(x, y, width, height);
 
     if (!iconPattern.complete || iconPattern.naturalWidth <= 0) {
@@ -382,16 +382,28 @@
       return;
     }
 
-    const scale = SIZE / iconPattern.naturalWidth;
+    const sourceY = 43;
+    const sourceHeight = 1009;
+    const scale = (SIZE / iconPattern.naturalWidth) * 1.22;
     const tileWidth = iconPattern.naturalWidth * scale;
-    const tileHeight = iconPattern.naturalHeight * scale;
+    const tileHeight = sourceHeight * scale;
     const startX = x + offsetX;
     const startY = y + offsetY;
     context.imageSmoothingEnabled = false;
 
     for (let tileY = startY; tileY < y + height; tileY += tileHeight) {
       for (let tileX = startX; tileX < x + width; tileX += tileWidth) {
-        context.drawImage(iconPattern, tileX, tileY, tileWidth, tileHeight);
+        context.drawImage(
+          iconPattern,
+          0,
+          sourceY,
+          iconPattern.naturalWidth,
+          sourceHeight,
+          tileX,
+          tileY,
+          tileWidth,
+          tileHeight
+        );
       }
     }
     context.restore();
@@ -458,7 +470,7 @@
       context.stroke();
     }
 
-    drawIconPatternRegion(0, 0, 32, 900, 0, -28);
+    drawIconPatternRegion(0, 0, 32, 900);
     drawBrand(46, 24, 160, accent);
     fittedText(copy.title, {
       x: 66,
@@ -497,7 +509,7 @@
       align: "center"
     });
 
-    drawIconPatternRegion(0, 900, SIZE, 180, -18, -28);
+    drawIconPatternRegion(0, 900, SIZE, 180, -18);
   }
 
   function drawPortalLayout(copy, qr) {
@@ -534,7 +546,7 @@
       color: accent,
       align: "center"
     });
-    drawIconPatternRegion(0, 900, SIZE, 180, -18, -28);
+    drawIconPatternRegion(0, 900, SIZE, 180, -18);
   }
 
   function drawInvalidState(message) {
