@@ -1378,6 +1378,26 @@ textarea:focus {
   line-height: 1.55;
 }
 
+.vibe-code-destination-help {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.vibe-code-payment-note {
+  margin: 9px 0 0;
+  padding: 9px 11px;
+  border-left: 3px solid var(--brand-yellow);
+  background: rgba(248, 210, 61, 0.07);
+  color: var(--muted-strong);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .flyer-controls textarea {
   resize: vertical;
 }
@@ -1470,6 +1490,12 @@ textarea:focus {
   gap: var(--gap-xs);
 }
 
+.vibe-code-destination-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gap-xs);
+}
+
 .vibe-code-mark-options {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
@@ -1518,7 +1544,8 @@ textarea:focus {
 }
 
 .vibetinerary-layout-options .flyer-option,
-.vibe-code-layout-options .flyer-option {
+.vibe-code-layout-options .flyer-option,
+.vibe-code-destination-options .flyer-option {
   display: grid;
   min-height: 62px;
   gap: 3px;
@@ -1528,12 +1555,14 @@ textarea:focus {
 }
 
 .vibetinerary-layout-options .flyer-option span,
-.vibe-code-layout-options .flyer-option span {
+.vibe-code-layout-options .flyer-option span,
+.vibe-code-destination-options .flyer-option span {
   font-size: 0.9rem;
 }
 
 .vibetinerary-layout-options .flyer-option small,
-.vibe-code-layout-options .flyer-option small {
+.vibe-code-layout-options .flyer-option small,
+.vibe-code-destination-options .flyer-option small {
   color: var(--muted);
   font-size: 0.7rem;
   font-weight: 700;

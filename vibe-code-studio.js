@@ -73,15 +73,53 @@
     olive: "#4d5231"
   };
   const DEFAULTS = {
+    destinationType: "link",
     layout: "signal",
     accent: COLORS.teal,
     mark: "key"
+  };
+  const DESTINATION_TYPES = {
+    link: {
+      label: "Web link",
+      fieldLabel: "Destination link",
+      placeholder: "Website, sign-up page, map...",
+      help: "Paste the page people should reach after scanning.",
+      defaultDestination: "https://www.vibe-quest.net/",
+      defaultTitle: "A good thing is hiding here.",
+      defaultPrompt: "Scan to follow the signal"
+    },
+    venmo: {
+      label: "Venmo",
+      fieldLabel: "Venmo payment link",
+      placeholder: "Paste a link copied from Venmo...",
+      help: "In Venmo, share your profile or payment request and paste that link here.",
+      allowedHosts: ["venmo.com", "venmo.me"],
+      defaultDestination: "",
+      defaultTitle: "Support this good thing.",
+      defaultPrompt: "Scan to pay with Venmo"
+    },
+    cashapp: {
+      label: "Cash App",
+      fieldLabel: "Cash App payment link",
+      placeholder: "Paste a payment link copied from Cash App...",
+      help: "In Cash App, create or share a payment link and paste it here.",
+      allowedHosts: ["cash.app"],
+      defaultDestination: "",
+      defaultTitle: "Support this good thing.",
+      defaultPrompt: "Scan to pay with Cash App"
+    }
   };
 
   const view = document.querySelector("#shareView");
   const form = document.querySelector("#vibeCodeForm");
   const canvas = document.querySelector("#vibeCodeCanvas");
   const destinationInput = document.querySelector("#vibeCodeDestination");
+  const destinationLabelElement = document.querySelector("#vibeCodeDestinationLabel");
+  const destinationHelp = document.querySelector("#vibeCodeDestinationHelp");
+  const paymentNote = document.querySelector("#vibeCodePaymentNote");
+  const titleInput = form?.elements.namedItem("vibeCodeTitle");
+  const promptInput = form?.elements.namedItem("vibeCodePrompt");
+  const copyButton = view?.querySelector('[data-vibe-code-action="copy"]');
   const status = document.querySelector("#vibeCodeStatus");
   if (!view || !form || !(canvas instanceof HTMLCanvasElement)) return;
 
@@ -102,6 +140,12 @@
   const gemMark = new Image();
   gemMark.decoding = "async";
   const studio = {
+    destinationType: DEFAULTS.destinationType,
+    destinationValues: {
+      link: destinationInput?.value || DESTINATION_TYPES.link.defaultDestination,
+      venmo: "",
+      cashapp: ""
+    },
     layout: DEFAULTS.layout,
     accent: DEFAULTS.accent,
     mark: DEFAULTS.mark,
@@ -115,9 +159,18 @@
     return String(field?.value || fallback).trim();
   }
 
-  function normalizeDestination(value) {
+  function destinationConfig(type = studio.destinationType) {
+    return DESTINATION_TYPES[type] || DESTINATION_TYPES.link;
+  }
+
+  function normalizeDestination(value, type = studio.destinationType) {
     const trimmed = String(value || "").trim();
-    if (!trimmed) throw new Error("Add a destination to generate your Vibe Code.");
+    const config = destinationConfig(type);
+    if (!trimmed) {
+      throw new Error(type === "link"
+        ? "Add a destination to generate your Vibe Code."
+        : `Paste a ${config.label} payment link to generate your Vibe Code.`);
+    }
     const candidate = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
     let parsed;
     try {
@@ -127,6 +180,13 @@
     }
     if (!["http:", "https:"].includes(parsed.protocol)) {
       throw new Error("Use an http or https destination.");
+    }
+    if (config.allowedHosts) {
+      const host = parsed.hostname.toLowerCase();
+      const matchesProvider = config.allowedHosts.some((allowedHost) => (
+        host === allowedHost || host.endsWith(`.${allowedHost}`)
+      ));
+      if (!matchesProvider) throw new Error(`Paste a ${config.label} link copied from the app.`);
     }
     return parsed.href;
   }
@@ -454,6 +514,21 @@
     drawCodeMark(x + size / 2, y + size / 2, size);
   }
 
+  function drawDestinationTag(copy, options) {
+    if (copy.destinationType === "link") return;
+    drawSingleLine(`${copy.destinationTypeLabel.toUpperCase()} PAYMENT`, {
+      x: options.x,
+      y: options.y,
+      maxWidth: options.maxWidth,
+      startSize: options.startSize || 22,
+      minSize: options.minSize || 17,
+      weight: 700,
+      family: FONT_INTERFACE,
+      color: options.color,
+      align: options.align || "left"
+    });
+  }
+
   function drawSignalLayout(copy, qr) {
     const accent = studio.accent;
     context.fillStyle = COLORS.charcoal;
@@ -496,6 +571,12 @@
       family: FONT_INTERFACE,
       color: COLORS.cream
     });
+    drawDestinationTag(copy, {
+      x: 70,
+      y: 586,
+      maxWidth: 320,
+      color: COLORS.qrOrange
+    });
     drawQrFrame(460, 230, 556, qr, accent);
     drawSingleLine("SCAN THE SIGNAL", {
       x: 738,
@@ -531,6 +612,14 @@
       weight: 700,
       family: FONT_READING,
       color: COLORS.charcoalDeep,
+      align: "center"
+    });
+
+    drawDestinationTag(copy, {
+      x: SIZE / 2,
+      y: 238,
+      maxWidth: 860,
+      color: accent,
       align: "center"
     });
 
@@ -580,12 +669,15 @@
   }
 
   function vibeCodeCopy() {
-    const destination = normalizeDestination(fieldValue("vibeCodeDestination"));
+    const config = destinationConfig();
+    const destination = normalizeDestination(fieldValue("vibeCodeDestination"), studio.destinationType);
     return {
       destination,
       destinationLabel: destinationLabel(destination),
-      title: fieldValue("vibeCodeTitle", "A good thing is hiding here."),
-      prompt: fieldValue("vibeCodePrompt", "Scan to follow the signal")
+      destinationType: studio.destinationType,
+      destinationTypeLabel: config.label,
+      title: fieldValue("vibeCodeTitle", config.defaultTitle),
+      prompt: fieldValue("vibeCodePrompt", config.defaultPrompt)
     };
   }
 
@@ -629,7 +721,7 @@
     studio.currentDestination = copy.destination;
     if (studio.layout === "portal") drawPortalLayout(copy, qrCanvas);
     else drawSignalLayout(copy, qrCanvas);
-    setStatus(`Signal ready for ${copy.destinationLabel}.`);
+    setStatus(`${copy.destinationTypeLabel} signal ready for ${copy.destinationLabel}.`);
     return true;
   }
 
@@ -638,7 +730,51 @@
     studio.renderTimer = window.setTimeout(render, 120);
   }
 
+  function fieldUsesDefaultCopy(field, key) {
+    const value = String(field?.value || "").trim();
+    return !value || Object.values(DESTINATION_TYPES).some((config) => config[key] === value);
+  }
+
+  function updateDestinationUi() {
+    const config = destinationConfig();
+    if (destinationLabelElement) destinationLabelElement.textContent = config.fieldLabel;
+    if (destinationHelp) destinationHelp.textContent = config.help;
+    if (paymentNote) paymentNote.hidden = studio.destinationType === "link";
+    if (copyButton) copyButton.textContent = studio.destinationType === "link" ? "Copy URL" : "Copy payment link";
+    if (destinationInput) {
+      destinationInput.placeholder = config.placeholder;
+      destinationInput.inputMode = "url";
+      destinationInput.autocomplete = studio.destinationType === "link" ? "url" : "off";
+    }
+    canvas.setAttribute(
+      "aria-label",
+      studio.destinationType === "link"
+        ? "Preview of your branded Vibe Quest QR code"
+        : `Preview of your branded Vibe Quest ${config.label} payment QR code`
+    );
+  }
+
+  function setDestinationType(nextType) {
+    if (!DESTINATION_TYPES[nextType] || nextType === studio.destinationType) return;
+    const updateTitle = fieldUsesDefaultCopy(titleInput, "defaultTitle");
+    const updatePrompt = fieldUsesDefaultCopy(promptInput, "defaultPrompt");
+    if (destinationInput) studio.destinationValues[studio.destinationType] = destinationInput.value;
+
+    studio.destinationType = nextType;
+    const config = destinationConfig();
+    if (destinationInput) destinationInput.value = studio.destinationValues[nextType] || config.defaultDestination;
+    if (updateTitle && titleInput) titleInput.value = config.defaultTitle;
+    if (updatePrompt && promptInput) promptInput.value = config.defaultPrompt;
+    updateControlState();
+    render();
+  }
+
   function updateControlState() {
+    view.querySelectorAll("[data-vibe-code-destination-type]").forEach((button) => {
+      const active = button.dataset.vibeCodeDestinationType === studio.destinationType;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
     view.querySelectorAll("[data-vibe-code-layout]").forEach((button) => {
       const active = button.dataset.vibeCodeLayout === studio.layout;
       button.classList.toggle("is-active", active);
@@ -654,10 +790,17 @@
       button.classList.toggle("is-active", active);
       button.setAttribute("aria-pressed", active ? "true" : "false");
     });
+    updateDestinationUi();
   }
 
   function reset() {
     form.reset();
+    studio.destinationType = DEFAULTS.destinationType;
+    studio.destinationValues = {
+      link: DESTINATION_TYPES.link.defaultDestination,
+      venmo: "",
+      cashapp: ""
+    };
     studio.layout = DEFAULTS.layout;
     studio.accent = DEFAULTS.accent;
     studio.mark = DEFAULTS.mark;
@@ -668,7 +811,7 @@
   async function copyDestination() {
     let destination;
     try {
-      destination = normalizeDestination(destinationInput?.value);
+      destination = normalizeDestination(destinationInput?.value, studio.destinationType);
     } catch (error) {
       setStatus(error.message, true);
       destinationInput?.focus();
@@ -688,7 +831,7 @@
       document.execCommand("copy");
       helper.remove();
     }
-    setStatus("Destination copied. Send the signal.");
+    setStatus(`${destinationConfig().label} link copied. Send the signal.`);
   }
 
   async function download() {
@@ -711,7 +854,8 @@
       const objectUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = objectUrl;
-      link.download = `${title}-vibe-code.png`;
+      const destinationSuffix = studio.destinationType === "link" ? "" : `-${studio.destinationType}`;
+      link.download = `${title}${destinationSuffix}-vibe-code.png`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -721,10 +865,17 @@
   }
 
   form.addEventListener("submit", (event) => event.preventDefault());
-  form.addEventListener("input", scheduleRender);
+  form.addEventListener("input", (event) => {
+    if (event.target === destinationInput) studio.destinationValues[studio.destinationType] = destinationInput.value;
+    scheduleRender();
+  });
   view.addEventListener("click", (event) => {
-    const target = event.target.closest("[data-vibe-code-layout], [data-vibe-code-accent], [data-vibe-code-mark], [data-vibe-code-action]");
+    const target = event.target.closest("[data-vibe-code-destination-type], [data-vibe-code-layout], [data-vibe-code-accent], [data-vibe-code-mark], [data-vibe-code-action]");
     if (!target) return;
+    if (target.dataset.vibeCodeDestinationType) {
+      setDestinationType(target.dataset.vibeCodeDestinationType);
+      return;
+    }
     if (target.dataset.vibeCodeLayout) studio.layout = target.dataset.vibeCodeLayout;
     if (target.dataset.vibeCodeAccent) studio.accent = target.dataset.vibeCodeAccent;
     if (target.dataset.vibeCodeMark) studio.mark = target.dataset.vibeCodeMark;
