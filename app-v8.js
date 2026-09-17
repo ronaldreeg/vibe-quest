@@ -505,6 +505,7 @@ const state = {
 const REMOTE_ACTIVITY_LIMIT = 250;
 const MAP_QUERY_PADDING_RATIO = 0.35;
 const MAX_CACHED_MAP_AREAS = 12;
+const DISCOVERY_AREA_ZOOM = 10;
 let cachedRemoteMapAreas = [];
 
 let lastRolledAdventureId = "";
@@ -1683,7 +1684,7 @@ function initMap() {
   }).setView(state.mapCenter, 13);
   L.control.zoom({ position: "bottomright" }).addTo(map);
   addPrimaryBasemap();
-  map.on("moveend", scheduleMapViewportSync);
+  map.on("moveend zoomend dragend", scheduleMapViewportSync);
   updateMapInteractionMode(false);
   setTimeout(() => map.invalidateSize(), 50);
   return true;
@@ -1744,13 +1745,17 @@ function renderMap(markerAdventures, visibleAdventures = markerAdventures) {
     suppressMapViewportSync = true;
     window.clearTimeout(mapViewportRenderTimer);
     if (state.locationSource === "geolocation" && !state.location) {
-      map.setView(state.mapCenter, 12, { animate: false });
+      map.setView(state.mapCenter, DISCOVERY_AREA_ZOOM, { animate: false });
     } else if (fitPoints.length > 1) {
-      map.fitBounds(fitPoints.map((item) => [item.lat, item.lng]), { padding: [34, 34], maxZoom: 14, animate: false });
+      map.fitBounds(fitPoints.map((item) => [item.lat, item.lng]), {
+        padding: [34, 34],
+        maxZoom: DISCOVERY_AREA_ZOOM,
+        animate: false
+      });
     } else if (fitPoints.length === 1) {
-      map.setView([fitPoints[0].lat, fitPoints[0].lng], 14, { animate: false });
+      map.setView(state.mapCenter, DISCOVERY_AREA_ZOOM, { animate: false });
     } else {
-      map.setView(state.mapCenter, 12, { animate: false });
+      map.setView(state.mapCenter, DISCOVERY_AREA_ZOOM, { animate: false });
     }
     window.setTimeout(() => {
       suppressMapViewportSync = false;
@@ -1859,7 +1864,9 @@ function renderAdventures() {
   const timingMeta = state.activeTiming === "today"
     ? "Happening today"
     : state.activeTiming === "coming-up" ? "Worth planning for" : "Nearby finds";
-  const areaMeta = state.mapBrowseActive ? "This map area" : state.location;
+  const areaMeta = state.mapBrowseActive
+    ? `${adventures.length} ${adventures.length === 1 ? "find" : "finds"} in this map area`
+    : state.location;
   els.resultsMeta.textContent = areaMeta ? `${timingMeta} · ${areaMeta}` : timingMeta;
   const timingTitle = state.activeTiming === "today"
     ? "What’s happening today"
