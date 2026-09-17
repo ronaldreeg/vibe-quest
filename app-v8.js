@@ -503,9 +503,9 @@ const state = {
 };
 
 const REMOTE_ACTIVITY_LIMIT = 250;
-const MAP_QUERY_PADDING_RATIO = 0.35;
+const MAP_QUERY_PADDING_RATIO = 0.75;
 const MAX_CACHED_MAP_AREAS = 12;
-const DISCOVERY_AREA_ZOOM = 10;
+const DISCOVERY_AREA_ZOOM = 9;
 let cachedRemoteMapAreas = [];
 
 let lastRolledAdventureId = "";
@@ -1464,6 +1464,7 @@ function syncResultsToMapViewport({ force = false } = {}) {
   const center = map.getCenter();
   state.mapBounds = nextBounds;
   state.mapBrowseActive = true;
+  state.locationSource = "map";
   state.mapCenter = [center.lat, center.lng];
   renderAdventures();
   loadRemoteActivitiesForMap(nextBounds).then((foundActivities) => {
