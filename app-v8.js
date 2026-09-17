@@ -502,6 +502,11 @@ const state = {
   remoteSavedIds: []
 };
 
+const REMOTE_ACTIVITY_LIMIT = 250;
+const MAP_QUERY_PADDING_RATIO = 0.35;
+const MAX_CACHED_MAP_AREAS = 12;
+let cachedRemoteMapAreas = [];
+
 let lastRolledAdventureId = "";
 
 const els = {
@@ -694,26 +699,59 @@ function mapRemoteActivity(row, linkRows, profileMap) {
   };
 }
 
-async function loadRemoteActivities() {
-  if (!state.backendEnabled) return;
-  const { data: rows, error } = await window.vvSupabase
-    .from("activities")
-    .select("*")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-
+async function hydrateRemoteActivities(rows) {
   const activities = Array.isArray(rows) ? rows : [];
   const ids = activities.map((row) => row.id);
+  const ownerIds = [...new Set(activities.map((row) => row.owner_id).filter(Boolean))];
   const [linksResult, profilesResult] = await Promise.all([
     ids.length
       ? window.vvSupabase.from("activity_links").select("*").in("activity_id", ids)
       : Promise.resolve({ data: [], error: null }),
-    window.vvSupabase.from("profiles").select("id, display_name")
+    ownerIds.length
+      ? window.vvSupabase.from("profiles").select("id, display_name").in("id", ownerIds)
+      : Promise.resolve({ data: [], error: null })
   ]);
   if (linksResult.error) throw linksResult.error;
   if (profilesResult.error) throw profilesResult.error;
   const profileMap = new Map((profilesResult.data || []).map((profile) => [profile.id, profile]));
-  state.remoteActivities = activities.map((row) => mapRemoteActivity(row, linksResult.data || [], profileMap));
+  return activities.map((row) => mapRemoteActivity(row, linksResult.data || [], profileMap));
+}
+
+function mergeRemoteActivities(activities) {
+  const byId = new Map(state.remoteActivities.map((activity) => [activity.id, activity]));
+  activities.forEach((activity) => byId.set(activity.id, activity));
+  state.remoteActivities = [...byId.values()].sort((first, second) => (
+    new Date(second.createdAt || 0).getTime() - new Date(first.createdAt || 0).getTime()
+  ));
+}
+
+async function loadRemoteActivities({ bounds = null, merge = false } = {}) {
+  if (!state.backendEnabled) return;
+  let query = window.vvSupabase
+    .from("activities")
+    .select("*")
+    .eq("status", "published")
+    .order("created_at", { ascending: false })
+    .limit(REMOTE_ACTIVITY_LIMIT);
+
+  if (bounds) {
+    query = query
+      .gte("latitude", bounds.south)
+      .lte("latitude", bounds.north);
+    query = bounds.west <= bounds.east
+      ? query.gte("longitude", bounds.west).lte("longitude", bounds.east)
+      : query.or(`longitude.gte.${bounds.west},longitude.lte.${bounds.east}`);
+  }
+
+  const { data: rows, error } = await query;
+  if (error) throw error;
+  const activities = await hydrateRemoteActivities(rows);
+  if (merge) mergeRemoteActivities(activities);
+  else {
+    state.remoteActivities = activities;
+    cachedRemoteMapAreas = [];
+  }
+  return activities;
 }
 
 async function loadRemoteSavedIds() {
@@ -988,7 +1026,7 @@ function matchesDiscoveryArea(adventure) {
   return matchesCurrentLocation(adventure);
 }
 
-function filteredAdventures() {
+function discoveryCandidates() {
   return getAdventures()
     .filter(matchesActiveTiming)
     .filter(matchesActiveTypes)
@@ -997,7 +1035,6 @@ function filteredAdventures() {
       const listingVibes = getListingVibes(adventure);
       return state.activeVibes.some((vibe) => listingVibes.includes(vibe));
     })
-    .filter(matchesDiscoveryArea)
     .sort((a, b) => listingRank(a) - listingRank(b));
 }
 
@@ -1357,6 +1394,60 @@ function visibleMapBounds() {
   };
 }
 
+function wrapLongitude(value) {
+  return ((value + 180) % 360 + 360) % 360 - 180;
+}
+
+function expandMapBounds(bounds, ratio = MAP_QUERY_PADDING_RATIO) {
+  const latitudeSpan = Math.max(0.01, bounds.north - bounds.south);
+  const longitudeSpan = bounds.west <= bounds.east
+    ? Math.max(0.01, bounds.east - bounds.west)
+    : Math.max(0.01, 360 - bounds.west + bounds.east);
+  const expandedLongitudeSpan = Math.min(360, longitudeSpan * (1 + ratio * 2));
+  const longitudeCenter = wrapLongitude(bounds.west + longitudeSpan / 2);
+
+  return {
+    south: Math.max(-90, bounds.south - latitudeSpan * ratio),
+    west: expandedLongitudeSpan >= 360
+      ? -180
+      : wrapLongitude(longitudeCenter - expandedLongitudeSpan / 2),
+    north: Math.min(90, bounds.north + latitudeSpan * ratio),
+    east: expandedLongitudeSpan >= 360
+      ? 180
+      : wrapLongitude(longitudeCenter + expandedLongitudeSpan / 2)
+  };
+}
+
+function longitudeRanges(bounds) {
+  if (bounds.west <= bounds.east) return [[bounds.west, bounds.east]];
+  return [[bounds.west, 180], [-180, bounds.east]];
+}
+
+function mapBoundsContain(outer, inner) {
+  if (!outer || !inner || outer.south > inner.south || outer.north < inner.north) return false;
+  const outerRanges = longitudeRanges(outer);
+  return longitudeRanges(inner).every(([innerWest, innerEast]) => (
+    outerRanges.some(([outerWest, outerEast]) => outerWest <= innerWest && outerEast >= innerEast)
+  ));
+}
+
+async function loadRemoteActivitiesForMap(bounds) {
+  if (!state.backendEnabled || !bounds) return false;
+  const queryBounds = expandMapBounds(bounds);
+  if (cachedRemoteMapAreas.some((area) => mapBoundsContain(area, bounds))) return false;
+
+  cachedRemoteMapAreas.push(queryBounds);
+  cachedRemoteMapAreas = cachedRemoteMapAreas.slice(-MAX_CACHED_MAP_AREAS);
+  try {
+    const activities = await loadRemoteActivities({ bounds: queryBounds, merge: true });
+    return activities.length > 0;
+  } catch (error) {
+    cachedRemoteMapAreas = cachedRemoteMapAreas.filter((area) => area !== queryBounds);
+    console.warn("Could not refresh activities for this map area.", error);
+    return false;
+  }
+}
+
 function mapBoundsMatch(first, second) {
   if (!first || !second) return false;
   return ["south", "west", "north", "east"]
@@ -1374,6 +1465,9 @@ function syncResultsToMapViewport({ force = false } = {}) {
   state.mapBrowseActive = true;
   state.mapCenter = [center.lat, center.lng];
   renderAdventures();
+  loadRemoteActivitiesForMap(nextBounds).then((foundActivities) => {
+    if (foundActivities && state.view === "discover") renderAdventures();
+  });
 }
 
 function scheduleMapViewportSync() {
@@ -1607,9 +1701,9 @@ function markerIcon(adventure) {
   });
 }
 
-function renderMap(adventures) {
+function renderMap(markerAdventures, visibleAdventures = markerAdventures) {
   if (els.legendCount) {
-    els.legendCount.textContent = `${adventures.length} ${adventures.length === 1 ? "activity" : "activities"}`;
+    els.legendCount.textContent = `${visibleAdventures.length} ${visibleAdventures.length === 1 ? "activity" : "activities"}`;
   }
   const hasMap = initMap();
   if (!hasMap) return;
@@ -1617,7 +1711,9 @@ function renderMap(adventures) {
   mapMarkers.forEach((marker) => marker.remove());
   mapMarkers = [];
 
-  const points = adventures.filter((adventure) => Number.isFinite(adventure.lat) && Number.isFinite(adventure.lng));
+  const visibleIds = new Set(visibleAdventures.map((adventure) => adventure.id));
+  const points = [...visibleAdventures, ...markerAdventures.filter((adventure) => !visibleIds.has(adventure.id))]
+    .filter((adventure) => Number.isFinite(adventure.lat) && Number.isFinite(adventure.lng));
   points.slice(0, MAX_MAP_MARKERS).forEach((adventure) => {
     const marker = L.marker([adventure.lat, adventure.lng], {
       icon: markerIcon(adventure),
@@ -1643,15 +1739,16 @@ function renderMap(adventures) {
   });
 
   if (state.mapNeedsFit) {
+    const fitPoints = visibleAdventures.filter((adventure) => Number.isFinite(adventure.lat) && Number.isFinite(adventure.lng));
     state.mapNeedsFit = false;
     suppressMapViewportSync = true;
     window.clearTimeout(mapViewportRenderTimer);
     if (state.locationSource === "geolocation" && !state.location) {
       map.setView(state.mapCenter, 12, { animate: false });
-    } else if (points.length > 1) {
-      map.fitBounds(points.map((item) => [item.lat, item.lng]), { padding: [34, 34], maxZoom: 14, animate: false });
-    } else if (points.length === 1) {
-      map.setView([points[0].lat, points[0].lng], 14, { animate: false });
+    } else if (fitPoints.length > 1) {
+      map.fitBounds(fitPoints.map((item) => [item.lat, item.lng]), { padding: [34, 34], maxZoom: 14, animate: false });
+    } else if (fitPoints.length === 1) {
+      map.setView([fitPoints[0].lat, fitPoints[0].lng], 14, { animate: false });
     } else {
       map.setView(state.mapCenter, 12, { animate: false });
     }
@@ -1751,13 +1848,14 @@ function renderViews() {
 }
 
 function renderAdventures() {
-  const adventures = filteredAdventures();
+  const mapAdventures = discoveryCandidates();
+  const adventures = mapAdventures.filter(matchesDiscoveryArea);
   els.adventureGrid.innerHTML = adventures.length
     ? adventures.map(adventureCard).join("")
     : state.mapBrowseActive
       ? `<div class="empty-state">Nothing is pinned in this map area yet. Move the map or zoom out to keep exploring.</div>`
       : `<div class="empty-state">Nothing matches this moment yet. Try another timing tab, city, type, or vibe.</div>`;
-  renderMap(adventures);
+  renderMap(mapAdventures, adventures);
   const timingMeta = state.activeTiming === "today"
     ? "Happening today"
     : state.activeTiming === "coming-up" ? "Worth planning for" : "Nearby finds";
