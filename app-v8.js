@@ -172,7 +172,9 @@ const CITY_CENTERS = {
   houston: [29.7604, -95.3698],
   "houston, tx": [29.7604, -95.3698],
   austin: [30.2672, -97.7431],
-  "austin, tx": [30.2672, -97.7431]
+  "austin, tx": [30.2672, -97.7431],
+  marfa: [30.3095, -104.0206],
+  "marfa, tx": [30.3095, -104.0206]
 };
 
 const DEFAULT_MAP_CENTER = [39.8283, -98.5795];
@@ -364,6 +366,26 @@ const DEFAULT_ADVENTURES = [
     ],
     x: 25,
     y: 68
+  },
+  {
+    id: "marfa-night-signal",
+    title: "Marfa Night Signal",
+    city: "Marfa, TX",
+    area: "Downtown Marfa",
+    category: "Arts & Music",
+    type: "Arts & Music",
+    vibes: ["Weird", "Hidden Gem", "Local Lore"],
+    price: "Free",
+    seats: 24,
+    distance: 375,
+    lat: 30.3095,
+    lng: -104.0206,
+    photo: "https://images.unsplash.com/photo-1509316785289-025f5b846b35?auto=format&fit=crop&w=1200&q=80",
+    host: "Vibe Quest Field Office",
+    description: "A dusk listening session with desert field recordings, short stories, and a clear view of the high-country sky.",
+    links: [],
+    x: 31,
+    y: 43
   },
   {
     id: "porch-sale-trail",
