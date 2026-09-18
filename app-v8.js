@@ -119,6 +119,39 @@ const VIBE_FILTER_STYLE = {
   Fest: ["#f8d23d", "#2f3035"]
 };
 
+// Horizontal centers in the master icon sprite. A listing's first vibe is its map symbol.
+const VIBE_ICON_CENTER = {
+  "Local Lore": 2448, // feather
+  "Game On": 89.8, // paddle and ball
+  Chill: 720.6, // lounge chair
+  Adventure: 1270.8, // sword
+  Getaway: 1701.8, // map
+  Random: 848.4, // dice
+  Divey: 294.6, // beer mug
+  "Hidden Gem": 460.8, // key
+  Crafty: 2622, // magic wand
+  Wholesome: 1042.8, // apple
+  Spooky: 784, // ghost
+  Bazaar: 2564.2, // storefront
+  Creative: 1100.2, // artist palette
+  Curious: 2265, // puzzle piece
+  Groovy: 2068, // cassette
+  Healthy: 1384, // dumbbell
+  Weird: 2201, // alien
+  Country: 2326.8, // horse
+  Club: 347.6, // sparkles
+  Underground: 2006.8, // lightning bolt
+  Gig: 913, // music note
+  Flea: 1438.2, // market bag
+  Tasty: 981, // taco
+  Shindig: 154.2, // party horn
+  Fest: 29.8 // tent
+};
+
+const VIBE_ICON_SPRITE_HEIGHT = 40;
+const VIBE_ICON_SPRITE_SCALE = VIBE_ICON_SPRITE_HEIGHT / 115.56;
+const VIBE_ICON_BOX_CENTER = 10;
+
 const LEGACY_TYPE_MAP = {
   Chill: "Wellness",
   Thrill: "Outdoors",
@@ -1715,13 +1748,20 @@ function initMap() {
 
 function markerIcon(adventure) {
   const color = MARKER_STYLE[getListingType(adventure)] || MARKER_STYLE["Pop-ups & Events"];
+  const primaryVibe = getListingVibes(adventure)[0] || "Curious";
+  const iconCenter = VIBE_ICON_CENTER[primaryVibe] || VIBE_ICON_CENTER.Curious;
+  const iconPosition = VIBE_ICON_BOX_CENTER - iconCenter * VIBE_ICON_SPRITE_SCALE;
   const isToday = getListingSchedule(adventure).bucket === "today";
   return L.divIcon({
     className: "vv-marker-shell",
-    html: `<span class="vv-marker ${isToday ? "is-today" : ""}" style="--pin-color:${color}" aria-hidden="true"></span>`,
-    iconSize: [18, 18],
-    iconAnchor: [9, 9],
-    popupAnchor: [0, -12]
+    html: `
+      <span class="vv-marker ${isToday ? "is-today" : ""}" style="--pin-color:${color}" aria-hidden="true">
+        <span class="vv-marker-icon" style="--vibe-icon-x:${iconPosition.toFixed(2)}px"></span>
+      </span>
+    `,
+    iconSize: [26, 26],
+    iconAnchor: [13, 13],
+    popupAnchor: [0, -15]
   });
 }
 
@@ -1739,19 +1779,20 @@ function renderMap(markerAdventures, visibleAdventures = markerAdventures) {
   const points = [...visibleAdventures, ...markerAdventures.filter((adventure) => !visibleIds.has(adventure.id))]
     .filter((adventure) => Number.isFinite(adventure.lat) && Number.isFinite(adventure.lng));
   points.slice(0, MAX_MAP_MARKERS).forEach((adventure) => {
+    const primaryVibe = getListingVibes(adventure)[0] || "Curious";
     const marker = L.marker([adventure.lat, adventure.lng], {
       icon: markerIcon(adventure),
-      title: adventure.title,
-      alt: adventure.title,
+      title: `${adventure.title} — ${primaryVibe}`,
+      alt: `${adventure.title}, ${primaryVibe}`,
       riseOnHover: true
     })
       .addTo(map)
       .bindPopup(
-        `<strong>${escapeHtml(adventure.title)}</strong><br>${escapeHtml(timingLabel(adventure))}<br>${escapeHtml(getListingType(adventure))} · ${escapeHtml(adventure.area)}${
+        `<strong>${escapeHtml(adventure.title)}</strong><br>${escapeHtml(primaryVibe)} · ${escapeHtml(timingLabel(adventure))}<br>${escapeHtml(getListingType(adventure))} · ${escapeHtml(adventure.area)}${
           adventure.locationAccuracy === "approximate" ? "<br><em>Approximate area</em>" : ""
         }`
       )
-      .bindTooltip(`${escapeHtml(adventure.title)}<br><span>${escapeHtml(timingLabel(adventure))}</span>`, {
+      .bindTooltip(`${escapeHtml(adventure.title)}<br><span>${escapeHtml(primaryVibe)} · ${escapeHtml(timingLabel(adventure))}</span>`, {
         className: "vv-map-tooltip",
         direction: "top",
         offset: [0, -12],
