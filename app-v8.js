@@ -132,7 +132,7 @@ const VIBE_ICON_CENTER = {
   Crafty: 2622, // magic wand
   Wholesome: 1042.8, // apple
   Spooky: 784, // ghost
-  Bazaar: 2564.2, // storefront
+  Bazaar: 1438.2, // market bag
   Creative: 1100.2, // artist palette
   Curious: 2265, // puzzle piece
   Groovy: 2068, // cassette
@@ -142,7 +142,7 @@ const VIBE_ICON_CENTER = {
   Club: 347.6, // sparkles
   Underground: 2006.8, // lightning bolt
   Gig: 913, // music note
-  Flea: 1438.2, // market bag
+  Flea: 402.6, // found treasure
   Tasty: 981, // taco
   Shindig: 154.2, // party horn
   Fest: 29.8 // tent
