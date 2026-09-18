@@ -2397,17 +2397,20 @@ textarea:focus {
   gap: 2px;
 }
 
-.checklist-field {
+.checklist-field,
+.quest-mark-field {
   padding: 0;
   border: 0;
 }
 
-.checklist-field legend {
+.checklist-field legend,
+.quest-mark-field legend {
   margin-bottom: 8px;
   color: var(--muted-strong);
 }
 
-.checklist-field legend span {
+.checklist-field legend span,
+.quest-mark-field legend span {
   margin-left: 6px;
   color: var(--muted);
   font-size: 0.76rem;
@@ -2439,6 +2442,125 @@ textarea:focus {
   min-height: 16px;
   padding: 0;
   accent-color: var(--accent);
+}
+
+.quest-mark-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--gap-xs);
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.quest-mark-preview {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.quest-mark-preview small,
+.quest-mark-preview strong {
+  display: block;
+}
+
+.quest-mark-preview small {
+  color: var(--muted);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.quest-mark-preview strong {
+  margin-top: 2px;
+  color: var(--text);
+  line-height: 1.15;
+}
+
+.quest-mark-preview-pin {
+  position: relative;
+  display: grid;
+  flex: 0 0 58px;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  overflow: hidden;
+  border: 3px solid var(--pin-color, var(--accent));
+  background: var(--brand-charcoal);
+  box-shadow: 0 0 0 1px rgba(243, 233, 196, 0.72);
+}
+
+.quest-mark-suggestions,
+.quest-mark-bank {
+  display: grid;
+  gap: 8px;
+}
+
+.quest-mark-suggestions {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.quest-mark-bank {
+  grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.quest-mark-option {
+  display: grid;
+  min-width: 0;
+  min-height: 82px;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  padding: 7px 5px;
+  border: 1px solid var(--line);
+  background: rgba(243, 233, 196, 0.06);
+  color: var(--muted-strong);
+  text-align: center;
+}
+
+.quest-mark-option:hover,
+.quest-mark-option:focus-visible {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.quest-mark-option.is-selected {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  box-shadow: inset 0 -4px var(--accent);
+  color: var(--text);
+}
+
+.quest-mark-sprite {
+  display: block;
+  width: 32px;
+  height: 50px;
+  background-image: url("./assets/brand/master-icon-library.svg");
+  background-position: var(--quest-mark-x) center;
+  background-repeat: no-repeat;
+  background-size: auto 58px;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.quest-mark-option-label {
+  max-width: 100%;
+  font-size: 0.68rem;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.quest-mark-reset,
+.quest-mark-browser-toggle {
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.quest-mark-browser-toggle {
+  width: 100%;
+  margin-top: 8px;
 }
 
 .modal {
@@ -3246,11 +3368,16 @@ textarea:focus {
   .detail-list,
   .link-list,
   .check-grid,
+  .quest-mark-heading,
   .share-auth-prompt,
   .host-form-actions,
   .profile-owned-item,
   .confirm-actions {
     grid-template-columns: 1fr;
+  }
+
+  .quest-mark-reset {
+    width: 100%;
   }
 
   .share-auth-actions {

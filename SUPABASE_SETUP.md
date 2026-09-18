@@ -6,7 +6,7 @@ The Vibe Quest prototype is connected to the active Supabase project for `vibe-q
 
 - Supabase Auth for email/password accounts.
 - `profiles` for display name, home city, bio, and future avatar storage.
-- `activities` for shared listings, verified coordinates, timing, vibes, type, and lifecycle status.
+- `activities` for shared listings, verified coordinates, timing, vibes, type, a selected map icon, and lifecycle status.
 - `activity_links` for optional social, signup, and information links.
 - `activity_media` for activity photos and future moderation.
 - `saved_activities` for each user's saved list.

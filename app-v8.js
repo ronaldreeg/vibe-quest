@@ -119,38 +119,102 @@ const VIBE_FILTER_STYLE = {
   Fest: ["#f8d23d", "#2f3035"]
 };
 
-// Horizontal centers in the master icon sprite. A listing's first vibe is its map symbol.
-const VIBE_ICON_CENTER = {
-  "Local Lore": 2448, // feather
-  "Game On": 89.8, // paddle and ball
-  Chill: 720.6, // lounge chair
-  Adventure: 1270.8, // sword
-  Getaway: 1701.8, // map
-  Random: 848.4, // dice
-  Divey: 294.6, // beer mug
-  "Hidden Gem": 460.8, // key
-  Crafty: 2622, // magic wand
-  Wholesome: 1042.8, // apple
-  Spooky: 784, // ghost
-  Bazaar: 1438.2, // market bag
-  Creative: 1100.2, // artist palette
-  Curious: 2265, // puzzle piece
-  Groovy: 2068, // cassette
-  Healthy: 1384, // dumbbell
-  Weird: 2201, // alien
-  Country: 2326.8, // horse
-  Club: 347.6, // sparkles
-  Underground: 2006.8, // lightning bolt
-  Gig: 913, // music note
-  Flea: 402.6, // found treasure
-  Tasty: 981, // taco
-  Shindig: 154.2, // party horn
-  Fest: 29.8 // tent
+// Horizontal centers in the master icon sprite.
+const QUEST_MARKS = [
+  { key: "tent", label: "Tent", center: 29.8 },
+  { key: "paddle-ball", label: "Paddle & ball", center: 89.8 },
+  { key: "party-popper", label: "Party popper", center: 154.2 },
+  { key: "bowl", label: "Bowl", center: 223.8 },
+  { key: "beer-mug", label: "Beer mug", center: 294.6 },
+  { key: "sparkles", label: "Sparkles", center: 347.6 },
+  { key: "gift", label: "Gift", center: 402.6 },
+  { key: "key", label: "Key", center: 460.8 },
+  { key: "finish-flag", label: "Finish flag", center: 519.8 },
+  { key: "skull", label: "Skull", center: 580.8 },
+  { key: "bicycle", label: "Bicycle", center: 646.2 },
+  { key: "lounge-chair", label: "Lounge chair", center: 720.6 },
+  { key: "ghost", label: "Ghost", center: 784 },
+  { key: "dice", label: "Dice", center: 848.4 },
+  { key: "music-note", label: "Music note", center: 913 },
+  { key: "taco", label: "Taco", center: 981 },
+  { key: "apple", label: "Apple", center: 1042.8 },
+  { key: "artist-palette", label: "Artist palette", center: 1100.2 },
+  { key: "typewriter", label: "Typewriter", center: 1158.4 },
+  { key: "baseball", label: "Baseball", center: 1218.4 },
+  { key: "sword", label: "Sword", center: 1270.8 },
+  { key: "mushroom", label: "Mushroom", center: 1324.4 },
+  { key: "dumbbell", label: "Dumbbell", center: 1384 },
+  { key: "market-bag", label: "Market bag", center: 1438.2 },
+  { key: "craft-tools", label: "Craft tools", center: 1482.4 },
+  { key: "table-tennis", label: "Table tennis", center: 1532 },
+  { key: "cheese", label: "Cheese", center: 1592.4 },
+  { key: "hot-dog", label: "Hot dog", center: 1646.8 },
+  { key: "map", label: "Map", center: 1701.8 },
+  { key: "bird", label: "Bird", center: 1761 },
+  { key: "cooking-pot", label: "Cooking pot", center: 1818 },
+  { key: "arcade", label: "Arcade", center: 1878 },
+  { key: "ship", label: "Ship", center: 1944.8 },
+  { key: "lightning", label: "Lightning", center: 2006.8 },
+  { key: "cassette", label: "Cassette", center: 2068 },
+  { key: "laptop", label: "Laptop", center: 2135.8 },
+  { key: "alien", label: "Alien", center: 2201 },
+  { key: "puzzle", label: "Puzzle piece", center: 2265 },
+  { key: "horse", label: "Horse", center: 2326.8 },
+  { key: "trophy", label: "Trophy", center: 2385 },
+  { key: "feather", label: "Feather", center: 2448 },
+  { key: "roller-skate", label: "Roller skate", center: 2505.6 },
+  { key: "film-strip", label: "Film strip", center: 2564.2 },
+  { key: "magic-wand", label: "Magic wand", center: 2622 }
+];
+
+const QUEST_MARK_BY_KEY = new Map(QUEST_MARKS.map((mark) => [mark.key, mark]));
+
+const VIBE_ICON_KEY = {
+  "Local Lore": "feather",
+  "Game On": "paddle-ball",
+  Chill: "lounge-chair",
+  Adventure: "sword",
+  Getaway: "map",
+  Random: "dice",
+  Divey: "beer-mug",
+  "Hidden Gem": "key",
+  Crafty: "magic-wand",
+  Wholesome: "apple",
+  Spooky: "ghost",
+  Bazaar: "market-bag",
+  Creative: "artist-palette",
+  Curious: "puzzle",
+  Groovy: "cassette",
+  Healthy: "dumbbell",
+  Weird: "alien",
+  Country: "horse",
+  Club: "sparkles",
+  Underground: "lightning",
+  Gig: "music-note",
+  Flea: "gift",
+  Tasty: "taco",
+  Shindig: "party-popper",
+  Fest: "tent"
+};
+
+const TYPE_ICON_KEY = {
+  "Pop-ups & Events": "party-popper",
+  Classes: "typewriter",
+  "Tours & Culture": "map",
+  Markets: "market-bag",
+  "Food & Drink": "taco",
+  Groups: "sparkles",
+  "Arts & Music": "artist-palette",
+  Outdoors: "tent",
+  Wellness: "apple",
+  Nightlife: "cassette",
+  Random: "dice"
 };
 
 const VIBE_ICON_SPRITE_HEIGHT = 40;
-const VIBE_ICON_SPRITE_SCALE = VIBE_ICON_SPRITE_HEIGHT / 115.56;
 const VIBE_ICON_BOX_CENTER = 10;
+const QUEST_MARK_PICKER_SPRITE_HEIGHT = 58;
+const QUEST_MARK_PICKER_BOX_CENTER = 16;
 
 const LEGACY_TYPE_MAP = {
   Chill: "Wellness",
@@ -610,6 +674,14 @@ const els = {
   hostFormCopy: document.querySelector("#hostFormCopy"),
   hostSubmitButton: document.querySelector("#hostSubmitButton"),
   cancelEditButton: document.querySelector("#cancelEditButton"),
+  questMarkInput: document.querySelector("#questMarkInput"),
+  questMarkSuggestions: document.querySelector("#questMarkSuggestions"),
+  questMarkBank: document.querySelector("#questMarkBank"),
+  questMarkBrowserToggle: document.querySelector("#questMarkBrowserToggle"),
+  questMarkSuggestedButton: document.querySelector("#questMarkSuggestedButton"),
+  questMarkPreviewPin: document.querySelector("#questMarkPreviewPin"),
+  questMarkPreviewIcon: document.querySelector("#questMarkPreviewIcon"),
+  questMarkPreviewLabel: document.querySelector("#questMarkPreviewLabel"),
   locationFeedback: document.querySelector("#locationFeedback"),
   toast: document.querySelector("#toast")
 };
@@ -734,6 +806,7 @@ function mapRemoteActivity(row, linkRows, profileMap) {
     category: row.type,
     type: row.type,
     vibes: Array.isArray(row.vibes) ? row.vibes : [],
+    iconKey: row.icon_key || "",
     price: row.price_label || "Free",
     seats: 12,
     distance: 1.5,
@@ -1052,6 +1125,35 @@ function getListingVibes(adventure) {
       : [])
   ];
   return [...new Set([...migrated, ...legacy])].filter((vibe) => VIBE_FILTERS.includes(vibe));
+}
+
+function defaultQuestMarkKey(vibes, type) {
+  return vibes.map((vibe) => VIBE_ICON_KEY[vibe]).find((key) => QUEST_MARK_BY_KEY.has(key))
+    || TYPE_ICON_KEY[type]
+    || "puzzle";
+}
+
+function suggestedQuestMarkKeys(vibes, type) {
+  return [...new Set([
+    ...vibes.map((vibe) => VIBE_ICON_KEY[vibe]),
+    TYPE_ICON_KEY[type],
+    "sparkles",
+    "key",
+    "map",
+    "dice"
+  ])]
+    .filter((key) => QUEST_MARK_BY_KEY.has(key))
+    .slice(0, 3);
+}
+
+function getAdventureQuestMarkKey(adventure) {
+  const storedKey = String(adventure.iconKey || adventure.icon_key || "");
+  if (QUEST_MARK_BY_KEY.has(storedKey)) return storedKey;
+  return defaultQuestMarkKey(getListingVibes(adventure), getListingType(adventure));
+}
+
+function questMarkSpriteOffset(mark, spriteHeight, boxCenter) {
+  return boxCenter - mark.center * (spriteHeight / 115.56);
 }
 
 function matchesActiveTiming(adventure) {
@@ -1748,9 +1850,8 @@ function initMap() {
 
 function markerIcon(adventure) {
   const color = MARKER_STYLE[getListingType(adventure)] || MARKER_STYLE["Pop-ups & Events"];
-  const primaryVibe = getListingVibes(adventure)[0] || "Curious";
-  const iconCenter = VIBE_ICON_CENTER[primaryVibe] || VIBE_ICON_CENTER.Curious;
-  const iconPosition = VIBE_ICON_BOX_CENTER - iconCenter * VIBE_ICON_SPRITE_SCALE;
+  const mark = QUEST_MARK_BY_KEY.get(getAdventureQuestMarkKey(adventure)) || QUEST_MARK_BY_KEY.get("puzzle");
+  const iconPosition = questMarkSpriteOffset(mark, VIBE_ICON_SPRITE_HEIGHT, VIBE_ICON_BOX_CENTER);
   const isToday = getListingSchedule(adventure).bucket === "today";
   return L.divIcon({
     className: "vv-marker-shell",
@@ -2797,6 +2898,55 @@ function hostLinkValue(adventure, labels) {
   return links.find((link) => labels.includes(normalize(link.label)))?.url || "";
 }
 
+function hostSelectedVibes() {
+  return [...els.hostForm.querySelectorAll('input[name="vibes"]:checked')].map((input) => input.value);
+}
+
+function questMarkOptionMarkup(key, selectedKey) {
+  const mark = QUEST_MARK_BY_KEY.get(key);
+  if (!mark) return "";
+  const offset = questMarkSpriteOffset(mark, QUEST_MARK_PICKER_SPRITE_HEIGHT, QUEST_MARK_PICKER_BOX_CENTER);
+  const selected = key === selectedKey;
+  return `
+    <button
+      class="quest-mark-option ${selected ? "is-selected" : ""}"
+      type="button"
+      data-action="select-quest-mark"
+      data-quest-mark="${escapeHtml(mark.key)}"
+      aria-label="Use ${escapeHtml(mark.label)} quest mark"
+      aria-pressed="${selected}"
+      title="${escapeHtml(mark.label)}"
+    >
+      <span class="quest-mark-sprite" style="--quest-mark-x:${offset.toFixed(2)}px" aria-hidden="true"></span>
+      <span class="quest-mark-option-label">${escapeHtml(mark.label)}</span>
+    </button>
+  `;
+}
+
+function renderQuestMarkPicker() {
+  if (!els.questMarkInput || !els.questMarkSuggestions || !els.questMarkBank) return;
+  const vibes = hostSelectedVibes();
+  const type = els.hostForm.elements.type.value || "Pop-ups & Events";
+  const suggestedKeys = suggestedQuestMarkKeys(vibes, type);
+  const suggestedKey = suggestedKeys[0] || "puzzle";
+  const savedKey = String(els.questMarkInput.value || "");
+  const manualSelection = els.questMarkInput.dataset.manual === "true" && QUEST_MARK_BY_KEY.has(savedKey);
+  const selectedKey = manualSelection ? savedKey : suggestedKey;
+  const selectedMark = QUEST_MARK_BY_KEY.get(selectedKey) || QUEST_MARK_BY_KEY.get("puzzle");
+  const offset = questMarkSpriteOffset(selectedMark, QUEST_MARK_PICKER_SPRITE_HEIGHT, QUEST_MARK_PICKER_BOX_CENTER);
+
+  els.questMarkInput.value = selectedMark.key;
+  els.questMarkInput.dataset.manual = String(manualSelection);
+  els.questMarkSuggestions.innerHTML = suggestedKeys.map((key) => questMarkOptionMarkup(key, selectedMark.key)).join("");
+  els.questMarkBank.innerHTML = QUEST_MARKS.map((mark) => questMarkOptionMarkup(mark.key, selectedMark.key)).join("");
+  els.questMarkPreviewIcon.style.setProperty("--quest-mark-x", `${offset.toFixed(2)}px`);
+  els.questMarkPreviewPin.style.setProperty("--pin-color", MARKER_STYLE[type] || MARKER_STYLE["Pop-ups & Events"]);
+  els.questMarkPreviewLabel.textContent = selectedMark.label;
+  els.questMarkSuggestedButton.hidden = !manualSelection;
+  els.questMarkSuggestedButton.textContent = `Use suggested: ${QUEST_MARK_BY_KEY.get(suggestedKey)?.label || "Puzzle piece"}`;
+  els.questMarkBrowserToggle.textContent = els.questMarkBank.hidden ? "Browse all marks" : "Close icon bank";
+}
+
 function updateHostFormMode() {
   const editing = Boolean(state.editingAdventureId);
   els.hostModeLabel.textContent = editing ? "Edit mode" : "Share mode";
@@ -2822,6 +2972,9 @@ function updateScheduleFields() {
 function resetHostForm() {
   state.editingAdventureId = null;
   els.hostForm.reset();
+  els.questMarkInput.dataset.manual = "false";
+  els.questMarkBank.hidden = true;
+  els.questMarkBrowserToggle.setAttribute("aria-expanded", "false");
   const todayInput = els.hostForm.elements.startDate;
   todayInput.min = formatInputDate(startOfToday());
   todayInput.value = formatInputDate(startOfToday());
@@ -2829,6 +2982,7 @@ function resetHostForm() {
   els.hostForm.elements.recurringDay.value = String(startOfToday().getDay());
   els.hostForm.elements.recurringTime.value = "18:00";
   updateScheduleFields();
+  renderQuestMarkPicker();
   delete els.hostForm.dataset.approximateLocationKey;
   setLocationFeedback();
   updateHostFormMode();
@@ -2879,6 +3033,7 @@ async function saveRemoteActivity(adventure, existing, photoDataUrl) {
     location_accuracy: adventure.locationAccuracy,
     type: adventure.type,
     vibes: adventure.vibes,
+    icon_key: adventure.iconKey || null,
     price_label: adventure.price || "Free",
     listing_mode: adventure.listingMode,
     start_date: adventure.startDate || null,
@@ -2959,7 +3114,11 @@ function editPost(id) {
   els.hostForm.querySelectorAll('input[name="vibes"]').forEach((input) => {
     input.checked = selectedVibes.has(input.value);
   });
+  const storedQuestMark = String(adventure.iconKey || "");
+  form.iconKey.value = QUEST_MARK_BY_KEY.has(storedQuestMark) ? storedQuestMark : "";
+  form.iconKey.dataset.manual = String(QUEST_MARK_BY_KEY.has(storedQuestMark));
   updateScheduleFields();
+  renderQuestMarkPicker();
 
   updateHostFormMode();
   els.detailModal.close();
@@ -3062,6 +3221,10 @@ async function publishAdventure(event) {
     ? String(data.get("listingMode"))
     : "one-time";
   const vibes = [...new Set(data.getAll("vibes").map(String))].slice(0, 3);
+  const submittedIconKey = String(data.get("iconKey") || "");
+  const iconKey = QUEST_MARK_BY_KEY.has(submittedIconKey)
+    ? submittedIconKey
+    : defaultQuestMarkKey(vibes, type);
   const title = String(data.get("title") || "").trim();
   const location = String(data.get("location") || "").trim();
   const city = String(data.get("city") || "").trim();
@@ -3130,6 +3293,7 @@ async function publishAdventure(event) {
       recurringDay: listingMode === "recurring" ? Number(data.get("recurringDay")) : undefined,
       recurringTime: listingMode === "recurring" ? String(data.get("recurringTime") || "") : "",
       vibes,
+      iconKey,
       goodFor: undefined,
       price,
       seats: 12,
@@ -3269,6 +3433,27 @@ document.addEventListener("click", async (event) => {
   }
 
   const action = target.dataset.action;
+  if (action === "select-quest-mark") {
+    const key = target.dataset.questMark;
+    if (QUEST_MARK_BY_KEY.has(key)) {
+      els.questMarkInput.value = key;
+      els.questMarkInput.dataset.manual = "true";
+      renderQuestMarkPicker();
+    }
+    return;
+  }
+  if (action === "use-suggested-mark") {
+    els.questMarkInput.dataset.manual = "false";
+    renderQuestMarkPicker();
+    return;
+  }
+  if (action === "toggle-quest-mark-bank") {
+    const nextOpen = els.questMarkBank.hidden;
+    els.questMarkBank.hidden = !nextOpen;
+    els.questMarkBrowserToggle.setAttribute("aria-expanded", String(nextOpen));
+    renderQuestMarkPicker();
+    return;
+  }
   if (action === "toggle-mobile-nav") {
     setMobileNavOpen(els.mobileNavPanel?.hidden);
     return;
@@ -3389,11 +3574,17 @@ els.hostForm.addEventListener("change", (event) => {
     updateScheduleFields();
     return;
   }
-  if (!(input instanceof HTMLInputElement) || input.name !== "vibes" || !input.checked) return;
+  if (input instanceof HTMLSelectElement && input.name === "type") {
+    renderQuestMarkPicker();
+    return;
+  }
+  if (!(input instanceof HTMLInputElement) || input.name !== "vibes") return;
   const selected = els.hostForm.querySelectorAll('input[name="vibes"]:checked');
-  if (selected.length <= 3) return;
-  input.checked = false;
-  toast("Choose up to three vibes.");
+  if (input.checked && selected.length > 3) {
+    input.checked = false;
+    toast("Choose up to three vibes.");
+  }
+  renderQuestMarkPicker();
 });
 els.hostForm.querySelectorAll('input[name="location"], input[name="city"]').forEach((input) => {
   input.addEventListener("input", () => {

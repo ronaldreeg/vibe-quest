@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Faculty+Glyphic&family=VT323&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" />
-    <link rel="stylesheet" href="./styles.css?v=20260918-vibe-map-icons-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260918-quest-mark-picker-v3" />
   </head>
   <body>
     <div class="app-shell">
@@ -316,6 +316,25 @@
                   <label class="check-pill"><input name="vibes" type="checkbox" value="Shindig" /> Shindig</label>
                   <label class="check-pill"><input name="vibes" type="checkbox" value="Fest" /> Fest</label>
                 </div>
+              </fieldset>
+              <fieldset class="field quest-mark-field">
+                <legend>Quest mark <span>Optional. Suggested from your vibes.</span></legend>
+                <input id="questMarkInput" name="iconKey" type="hidden" />
+                <div class="quest-mark-heading">
+                  <div class="quest-mark-preview" aria-live="polite">
+                    <span class="quest-mark-preview-pin" id="questMarkPreviewPin" aria-hidden="true">
+                      <span class="quest-mark-sprite" id="questMarkPreviewIcon"></span>
+                    </span>
+                    <span>
+                      <small>Map pin preview</small>
+                      <strong id="questMarkPreviewLabel">Suggested mark</strong>
+                    </span>
+                  </div>
+                  <button class="secondary-button quest-mark-reset" id="questMarkSuggestedButton" type="button" data-action="use-suggested-mark" hidden>Use suggested mark</button>
+                </div>
+                <div class="quest-mark-suggestions" id="questMarkSuggestions" role="group" aria-label="Suggested quest marks"></div>
+                <button class="secondary-button quest-mark-browser-toggle" id="questMarkBrowserToggle" type="button" data-action="toggle-quest-mark-bank" aria-expanded="false" aria-controls="questMarkBank">Browse all marks</button>
+                <div class="quest-mark-bank" id="questMarkBank" role="group" aria-label="All quest marks" hidden></div>
               </fieldset>
               <label class="field">
                 <span>Type</span>
@@ -838,7 +857,7 @@
   <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.3/leaflet-maplibre-gl.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.min.js"></script>
   <script src="./supabase-client.js?v=20260722"></script>
-  <script src="./app-v8.js?v=20260918-vibe-map-icons-v3"></script>
+  <script src="./app-v8.js?v=20260918-quest-mark-picker-v3"></script>
   <script src="./vendor/qrcode.min.js?v=1.5.4"></script>
   <script src="./flyer-studio.js?v=20260911-logo-mark-v2"></script>
   <script src="./vibetinerary-studio.js?v=20260911-vibe-code-v1"></script>
