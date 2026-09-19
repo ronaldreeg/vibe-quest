@@ -857,7 +857,7 @@ textarea:focus {
   width: var(--vibe-icon-w, 20px);
   height: 20px;
   background-image: url("./assets/brand/master-icon-library.svg?v=20260919-expanded-v1");
-  background-position: var(--vibe-icon-x) -11px;
+  background-position: var(--vibe-icon-x) var(--vibe-icon-y, -11px);
   background-repeat: no-repeat;
   background-size: auto 40px;
   image-rendering: pixelated;
@@ -2484,7 +2484,7 @@ textarea:focus {
   height: 58px;
   place-items: center;
   overflow: hidden;
-  border: 3px solid var(--pin-color, var(--accent));
+  border: 2px solid var(--pin-color, var(--accent));
   background: var(--brand-charcoal);
   box-shadow: 0 0 0 1px rgba(243, 233, 196, 0.72);
 }
@@ -2538,7 +2538,7 @@ textarea:focus {
   width: var(--quest-mark-w, 44px);
   height: 54px;
   background-image: url("./assets/brand/master-icon-library.svg?v=20260919-expanded-v1");
-  background-position: var(--quest-mark-x) center;
+  background-position: var(--quest-mark-x) var(--quest-mark-y, center);
   background-repeat: no-repeat;
   background-size: auto 72px;
   image-rendering: pixelated;

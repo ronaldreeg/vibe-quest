@@ -121,55 +121,55 @@ const VIBE_FILTER_STYLE = {
 
 // Horizontal centers in the master icon sprite.
 const QUEST_MARKS = [
-  { key: "tent", label: "Tent", center: 29.8 },
-  { key: "paddle-ball", label: "Flashlight", center: 89.8 },
-  { key: "party-popper", label: "Party popper", center: 154.2 },
-  { key: "bowl", label: "Cowboy hat", center: 223.8 },
-  { key: "beer-mug", label: "Beer mug", center: 294.6 },
-  { key: "sparkles", label: "Sparkles", center: 347.6 },
-  { key: "gift", label: "Portal", center: 402.6 },
-  { key: "key", label: "Key", center: 460.8 },
-  { key: "finish-flag", label: "Finish flag", center: 519.8 },
-  { key: "skull", label: "Paw print", center: 580.8 },
-  { key: "bicycle", label: "Bicycle", center: 646.2 },
-  { key: "lounge-chair", label: "Lounge chair", center: 720.6 },
-  { key: "ghost", label: "Secret emoji", center: 784 },
-  { key: "dice", label: "Dice", center: 848.4 },
-  { key: "music-note", label: "Music note", center: 913 },
-  { key: "taco", label: "Skateboard", center: 981 },
-  { key: "apple", label: "Apple", center: 1042.8 },
-  { key: "artist-palette", label: "Artist palette", center: 1100.2 },
-  { key: "typewriter", label: "Scroll", center: 1158.4 },
-  { key: "baseball", label: "Baseball", center: 1218.4 },
-  { key: "sword", label: "Sword", center: 1270.8 },
-  { key: "mushroom", label: "Mushroom", center: 1324.4 },
-  { key: "dumbbell", label: "Dumbbell", center: 1384 },
-  { key: "market-bag", label: "Coin purse", center: 1438.2 },
-  { key: "craft-tools", label: "Pointer finger", center: 1482.4 },
-  { key: "table-tennis", label: "Table tennis", center: 1532 },
-  { key: "cheese", label: "Compass", center: 1592.4 },
-  { key: "hot-dog", label: "Hot dog", center: 1646.8 },
-  { key: "map", label: "Gem", center: 1701.8 },
-  { key: "bird", label: "Bird", center: 1761 },
-  { key: "cooking-pot", label: "Pottery", center: 1818 },
-  { key: "arcade", label: "Treasure", center: 1878 },
-  { key: "ship", label: "Boat", center: 1944.8 },
-  { key: "lightning", label: "Lightning", center: 2006.8 },
-  { key: "cassette", label: "Cassette", center: 2068 },
-  { key: "laptop", label: "Laptop", center: 2135.8 },
-  { key: "alien", label: "Ghost", center: 2201 },
-  { key: "puzzle", label: "Puzzle piece", center: 2265 },
-  { key: "horse", label: "Horse", center: 2326.8 },
-  { key: "trophy", label: "Trophy", center: 2385 },
-  { key: "feather", label: "Corn", center: 2448 },
-  { key: "roller-skate", label: "Roller skate", center: 2505.6 },
-  { key: "film-strip", label: "Film strip", center: 2564.2 },
-  { key: "magic-wand", label: "Magic wand", center: 2622 },
-  { key: "playground-slide", label: "Playground slide", center: 2668.5 },
-  { key: "shopping-cart", label: "Shopping cart", center: 2719.5 },
-  { key: "arcade-machine", label: "Arcade", center: 2762.5 },
-  { key: "barber-pole", label: "Barber pole", center: 2805.5 },
-  { key: "ufo", label: "UFO", center: 2848.5 }
+  { key: "tent", label: "Tent", center: 29.8, centerY: 62 },
+  { key: "paddle-ball", label: "Flashlight", center: 89.8, centerY: 62.5 },
+  { key: "party-popper", label: "Party popper", center: 154.2, centerY: 62.5 },
+  { key: "bowl", label: "Cowboy hat", center: 223.8, centerY: 62.5 },
+  { key: "beer-mug", label: "Beer mug", center: 294.6, centerY: 60.5 },
+  { key: "sparkles", label: "Sparkles", center: 347.6, centerY: 61 },
+  { key: "gift", label: "Portal", center: 402.6, centerY: 62.5 },
+  { key: "key", label: "Key", center: 460.8, centerY: 63 },
+  { key: "finish-flag", label: "Finish flag", center: 519.8, centerY: 63 },
+  { key: "skull", label: "Paw print", center: 580.8, centerY: 61.5 },
+  { key: "bicycle", label: "Bicycle", center: 646.2, centerY: 65 },
+  { key: "lounge-chair", label: "Lounge chair", center: 720.6, centerY: 60 },
+  { key: "ghost", label: "Secret emoji", center: 784, centerY: 63.5 },
+  { key: "dice", label: "Dice", center: 848.4, centerY: 63 },
+  { key: "music-note", label: "Music note", center: 913, centerY: 63 },
+  { key: "taco", label: "Skateboard", center: 981, centerY: 66 },
+  { key: "apple", label: "Apple", center: 1042.8, centerY: 60 },
+  { key: "artist-palette", label: "Artist palette", center: 1100.2, centerY: 62 },
+  { key: "typewriter", label: "Scroll", center: 1158.4, centerY: 61.5 },
+  { key: "baseball", label: "Baseball", center: 1218.4, centerY: 63.5 },
+  { key: "sword", label: "Sword", center: 1270.8, centerY: 64 },
+  { key: "mushroom", label: "Mushroom", center: 1324.4, centerY: 65 },
+  { key: "dumbbell", label: "Dumbbell", center: 1384, centerY: 64 },
+  { key: "market-bag", label: "Coin purse", center: 1438.2, centerY: 65 },
+  { key: "craft-tools", label: "Pointer finger", center: 1482.4, centerY: 63 },
+  { key: "table-tennis", label: "Table tennis", center: 1532, centerY: 63 },
+  { key: "cheese", label: "Compass", center: 1592.4, centerY: 62.5 },
+  { key: "hot-dog", label: "Hot dog", center: 1646.8, centerY: 69 },
+  { key: "map", label: "Gem", center: 1701.8, centerY: 62.5 },
+  { key: "bird", label: "Bird", center: 1761, centerY: 65 },
+  { key: "cooking-pot", label: "Pottery", center: 1818, centerY: 65 },
+  { key: "arcade", label: "Treasure", center: 1878, centerY: 66 },
+  { key: "ship", label: "Boat", center: 1944.8, centerY: 62 },
+  { key: "lightning", label: "Lightning", center: 2006.8, centerY: 63 },
+  { key: "cassette", label: "Cassette", center: 2068, centerY: 64.5 },
+  { key: "laptop", label: "Laptop", center: 2135.8, centerY: 63.5 },
+  { key: "alien", label: "Ghost", center: 2201, centerY: 61.5 },
+  { key: "puzzle", label: "Puzzle piece", center: 2265, centerY: 59 },
+  { key: "horse", label: "Horse", center: 2326.8, centerY: 60.5 },
+  { key: "trophy", label: "Trophy", center: 2385, centerY: 61.5 },
+  { key: "feather", label: "Corn", center: 2448, centerY: 61.5 },
+  { key: "roller-skate", label: "Roller skate", center: 2505.6, centerY: 59.5 },
+  { key: "film-strip", label: "Film strip", center: 2564.2, centerY: 61 },
+  { key: "magic-wand", label: "Magic wand", center: 2622, centerY: 61 },
+  { key: "playground-slide", label: "Playground slide", center: 2668.5, centerY: 61 },
+  { key: "shopping-cart", label: "Shopping cart", center: 2719.5, centerY: 60.5 },
+  { key: "arcade-machine", label: "Arcade", center: 2762.5, centerY: 61.5 },
+  { key: "barber-pole", label: "Barber pole", center: 2805.5, centerY: 61.5 },
+  { key: "ufo", label: "UFO", center: 2848.5, centerY: 62 }
 ];
 
 const QUEST_MARK_BY_KEY = new Map(QUEST_MARKS.map((mark) => [mark.key, mark]));
@@ -218,8 +218,10 @@ const TYPE_ICON_KEY = {
 
 const VIBE_ICON_SPRITE_HEIGHT = 40;
 const VIBE_ICON_MAX_WIDTH = 20;
+const VIBE_ICON_CROP_HEIGHT = 20;
 const QUEST_MARK_PICKER_SPRITE_HEIGHT = 72;
 const QUEST_MARK_PICKER_MAX_WIDTH = 44;
+const QUEST_MARK_PICKER_CROP_HEIGHT = 54;
 
 const LEGACY_TYPE_MAP = {
   Chill: "Wellness",
@@ -1157,7 +1159,7 @@ function getAdventureQuestMarkKey(adventure) {
   return defaultQuestMarkKey(getListingVibes(adventure), getListingType(adventure));
 }
 
-function questMarkSpriteMetrics(mark, spriteHeight, maxWidth) {
+function questMarkSpriteMetrics(mark, spriteHeight, maxWidth, cropHeight) {
   const index = QUEST_MARKS.indexOf(mark);
   const previousGap = index > 0 ? mark.center - QUEST_MARKS[index - 1].center : Infinity;
   const nextGap = index < QUEST_MARKS.length - 1 ? QUEST_MARKS[index + 1].center - mark.center : Infinity;
@@ -1166,7 +1168,8 @@ function questMarkSpriteMetrics(mark, spriteHeight, maxWidth) {
   const width = Math.min(maxWidth, Number.isFinite(safeWidth) ? safeWidth : maxWidth);
   return {
     width,
-    offset: width / 2 - mark.center * scale
+    offsetX: width / 2 - mark.center * scale,
+    offsetY: cropHeight / 2 - mark.centerY * scale
   };
 }
 
@@ -1865,13 +1868,13 @@ function initMap() {
 function markerIcon(adventure) {
   const color = MARKER_STYLE[getListingType(adventure)] || MARKER_STYLE["Pop-ups & Events"];
   const mark = QUEST_MARK_BY_KEY.get(getAdventureQuestMarkKey(adventure)) || QUEST_MARK_BY_KEY.get("puzzle");
-  const iconMetrics = questMarkSpriteMetrics(mark, VIBE_ICON_SPRITE_HEIGHT, VIBE_ICON_MAX_WIDTH);
+  const iconMetrics = questMarkSpriteMetrics(mark, VIBE_ICON_SPRITE_HEIGHT, VIBE_ICON_MAX_WIDTH, VIBE_ICON_CROP_HEIGHT);
   const isToday = getListingSchedule(adventure).bucket === "today";
   return L.divIcon({
     className: "vv-marker-shell",
     html: `
       <span class="vv-marker ${isToday ? "is-today" : ""}" style="--pin-color:${color}" aria-hidden="true">
-        <span class="vv-marker-icon" style="--vibe-icon-x:${iconMetrics.offset.toFixed(2)}px;--vibe-icon-w:${iconMetrics.width.toFixed(2)}px"></span>
+        <span class="vv-marker-icon" style="--vibe-icon-x:${iconMetrics.offsetX.toFixed(2)}px;--vibe-icon-y:${iconMetrics.offsetY.toFixed(2)}px;--vibe-icon-w:${iconMetrics.width.toFixed(2)}px"></span>
       </span>
     `,
     iconSize: [26, 26],
@@ -2919,7 +2922,7 @@ function hostSelectedVibes() {
 function questMarkOptionMarkup(key, selectedKey) {
   const mark = QUEST_MARK_BY_KEY.get(key);
   if (!mark) return "";
-  const iconMetrics = questMarkSpriteMetrics(mark, QUEST_MARK_PICKER_SPRITE_HEIGHT, QUEST_MARK_PICKER_MAX_WIDTH);
+  const iconMetrics = questMarkSpriteMetrics(mark, QUEST_MARK_PICKER_SPRITE_HEIGHT, QUEST_MARK_PICKER_MAX_WIDTH, QUEST_MARK_PICKER_CROP_HEIGHT);
   const selected = key === selectedKey;
   return `
     <button
@@ -2931,7 +2934,7 @@ function questMarkOptionMarkup(key, selectedKey) {
       aria-pressed="${selected}"
       title="${escapeHtml(mark.label)}"
     >
-      <span class="quest-mark-sprite" style="--quest-mark-x:${iconMetrics.offset.toFixed(2)}px;--quest-mark-w:${iconMetrics.width.toFixed(2)}px" aria-hidden="true"></span>
+      <span class="quest-mark-sprite" style="--quest-mark-x:${iconMetrics.offsetX.toFixed(2)}px;--quest-mark-y:${iconMetrics.offsetY.toFixed(2)}px;--quest-mark-w:${iconMetrics.width.toFixed(2)}px" aria-hidden="true"></span>
     </button>
   `;
 }
@@ -2946,13 +2949,14 @@ function renderQuestMarkPicker() {
   const manualSelection = els.questMarkInput.dataset.manual === "true" && QUEST_MARK_BY_KEY.has(savedKey);
   const selectedKey = manualSelection ? savedKey : suggestedKey;
   const selectedMark = QUEST_MARK_BY_KEY.get(selectedKey) || QUEST_MARK_BY_KEY.get("puzzle");
-  const iconMetrics = questMarkSpriteMetrics(selectedMark, QUEST_MARK_PICKER_SPRITE_HEIGHT, QUEST_MARK_PICKER_MAX_WIDTH);
+  const iconMetrics = questMarkSpriteMetrics(selectedMark, QUEST_MARK_PICKER_SPRITE_HEIGHT, QUEST_MARK_PICKER_MAX_WIDTH, QUEST_MARK_PICKER_CROP_HEIGHT);
 
   els.questMarkInput.value = selectedMark.key;
   els.questMarkInput.dataset.manual = String(manualSelection);
   els.questMarkSuggestions.innerHTML = suggestedKeys.map((key) => questMarkOptionMarkup(key, selectedMark.key)).join("");
   els.questMarkBank.innerHTML = QUEST_MARKS.map((mark) => questMarkOptionMarkup(mark.key, selectedMark.key)).join("");
-  els.questMarkPreviewIcon.style.setProperty("--quest-mark-x", `${iconMetrics.offset.toFixed(2)}px`);
+  els.questMarkPreviewIcon.style.setProperty("--quest-mark-x", `${iconMetrics.offsetX.toFixed(2)}px`);
+  els.questMarkPreviewIcon.style.setProperty("--quest-mark-y", `${iconMetrics.offsetY.toFixed(2)}px`);
   els.questMarkPreviewIcon.style.setProperty("--quest-mark-w", `${iconMetrics.width.toFixed(2)}px`);
   els.questMarkPreviewPin.style.setProperty("--pin-color", MARKER_STYLE[type] || MARKER_STYLE["Pop-ups & Events"]);
   els.questMarkPreviewLabel.textContent = selectedMark.label;
