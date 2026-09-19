@@ -218,8 +218,8 @@ const TYPE_ICON_KEY = {
 
 const VIBE_ICON_SPRITE_HEIGHT = 40;
 const VIBE_ICON_BOX_CENTER = 10;
-const QUEST_MARK_PICKER_SPRITE_HEIGHT = 58;
-const QUEST_MARK_PICKER_BOX_CENTER = 16;
+const QUEST_MARK_PICKER_SPRITE_HEIGHT = 72;
+const QUEST_MARK_PICKER_BOX_CENTER = 22;
 
 const LEGACY_TYPE_MAP = {
   Chill: "Wellness",
@@ -2923,7 +2923,6 @@ function questMarkOptionMarkup(key, selectedKey) {
       title="${escapeHtml(mark.label)}"
     >
       <span class="quest-mark-sprite" style="--quest-mark-x:${offset.toFixed(2)}px" aria-hidden="true"></span>
-      <span class="quest-mark-option-label">${escapeHtml(mark.label)}</span>
     </button>
   `;
 }

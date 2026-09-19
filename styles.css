@@ -2492,15 +2492,15 @@ textarea:focus {
 .quest-mark-suggestions,
 .quest-mark-bank {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .quest-mark-suggestions {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, 62px);
 }
 
 .quest-mark-bank {
-  grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid var(--line);
@@ -2509,11 +2509,11 @@ textarea:focus {
 .quest-mark-option {
   display: grid;
   min-width: 0;
-  min-height: 82px;
+  min-height: 0;
+  aspect-ratio: 1;
   place-items: center;
   align-content: center;
-  gap: 4px;
-  padding: 7px 5px;
+  padding: 2px;
   border: 1px solid var(--line);
   background: rgba(243, 233, 196, 0.06);
   color: var(--muted-strong);
@@ -2535,21 +2535,14 @@ textarea:focus {
 
 .quest-mark-sprite {
   display: block;
-  width: 32px;
-  height: 50px;
+  width: 44px;
+  height: 54px;
   background-image: url("./assets/brand/master-icon-library.svg?v=20260919-expanded-v1");
   background-position: var(--quest-mark-x) center;
   background-repeat: no-repeat;
-  background-size: auto 58px;
+  background-size: auto 72px;
   image-rendering: pixelated;
   pointer-events: none;
-}
-
-.quest-mark-option-label {
-  max-width: 100%;
-  font-size: 0.68rem;
-  line-height: 1.1;
-  overflow-wrap: anywhere;
 }
 
 .quest-mark-reset,
