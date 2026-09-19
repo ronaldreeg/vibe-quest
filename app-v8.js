@@ -217,9 +217,9 @@ const TYPE_ICON_KEY = {
 };
 
 const VIBE_ICON_SPRITE_HEIGHT = 40;
-const VIBE_ICON_BOX_CENTER = 10;
+const VIBE_ICON_MAX_WIDTH = 20;
 const QUEST_MARK_PICKER_SPRITE_HEIGHT = 72;
-const QUEST_MARK_PICKER_BOX_CENTER = 22;
+const QUEST_MARK_PICKER_MAX_WIDTH = 44;
 
 const LEGACY_TYPE_MAP = {
   Chill: "Wellness",
@@ -1157,8 +1157,17 @@ function getAdventureQuestMarkKey(adventure) {
   return defaultQuestMarkKey(getListingVibes(adventure), getListingType(adventure));
 }
 
-function questMarkSpriteOffset(mark, spriteHeight, boxCenter) {
-  return boxCenter - mark.center * (spriteHeight / 115.56);
+function questMarkSpriteMetrics(mark, spriteHeight, maxWidth) {
+  const index = QUEST_MARKS.indexOf(mark);
+  const previousGap = index > 0 ? mark.center - QUEST_MARKS[index - 1].center : Infinity;
+  const nextGap = index < QUEST_MARKS.length - 1 ? QUEST_MARKS[index + 1].center - mark.center : Infinity;
+  const scale = spriteHeight / 115.56;
+  const safeWidth = Math.min(previousGap, nextGap) * scale;
+  const width = Math.min(maxWidth, Number.isFinite(safeWidth) ? safeWidth : maxWidth);
+  return {
+    width,
+    offset: width / 2 - mark.center * scale
+  };
 }
 
 function matchesActiveTiming(adventure) {
@@ -1856,13 +1865,13 @@ function initMap() {
 function markerIcon(adventure) {
   const color = MARKER_STYLE[getListingType(adventure)] || MARKER_STYLE["Pop-ups & Events"];
   const mark = QUEST_MARK_BY_KEY.get(getAdventureQuestMarkKey(adventure)) || QUEST_MARK_BY_KEY.get("puzzle");
-  const iconPosition = questMarkSpriteOffset(mark, VIBE_ICON_SPRITE_HEIGHT, VIBE_ICON_BOX_CENTER);
+  const iconMetrics = questMarkSpriteMetrics(mark, VIBE_ICON_SPRITE_HEIGHT, VIBE_ICON_MAX_WIDTH);
   const isToday = getListingSchedule(adventure).bucket === "today";
   return L.divIcon({
     className: "vv-marker-shell",
     html: `
       <span class="vv-marker ${isToday ? "is-today" : ""}" style="--pin-color:${color}" aria-hidden="true">
-        <span class="vv-marker-icon" style="--vibe-icon-x:${iconPosition.toFixed(2)}px"></span>
+        <span class="vv-marker-icon" style="--vibe-icon-x:${iconMetrics.offset.toFixed(2)}px;--vibe-icon-w:${iconMetrics.width.toFixed(2)}px"></span>
       </span>
     `,
     iconSize: [26, 26],
@@ -2910,7 +2919,7 @@ function hostSelectedVibes() {
 function questMarkOptionMarkup(key, selectedKey) {
   const mark = QUEST_MARK_BY_KEY.get(key);
   if (!mark) return "";
-  const offset = questMarkSpriteOffset(mark, QUEST_MARK_PICKER_SPRITE_HEIGHT, QUEST_MARK_PICKER_BOX_CENTER);
+  const iconMetrics = questMarkSpriteMetrics(mark, QUEST_MARK_PICKER_SPRITE_HEIGHT, QUEST_MARK_PICKER_MAX_WIDTH);
   const selected = key === selectedKey;
   return `
     <button
@@ -2922,7 +2931,7 @@ function questMarkOptionMarkup(key, selectedKey) {
       aria-pressed="${selected}"
       title="${escapeHtml(mark.label)}"
     >
-      <span class="quest-mark-sprite" style="--quest-mark-x:${offset.toFixed(2)}px" aria-hidden="true"></span>
+      <span class="quest-mark-sprite" style="--quest-mark-x:${iconMetrics.offset.toFixed(2)}px;--quest-mark-w:${iconMetrics.width.toFixed(2)}px" aria-hidden="true"></span>
     </button>
   `;
 }
@@ -2937,13 +2946,14 @@ function renderQuestMarkPicker() {
   const manualSelection = els.questMarkInput.dataset.manual === "true" && QUEST_MARK_BY_KEY.has(savedKey);
   const selectedKey = manualSelection ? savedKey : suggestedKey;
   const selectedMark = QUEST_MARK_BY_KEY.get(selectedKey) || QUEST_MARK_BY_KEY.get("puzzle");
-  const offset = questMarkSpriteOffset(selectedMark, QUEST_MARK_PICKER_SPRITE_HEIGHT, QUEST_MARK_PICKER_BOX_CENTER);
+  const iconMetrics = questMarkSpriteMetrics(selectedMark, QUEST_MARK_PICKER_SPRITE_HEIGHT, QUEST_MARK_PICKER_MAX_WIDTH);
 
   els.questMarkInput.value = selectedMark.key;
   els.questMarkInput.dataset.manual = String(manualSelection);
   els.questMarkSuggestions.innerHTML = suggestedKeys.map((key) => questMarkOptionMarkup(key, selectedMark.key)).join("");
   els.questMarkBank.innerHTML = QUEST_MARKS.map((mark) => questMarkOptionMarkup(mark.key, selectedMark.key)).join("");
-  els.questMarkPreviewIcon.style.setProperty("--quest-mark-x", `${offset.toFixed(2)}px`);
+  els.questMarkPreviewIcon.style.setProperty("--quest-mark-x", `${iconMetrics.offset.toFixed(2)}px`);
+  els.questMarkPreviewIcon.style.setProperty("--quest-mark-w", `${iconMetrics.width.toFixed(2)}px`);
   els.questMarkPreviewPin.style.setProperty("--pin-color", MARKER_STYLE[type] || MARKER_STYLE["Pop-ups & Events"]);
   els.questMarkPreviewLabel.textContent = selectedMark.label;
   els.questMarkSuggestedButton.hidden = !manualSelection;
