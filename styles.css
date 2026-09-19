@@ -856,7 +856,7 @@ textarea:focus {
   display: block;
   width: 20px;
   height: 20px;
-  background-image: url("./assets/brand/master-icon-library.svg");
+  background-image: url("./assets/brand/master-icon-library.svg?v=20260919-expanded-v1");
   background-position: var(--vibe-icon-x) -11px;
   background-repeat: no-repeat;
   background-size: auto 40px;
@@ -2537,7 +2537,7 @@ textarea:focus {
   display: block;
   width: 32px;
   height: 50px;
-  background-image: url("./assets/brand/master-icon-library.svg");
+  background-image: url("./assets/brand/master-icon-library.svg?v=20260919-expanded-v1");
   background-position: var(--quest-mark-x) center;
   background-repeat: no-repeat;
   background-size: auto 58px;

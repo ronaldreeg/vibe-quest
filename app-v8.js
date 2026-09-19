@@ -122,7 +122,7 @@ const VIBE_FILTER_STYLE = {
 // Horizontal centers in the master icon sprite.
 const QUEST_MARKS = [
   { key: "tent", label: "Tent", center: 29.8 },
-  { key: "paddle-ball", label: "Paddle & ball", center: 89.8 },
+  { key: "paddle-ball", label: "Flashlight", center: 89.8 },
   { key: "party-popper", label: "Party popper", center: 154.2 },
   { key: "bowl", label: "Cowboy hat", center: 223.8 },
   { key: "beer-mug", label: "Beer mug", center: 294.6 },
@@ -164,14 +164,19 @@ const QUEST_MARKS = [
   { key: "feather", label: "Corn", center: 2448 },
   { key: "roller-skate", label: "Roller skate", center: 2505.6 },
   { key: "film-strip", label: "Film strip", center: 2564.2 },
-  { key: "magic-wand", label: "Magic wand", center: 2622 }
+  { key: "magic-wand", label: "Magic wand", center: 2622 },
+  { key: "playground-slide", label: "Playground slide", center: 2668.5 },
+  { key: "shopping-cart", label: "Shopping cart", center: 2719.5 },
+  { key: "arcade-machine", label: "Arcade", center: 2762.5 },
+  { key: "barber-pole", label: "Barber pole", center: 2805.5 },
+  { key: "ufo", label: "UFO", center: 2848.5 }
 ];
 
 const QUEST_MARK_BY_KEY = new Map(QUEST_MARKS.map((mark) => [mark.key, mark]));
 
 const VIBE_ICON_KEY = {
   "Local Lore": "typewriter",
-  "Game On": "paddle-ball",
+  "Game On": "arcade-machine",
   Chill: "lounge-chair",
   Adventure: "sword",
   Getaway: "cheese",
