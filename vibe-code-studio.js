@@ -5,10 +5,10 @@
   const FONT_READING = '"Faculty Glyphic", Georgia, serif';
   const FONT_INTERFACE = '"VT323", monospace';
   const BRAND_MARK_URL = "./assets/brand/logo-mark-signal.svg?v=20260911-flyer-v2";
-  const ICON_LIBRARY_URL = "./assets/brand/master-icon-library.svg?v=20260912-v2";
+  const ICON_LIBRARY_URL = "./assets/brand/master-icon-library.svg?v=20260920-six-new-icons-v1";
   const ICON_PATTERN_URL = "./assets/brand/icon-pattern.png?v=20260913-v2";
   const GEM_MARK_URL = "./assets/brand/inventory.svg?v=20260912-v1";
-  const ICON_LIBRARY_SIZE = { width: 2718.39, height: 115.56 };
+  const ICON_LIBRARY_SIZE = { width: 3099.32, height: 115.56 };
   const CODE_MARKS = {
     tent: { x: 6, y: 36.8, width: 48, height: 50.8 },
     racketBall: { x: 65.2, y: 38, width: 49.6, height: 49.6 },

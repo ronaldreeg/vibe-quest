@@ -169,21 +169,27 @@ const QUEST_MARKS = [
   { key: "shopping-cart", label: "Shopping cart", center: 2719.5, centerY: 60.5 },
   { key: "arcade-machine", label: "Alert", center: 2762.5, centerY: 61.5 },
   { key: "barber-pole", label: "Barber pole", center: 2805.5, centerY: 61.5 },
-  { key: "ufo", label: "UFO", center: 2848.5, centerY: 62 }
+  { key: "ufo", label: "UFO", center: 2848.5, centerY: 62 },
+  { key: "knitting", label: "Knitting", center: 2892.9, centerY: 62.75 },
+  { key: "fork-knife", label: "Fork and knife", center: 2928.7, centerY: 61.4 },
+  { key: "unicorn", label: "Unicorn", center: 2968.7, centerY: 60.4 },
+  { key: "night-owl", label: "Night owl", center: 3009.7, centerY: 60.9 },
+  { key: "camera", label: "Camera", center: 3046.3, centerY: 61.1 },
+  { key: "vintage-shirt", label: "Vintage shirt", center: 3078.8, centerY: 61.75 }
 ];
 
 const QUEST_MARK_BY_KEY = new Map(QUEST_MARKS.map((mark) => [mark.key, mark]));
 
 const VIBE_ICON_KEY = {
   "Local Lore": "typewriter",
-  "Game On": "arcade-machine",
+  "Game On": "trophy",
   Chill: "lounge-chair",
   Adventure: "sword",
   Getaway: "cheese",
   Random: "dice",
   Divey: "beer-mug",
   "Hidden Gem": "map",
-  Crafty: "magic-wand",
+  Crafty: "knitting",
   Wholesome: "apple",
   Spooky: "alien",
   Bazaar: "market-bag",
@@ -191,13 +197,13 @@ const VIBE_ICON_KEY = {
   Curious: "puzzle",
   Groovy: "cassette",
   Healthy: "dumbbell",
-  Weird: "ghost",
+  Weird: "unicorn",
   Country: "horse",
   Club: "sparkles",
-  Underground: "lightning",
+  Underground: "gift",
   Gig: "music-note",
-  Flea: "arcade",
-  Tasty: "hot-dog",
+  Flea: "vintage-shirt",
+  Tasty: "fork-knife",
   Shindig: "party-popper",
   Fest: "tent"
 };
@@ -207,12 +213,12 @@ const TYPE_ICON_KEY = {
   Classes: "typewriter",
   "Tours & Culture": "cheese",
   Markets: "market-bag",
-  "Food & Drink": "hot-dog",
+  "Food & Drink": "fork-knife",
   Groups: "sparkles",
   "Arts & Music": "artist-palette",
   Outdoors: "tent",
   Wellness: "apple",
-  Nightlife: "cassette",
+  Nightlife: "night-owl",
   Random: "dice"
 };
 
