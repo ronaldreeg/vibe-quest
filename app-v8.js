@@ -146,7 +146,7 @@ const QUEST_MARKS = [
   { key: "dumbbell", label: "Dumbbell", center: 1384, centerY: 64 },
   { key: "market-bag", label: "Coin purse", center: 1438.2, centerY: 65 },
   { key: "craft-tools", label: "Pointer finger", center: 1482.4, centerY: 63 },
-  { key: "table-tennis", label: "Table tennis", center: 1532, centerY: 63 },
+  { key: "table-tennis", label: "Paddle", center: 1532, centerY: 63 },
   { key: "cheese", label: "Compass", center: 1592.4, centerY: 62.5 },
   { key: "hot-dog", label: "Hot dog", center: 1646.8, centerY: 64.5 },
   { key: "map", label: "Gem", center: 1704.6, centerY: 62.5 },
@@ -165,9 +165,9 @@ const QUEST_MARKS = [
   { key: "roller-skate", label: "Roller skate", center: 2505.6, centerY: 59.5 },
   { key: "film-strip", label: "Film strip", center: 2564.2, centerY: 61 },
   { key: "magic-wand", label: "Magic wand", center: 2622, centerY: 61 },
-  { key: "playground-slide", label: "Playground slide", center: 2668.5, centerY: 61 },
+  { key: "playground-slide", label: "Jersey", center: 2668.5, centerY: 61 },
   { key: "shopping-cart", label: "Shopping cart", center: 2719.5, centerY: 60.5 },
-  { key: "arcade-machine", label: "Arcade", center: 2762.5, centerY: 61.5 },
+  { key: "arcade-machine", label: "Alert", center: 2762.5, centerY: 61.5 },
   { key: "barber-pole", label: "Barber pole", center: 2805.5, centerY: 61.5 },
   { key: "ufo", label: "UFO", center: 2848.5, centerY: 62 }
 ];
