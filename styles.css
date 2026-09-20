@@ -859,7 +859,7 @@ textarea:focus {
   background-image: url("./assets/brand/master-icon-library.svg?v=20260920-six-new-icons-v1");
   background-position: var(--vibe-icon-x) var(--vibe-icon-y, -11px);
   background-repeat: no-repeat;
-  background-size: auto 40px;
+  background-size: auto var(--vibe-icon-bg-h, 40px);
   image-rendering: pixelated;
   pointer-events: none;
 }
@@ -2540,7 +2540,7 @@ textarea:focus {
   background-image: url("./assets/brand/master-icon-library.svg?v=20260920-six-new-icons-v1");
   background-position: var(--quest-mark-x) var(--quest-mark-y, center);
   background-repeat: no-repeat;
-  background-size: auto 72px;
+  background-size: auto var(--quest-mark-bg-h, 72px);
   image-rendering: pixelated;
   pointer-events: none;
 }

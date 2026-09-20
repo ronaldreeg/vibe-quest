@@ -178,6 +178,67 @@ const QUEST_MARKS = [
   { key: "vintage-shirt", label: "Vintage shirt", center: 3078.8, centerY: 61.75 }
 ];
 
+// Longest painted edge in the source sprite, used to equalize visual weight.
+const QUEST_MARK_ART_SIZE = {
+  tent: 50.75,
+  "paddle-ball": 49.5,
+  "party-popper": 44.75,
+  bowl: 55.5,
+  "beer-mug": 47,
+  sparkles: 40.25,
+  gift: 43.25,
+  key: 46,
+  "finish-flag": 46.5,
+  skull: 44,
+  bicycle: 62.25,
+  "lounge-chair": 50.25,
+  ghost: 44.25,
+  dice: 48.25,
+  "music-note": 47,
+  taco: 50.75,
+  apple: 50.75,
+  "artist-palette": 43,
+  typewriter: 43.5,
+  baseball: 43.25,
+  sword: 44,
+  mushroom: 45,
+  dumbbell: 49.5,
+  "market-bag": 36.5,
+  "craft-tools": 45.5,
+  "table-tennis": 46.25,
+  cheese: 41.5,
+  "hot-dog": 43.75,
+  map: 39.75,
+  bird: 43,
+  "cooking-pot": 41,
+  arcade: 39.5,
+  ship: 52,
+  lightning: 40.5,
+  cassette: 44.25,
+  laptop: 46,
+  alien: 45.5,
+  puzzle: 42.5,
+  horse: 42.75,
+  trophy: 37.25,
+  feather: 41.5,
+  "roller-skate": 43.75,
+  "film-strip": 40.75,
+  "magic-wand": 38.75,
+  "playground-slide": 36.75,
+  "shopping-cart": 36,
+  "arcade-machine": 33.25,
+  "barber-pole": 33.75,
+  ufo: 41,
+  knitting: 28.25,
+  "fork-knife": 30.75,
+  unicorn: 30.75,
+  "night-owl": 30.75,
+  camera: 27.5,
+  "vintage-shirt": 28
+};
+
+const QUEST_MARK_REFERENCE_SIZE = QUEST_MARK_ART_SIZE.tent;
+
 const QUEST_MARK_BY_KEY = new Map(QUEST_MARKS.map((mark) => [mark.key, mark]));
 
 const VIBE_ICON_KEY = {
@@ -1169,11 +1230,13 @@ function questMarkSpriteMetrics(mark, spriteHeight, maxWidth, cropHeight) {
   const index = QUEST_MARKS.indexOf(mark);
   const previousGap = index > 0 ? mark.center - QUEST_MARKS[index - 1].center : Infinity;
   const nextGap = index < QUEST_MARKS.length - 1 ? QUEST_MARKS[index + 1].center - mark.center : Infinity;
-  const scale = spriteHeight / 115.56;
+  const artSize = QUEST_MARK_ART_SIZE[mark.key] || QUEST_MARK_REFERENCE_SIZE;
+  const scale = (spriteHeight / 115.56) * (QUEST_MARK_REFERENCE_SIZE / artSize);
   const safeWidth = Math.min(previousGap, nextGap) * scale;
   const width = Math.min(maxWidth, Number.isFinite(safeWidth) ? safeWidth : maxWidth);
   return {
     width,
+    backgroundHeight: 115.56 * scale,
     offsetX: width / 2 - mark.center * scale,
     offsetY: cropHeight / 2 - mark.centerY * scale
   };
@@ -1880,7 +1943,7 @@ function markerIcon(adventure) {
     className: "vv-marker-shell",
     html: `
       <span class="vv-marker ${isToday ? "is-today" : ""}" style="--pin-color:${color}" aria-hidden="true">
-        <span class="vv-marker-icon" style="--vibe-icon-x:${iconMetrics.offsetX.toFixed(2)}px;--vibe-icon-y:${iconMetrics.offsetY.toFixed(2)}px;--vibe-icon-w:${iconMetrics.width.toFixed(2)}px"></span>
+        <span class="vv-marker-icon" style="--vibe-icon-x:${iconMetrics.offsetX.toFixed(2)}px;--vibe-icon-y:${iconMetrics.offsetY.toFixed(2)}px;--vibe-icon-w:${iconMetrics.width.toFixed(2)}px;--vibe-icon-bg-h:${iconMetrics.backgroundHeight.toFixed(2)}px"></span>
       </span>
     `,
     iconSize: [26, 26],
@@ -2940,7 +3003,7 @@ function questMarkOptionMarkup(key, selectedKey) {
       aria-pressed="${selected}"
       title="${escapeHtml(mark.label)}"
     >
-      <span class="quest-mark-sprite" style="--quest-mark-x:${iconMetrics.offsetX.toFixed(2)}px;--quest-mark-y:${iconMetrics.offsetY.toFixed(2)}px;--quest-mark-w:${iconMetrics.width.toFixed(2)}px" aria-hidden="true"></span>
+      <span class="quest-mark-sprite" style="--quest-mark-x:${iconMetrics.offsetX.toFixed(2)}px;--quest-mark-y:${iconMetrics.offsetY.toFixed(2)}px;--quest-mark-w:${iconMetrics.width.toFixed(2)}px;--quest-mark-bg-h:${iconMetrics.backgroundHeight.toFixed(2)}px" aria-hidden="true"></span>
     </button>
   `;
 }
@@ -2964,6 +3027,7 @@ function renderQuestMarkPicker() {
   els.questMarkPreviewIcon.style.setProperty("--quest-mark-x", `${iconMetrics.offsetX.toFixed(2)}px`);
   els.questMarkPreviewIcon.style.setProperty("--quest-mark-y", `${iconMetrics.offsetY.toFixed(2)}px`);
   els.questMarkPreviewIcon.style.setProperty("--quest-mark-w", `${iconMetrics.width.toFixed(2)}px`);
+  els.questMarkPreviewIcon.style.setProperty("--quest-mark-bg-h", `${iconMetrics.backgroundHeight.toFixed(2)}px`);
   els.questMarkPreviewPin.style.setProperty("--pin-color", MARKER_STYLE[type] || MARKER_STYLE["Pop-ups & Events"]);
   els.questMarkPreviewLabel.textContent = selectedMark.label;
   els.questMarkSuggestedButton.hidden = !manualSelection;
