@@ -856,7 +856,7 @@ textarea:focus {
   display: block;
   width: var(--vibe-icon-w, 20px);
   height: 20px;
-  background-image: url("./assets/brand/master-icon-library.svg?v=20260919-expanded-v1");
+  background-image: url("./assets/brand/master-icon-library.svg?v=20260920-icon-adjustments-v1");
   background-position: var(--vibe-icon-x) var(--vibe-icon-y, -11px);
   background-repeat: no-repeat;
   background-size: auto 40px;
@@ -2537,7 +2537,7 @@ textarea:focus {
   display: block;
   width: var(--quest-mark-w, 44px);
   height: 54px;
-  background-image: url("./assets/brand/master-icon-library.svg?v=20260919-expanded-v1");
+  background-image: url("./assets/brand/master-icon-library.svg?v=20260920-icon-adjustments-v1");
   background-position: var(--quest-mark-x) var(--quest-mark-y, center);
   background-repeat: no-repeat;
   background-size: auto 72px;
