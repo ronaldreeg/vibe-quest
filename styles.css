@@ -583,9 +583,9 @@ textarea:focus {
   grid-template-columns: minmax(0, 0.95fr) minmax(460px, 0.85fr);
   gap: clamp(48px, 8vw, 140px);
   align-items: end;
-  min-height: 340px;
+  min-height: 320px;
   overflow: hidden;
-  padding: clamp(44px, 5vw, 72px) clamp(32px, 4vw, 68px) clamp(48px, 5vw, 76px);
+  padding: clamp(28px, 2.5vw, 40px) clamp(32px, 4vw, 68px) clamp(62px, 6.5vw, 100px);
 }
 
 .map-hero-copy {
@@ -667,6 +667,13 @@ textarea:focus {
   background: transparent;
   box-shadow: none;
   backdrop-filter: none;
+}
+
+@media (min-width: 901px) {
+  .map-hero-copy,
+  .map-search-panel {
+    transform: translateY(-24px);
+  }
 }
 
 @media (min-width: 1100px) {
@@ -3136,7 +3143,7 @@ textarea:focus {
   .map-hero-header {
     gap: 34px;
     min-height: 0;
-    padding: 44px 34px 48px;
+    padding: 30px 34px 48px;
   }
 
   .hero-icon-stream {
@@ -3377,7 +3384,7 @@ textarea:focus {
 
   .map-hero-header {
     gap: 32px;
-    padding: 36px 20px 40px;
+    padding: 24px 20px 40px;
   }
 
   .hero-icon-stream {
