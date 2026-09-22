@@ -564,13 +564,17 @@ textarea:focus {
   background: var(--brand-charcoal);
 }
 
+.map-accent-band,
 .map-hero::after {
-  content: "";
   display: block;
   height: 18px;
   background-image: url("./assets/brand/retro-accent.svg?v=20260921-v2");
   background-repeat: no-repeat;
   background-size: 100% 100%;
+}
+
+.map-hero::after {
+  content: "";
 }
 
 .map-hero-header {
