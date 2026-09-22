@@ -474,11 +474,24 @@
     context.restore();
   }
 
-  function drawCodeMark(centerX, centerY, qrSize) {
+  function drawCodeMark(centerX, centerY, qrSize, style = "framed") {
     const badgeSize = Math.round(qrSize * 0.14);
     const inset = Math.max(8, Math.round(badgeSize * 0.09));
     const x = Math.round(centerX - badgeSize / 2);
     const y = Math.round(centerY - badgeSize / 2);
+
+    if (style === "dark") {
+      context.fillStyle = COLORS.charcoalDeep;
+      context.fillRect(x, y, badgeSize, badgeSize);
+      drawLibraryIcon(
+        studio.mark,
+        x + inset * 1.35,
+        y + inset * 1.35,
+        badgeSize - inset * 2.7,
+        badgeSize - inset * 2.7
+      );
+      return;
+    }
 
     context.fillStyle = COLORS.cream;
     context.fillRect(x, y, badgeSize, badgeSize);
@@ -516,9 +529,9 @@
     drawCodeMark(x + size / 2, y + size / 2, size);
   }
 
-  function drawBareQr(x, y, size, qr) {
+  function drawBareQr(x, y, size, qr, markStyle = "framed") {
     context.drawImage(qr, x, y, size, size);
-    drawCodeMark(x + size / 2, y + size / 2, size);
+    drawCodeMark(x + size / 2, y + size / 2, size, markStyle);
   }
 
   function drawDestinationTag(copy, options) {
@@ -677,7 +690,7 @@
       align: "center"
     });
 
-    drawBareQr(310, 320, 460, qr);
+    drawBareQr(310, 320, 460, qr, "dark");
     drawSingleLine(copy.prompt.toUpperCase(), {
       x: SIZE / 2,
       y: 812,
@@ -760,7 +773,7 @@
         width: 600,
         color: {
           dark: studio.layout === "signal" ? COLORS.charcoalDeep : COLORS.qrOrange,
-          light: COLORS.cream
+          light: studio.layout === "icon-field" ? "#00000000" : COLORS.cream
         }
       });
     } catch {
