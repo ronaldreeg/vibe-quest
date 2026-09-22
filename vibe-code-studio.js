@@ -54,7 +54,11 @@
     racket: { x: 2427.2, y: 41.6, width: 42, height: 39.6 },
     swim: { x: 2486.8, y: 38, width: 38, height: 43.6 },
     building: { x: 2544, y: 40.4, width: 40.8, height: 40.8 },
-    wand: { x: 2602.8, y: 42, width: 38.8, height: 38.8 }
+    wand: { x: 2592.7, y: 45.5, width: 35.1, height: 35.1 },
+    camera: { x: 3021.4, y: 43, width: 42.7, height: 42.4 },
+    unicorn: { x: 2896.1, y: 44.7, width: 40.6, height: 39.5 },
+    cowboyHat: { x: 196.4, y: 39.9, width: 55.5, height: 44.9 },
+    bike: { x: 615.4, y: 42.8, width: 62.2, height: 44.3 }
   };
   const ICON_RIBBON = [
     "tent", "racketBall", "confetti", "bowl", "beer", "sparkles", "gift", "key", "flag", "skull",
