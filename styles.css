@@ -610,7 +610,7 @@ textarea:focus {
   width: max-content;
   height: 100%;
   align-items: center;
-  animation: hero-icon-drift 126.28s linear infinite;
+  animation: hero-icon-drift 128.13s linear infinite;
   will-change: transform;
 }
 
@@ -856,7 +856,7 @@ textarea:focus {
   display: block;
   width: var(--vibe-icon-w, 20px);
   height: 20px;
-  background-image: url("./assets/brand/master-icon-library.svg?v=20260920-six-new-icons-v1");
+  background-image: url("./assets/brand/master-icon-library.svg?v=20260921-balanced-icons-v1");
   background-position: var(--vibe-icon-x) var(--vibe-icon-y, -11px);
   background-repeat: no-repeat;
   background-size: auto var(--vibe-icon-bg-h, 40px);
@@ -2537,7 +2537,7 @@ textarea:focus {
   display: block;
   width: var(--quest-mark-w, 44px);
   height: 54px;
-  background-image: url("./assets/brand/master-icon-library.svg?v=20260920-six-new-icons-v1");
+  background-image: url("./assets/brand/master-icon-library.svg?v=20260921-balanced-icons-v1");
   background-position: var(--quest-mark-x) var(--quest-mark-y, center);
   background-repeat: no-repeat;
   background-size: auto var(--quest-mark-bg-h, 72px);
