@@ -433,12 +433,12 @@
     context.restore();
   }
 
-  function drawIconPatternRegion(x, y, width, height, offsetX = 0, offsetY = -6) {
+  function drawIconPatternRegion(x, y, width, height, offsetX = 0, offsetY = -6, background = studio.accent) {
     context.save();
     context.beginPath();
     context.rect(x, y, width, height);
     context.clip();
-    context.fillStyle = studio.accent;
+    context.fillStyle = background;
     context.fillRect(x, y, width, height);
 
     if (!iconPattern.complete || iconPattern.naturalWidth <= 0) {
@@ -645,6 +645,52 @@
     drawIconPatternRegion(0, 900, SIZE, 180, -18);
   }
 
+  function drawIconFieldLayout(copy, qr) {
+    context.fillStyle = COLORS.charcoalDeep;
+    context.fillRect(0, 0, SIZE, SIZE);
+    drawIconPatternRegion(0, 0, SIZE, SIZE, -20, -14, COLORS.charcoalDeep);
+
+    const panel = { x: 170, y: 145, width: 740, height: 760 };
+    context.fillStyle = COLORS.charcoalDeep;
+    context.fillRect(panel.x, panel.y, panel.width, panel.height);
+
+    fittedText(copy.title, {
+      x: SIZE / 2,
+      y: 175,
+      maxWidth: 660,
+      maxLines: 2,
+      startSize: 62,
+      minSize: 40,
+      lineHeight: 0.96,
+      blockHeight: 112,
+      weight: 700,
+      family: FONT_READING,
+      color: COLORS.cream,
+      align: "center"
+    });
+
+    drawDestinationTag(copy, {
+      x: SIZE / 2,
+      y: 295,
+      maxWidth: 650,
+      color: COLORS.qrOrange,
+      align: "center"
+    });
+
+    drawBareQr(310, 320, 460, qr);
+    drawSingleLine(copy.prompt.toUpperCase(), {
+      x: SIZE / 2,
+      y: 812,
+      maxWidth: 650,
+      startSize: 29,
+      minSize: 20,
+      weight: 700,
+      family: FONT_INTERFACE,
+      color: COLORS.cream,
+      align: "center"
+    });
+  }
+
   function drawInvalidState(message) {
     context.fillStyle = COLORS.charcoal;
     context.fillRect(0, 0, SIZE, SIZE);
@@ -713,7 +759,7 @@
         margin: 4,
         width: 600,
         color: {
-          dark: studio.layout === "portal" ? COLORS.qrOrange : COLORS.charcoalDeep,
+          dark: studio.layout === "signal" ? COLORS.charcoalDeep : COLORS.qrOrange,
           light: COLORS.cream
         }
       });
@@ -727,6 +773,7 @@
     if (request !== studio.renderRequest) return false;
     studio.currentDestination = copy.destination;
     if (studio.layout === "portal") drawPortalLayout(copy, qrCanvas);
+    else if (studio.layout === "icon-field") drawIconFieldLayout(copy, qrCanvas);
     else drawSignalLayout(copy, qrCanvas);
     setStatus(`${copy.destinationTypeLabel} signal ready for ${copy.destinationLabel}.`);
     return true;
