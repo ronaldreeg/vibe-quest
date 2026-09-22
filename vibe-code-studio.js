@@ -76,6 +76,7 @@
     indigo: "#343b5e",
     olive: "#4d5231"
   };
+  const RETRO_ACCENT_COLORS = ["#fa622e", "#fc8a43", "#f6a938", "#f8d23d"];
   const DEFAULTS = {
     destinationType: "link",
     layout: "signal",
@@ -492,25 +493,27 @@
     );
   }
 
-  function drawQrFrame(x, y, size, qr, accent) {
+  function drawQrFrame(x, y, size, qr) {
+    const stripeWidth = 7;
+    const frameWidth = stripeWidth * RETRO_ACCENT_COLORS.length;
+
     context.fillStyle = rgba(COLORS.charcoalDeep, 0.42);
-    context.fillRect(x + 18, y + 18, size, size);
-    context.fillStyle = accent;
-    context.fillRect(x - 12, y - 12, size + 24, size + 24);
+    context.fillRect(
+      x - frameWidth + 18,
+      y - frameWidth + 18,
+      size + frameWidth * 2,
+      size + frameWidth * 2
+    );
+
+    RETRO_ACCENT_COLORS.forEach((color, index) => {
+      const inset = index * stripeWidth;
+      const offset = frameWidth - inset;
+      context.fillStyle = color;
+      context.fillRect(x - offset, y - offset, size + offset * 2, size + offset * 2);
+    });
+
     context.drawImage(qr, x, y, size, size);
     drawCodeMark(x + size / 2, y + size / 2, size);
-
-    const corner = 58;
-    const stroke = 10;
-    context.fillStyle = accent;
-    context.fillRect(x - 26, y - 26, corner, stroke);
-    context.fillRect(x - 26, y - 26, stroke, corner);
-    context.fillRect(x + size - corner + 26, y - 26, corner, stroke);
-    context.fillRect(x + size + 16, y - 26, stroke, corner);
-    context.fillRect(x - 26, y + size + 16, corner, stroke);
-    context.fillRect(x - 26, y + size - corner + 26, stroke, corner);
-    context.fillRect(x + size - corner + 26, y + size + 16, corner, stroke);
-    context.fillRect(x + size + 16, y + size - corner + 26, stroke, corner);
   }
 
   function drawBareQr(x, y, size, qr) {
@@ -581,7 +584,7 @@
       maxWidth: 320,
       color: COLORS.qrOrange
     });
-    drawQrFrame(460, 230, 556, qr, accent);
+    drawQrFrame(460, 230, 556, qr);
     drawSingleLine("SCAN THE SIGNAL", {
       x: 738,
       y: 818,
