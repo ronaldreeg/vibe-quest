@@ -429,6 +429,16 @@ textarea {
   outline: 0;
 }
 
+select {
+  color-scheme: dark;
+  background-color: #23252a;
+}
+
+select option {
+  background-color: #23252a;
+  color: var(--brand-cream);
+}
+
 input,
 select {
   min-height: 46px;
