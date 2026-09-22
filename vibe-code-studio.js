@@ -669,7 +669,7 @@
 
     fittedText(copy.title, {
       x: SIZE / 2,
-      y: 175,
+      y: 190,
       maxWidth: 660,
       maxLines: 2,
       startSize: 62,
