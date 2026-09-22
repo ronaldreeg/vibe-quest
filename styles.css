@@ -27,7 +27,7 @@
   --text: #f3e9c4;
   --muted: rgba(243, 233, 196, 0.72);
   --muted-strong: rgba(243, 233, 196, 0.9);
-  --accent: #f45077;
+  --accent: #0f8fb1;
   --accent-text: #f8d23d;
   --accent-strong: #fa622e;
   --detail-label: #f3e9c4;
@@ -346,7 +346,7 @@ button {
   display: inline-flex;
   width: max-content;
   padding: 3px 5px;
-  background: var(--brand-pink);
+  background: var(--brand-teal);
   color: var(--brand-charcoal);
   font-size: 0.78rem;
   font-weight: 900;
@@ -443,8 +443,8 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: var(--brand-pink);
-  box-shadow: 0 0 0 4px rgba(244, 80, 119, 0.16);
+  border-color: var(--brand-teal);
+  box-shadow: 0 0 0 4px rgba(15, 143, 177, 0.18);
 }
 
 .file-input {
@@ -496,7 +496,7 @@ textarea:focus {
 
 .chip.is-active {
   border-color: var(--brand-charcoal);
-  background: var(--brand-pink);
+  background: var(--brand-teal);
   color: var(--brand-charcoal);
 }
 
@@ -815,7 +815,7 @@ textarea:focus {
 #realMap .leaflet-bar a:hover,
 #realMap .leaflet-bar a:focus {
   background: #23252a;
-  color: var(--brand-pink);
+  color: var(--brand-teal);
 }
 
 #realMap .leaflet-top.leaflet-left {
@@ -921,8 +921,8 @@ textarea:focus {
 }
 
 .filter-bar .chip.is-active {
-  border-color: var(--brand-pink);
-  background: var(--brand-pink);
+  border-color: var(--brand-teal);
+  background: var(--brand-teal);
   color: var(--brand-charcoal);
 }
 
