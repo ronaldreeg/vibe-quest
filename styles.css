@@ -564,6 +564,15 @@ textarea:focus {
   background: var(--brand-charcoal);
 }
 
+.map-hero::after {
+  content: "";
+  display: block;
+  height: 18px;
+  background-image: url("./assets/brand/retro-accent.svg?v=20260921-v2");
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
 .map-hero-header {
   position: relative;
   display: grid;
@@ -1297,6 +1306,18 @@ textarea:focus {
   line-height: 1.65;
 }
 
+.share-page-header::after,
+.out-there-header::after {
+  content: "";
+  display: block;
+  width: min(100%, 620px);
+  height: 12px;
+  margin-top: 10px;
+  background-image: url("./assets/brand/retro-accent.svg?v=20260921-v2");
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
 .workshop-mode-switch {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1824,15 +1845,27 @@ textarea:focus {
 }
 
 .site-footer {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(240px, 0.6fr);
   gap: clamp(28px, 5vw, 72px);
+  overflow: hidden;
   margin-top: var(--gap-lg);
   padding: clamp(28px, 5vw, 64px);
   border: 1px solid var(--brand-charcoal);
   background: var(--brand-charcoal);
   color: var(--brand-cream);
   box-shadow: var(--shadow);
+}
+
+.site-footer::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 12px;
+  background-image: url("./assets/brand/retro-accent.svg?v=20260921-v2");
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
 }
 
 .site-footer-copy {
