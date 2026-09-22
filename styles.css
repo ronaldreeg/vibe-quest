@@ -1310,7 +1310,6 @@ textarea:focus {
   line-height: 1.65;
 }
 
-.share-page-header::after,
 .out-there-header::after {
   content: "";
   display: block;
@@ -1327,6 +1326,16 @@ textarea:focus {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-bottom: var(--gap);
   border: 1px solid var(--line);
+}
+
+.workshop-mode-switch::before {
+  content: "";
+  display: block;
+  grid-column: 1 / -1;
+  height: 12px;
+  background-image: url("./assets/brand/retro-accent.svg?v=20260921-v2");
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
 }
 
 .workshop-mode-button {
