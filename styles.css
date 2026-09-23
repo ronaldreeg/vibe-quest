@@ -618,10 +618,12 @@ textarea:focus {
 .hero-icon-stream {
   position: absolute;
   z-index: 1;
-  top: 30%;
+  top: 2%;
   right: 0;
   left: clamp(430px, 37vw, 700px);
-  height: clamp(96px, 8vw, 126px);
+  display: grid;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  height: clamp(148px, 12vw, 166px);
   overflow: hidden;
   pointer-events: none;
   -webkit-mask-image: linear-gradient(to right, transparent 0, #000 18%, #000 94%, transparent 100%);
@@ -635,6 +637,12 @@ textarea:focus {
   align-items: center;
   animation: hero-icon-drift 128.13s linear infinite;
   will-change: transform;
+}
+
+.hero-icon-stream-track.is-reverse {
+  animation-name: hero-icon-drift-reverse;
+  animation-duration: 141.77s;
+  animation-delay: -41s;
 }
 
 .hero-icon-stream img {
@@ -652,6 +660,16 @@ textarea:focus {
 
   to {
     transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes hero-icon-drift-reverse {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(-50%, 0, 0);
   }
 }
 
@@ -2991,6 +3009,10 @@ textarea:focus {
     animation: none;
     transform: translate3d(-18%, 0, 0);
   }
+
+  .hero-icon-stream-track.is-reverse {
+    transform: translate3d(-38%, 0, 0);
+  }
 }
 
 [hidden] {
@@ -3150,7 +3172,7 @@ textarea:focus {
     position: relative;
     inset: auto;
     width: calc(100% + 68px);
-    height: 64px;
+    height: 112px;
     margin: -4px -34px 0;
     -webkit-mask-image: linear-gradient(to right, transparent 0, #000 12%, #000 88%, transparent 100%);
     mask-image: linear-gradient(to right, transparent 0, #000 12%, #000 88%, transparent 100%);
@@ -3389,7 +3411,7 @@ textarea:focus {
 
   .hero-icon-stream {
     width: calc(100% + 40px);
-    height: 52px;
+    height: 96px;
     margin: -8px -20px 0;
   }
 
