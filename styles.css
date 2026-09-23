@@ -693,6 +693,10 @@ textarea:focus {
   .map-hero-copy {
     transform: translateY(-24px);
   }
+
+  .map-hero-copy .hero-subtitle {
+    transform: translateY(20px);
+  }
 }
 
 @media (min-width: 1100px) {
