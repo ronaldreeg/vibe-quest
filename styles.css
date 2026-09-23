@@ -640,6 +640,8 @@ textarea:focus {
 }
 
 .hero-icon-stream-track.is-reverse {
+  position: relative;
+  top: -28px;
   animation-name: hero-icon-drift-reverse;
   animation-duration: 141.77s;
   animation-delay: -41s;
@@ -3176,6 +3178,10 @@ textarea:focus {
     margin: -4px -34px 0;
     -webkit-mask-image: linear-gradient(to right, transparent 0, #000 12%, #000 88%, transparent 100%);
     mask-image: linear-gradient(to right, transparent 0, #000 12%, #000 88%, transparent 100%);
+  }
+
+  .hero-icon-stream-track.is-reverse {
+    top: -18px;
   }
 
   .share-page-header,
