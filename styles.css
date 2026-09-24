@@ -3890,8 +3890,8 @@ textarea:focus {
 
   .brand,
   .topbar:not(.is-scrolled) .brand {
-    width: clamp(320px, 27vw, 375px);
-    height: 158px;
+    width: clamp(224px, 19vw, 263px);
+    height: 111px;
     margin-right: clamp(18px, 2vw, 32px);
   }
 
@@ -3938,8 +3938,8 @@ textarea:focus {
   }
 
   .topbar.is-scrolled .brand {
-    width: 184px;
-    height: 78px;
+    width: 129px;
+    height: 55px;
     margin-right: 22px;
   }
 
@@ -3973,8 +3973,8 @@ textarea:focus {
 
   .brand,
   .topbar:not(.is-scrolled) .brand {
-    width: clamp(230px, 29vw, 270px);
-    height: 114px;
+    width: clamp(161px, 20.3vw, 189px);
+    height: 80px;
     margin-right: 0;
   }
 
@@ -3987,8 +3987,8 @@ textarea:focus {
   }
 
   .topbar.is-scrolled .brand {
-    width: 170px;
-    height: 72px;
+    width: 119px;
+    height: 50px;
   }
 }
 
@@ -3999,8 +3999,8 @@ textarea:focus {
 
   .topbar .brand,
   .topbar:not(.is-scrolled) .brand {
-    width: min(174px, 55vw);
-    height: 74px;
+    width: min(122px, 55vw);
+    height: 52px;
   }
 
   .mobile-nav-toggle {
@@ -4031,8 +4031,8 @@ textarea:focus {
   }
 
   .topbar.is-scrolled .brand {
-    width: min(150px, 48vw);
-    height: 64px;
+    width: min(105px, 48vw);
+    height: 45px;
   }
 }
 
@@ -4051,14 +4051,14 @@ textarea:focus {
   .topbar:not(.is-scrolled) .brand {
     grid-column: 1;
     grid-row: 1;
-    width: clamp(174px, 19vw, 205px);
-    height: 88px;
+    width: clamp(122px, 13.3vw, 144px);
+    height: 62px;
     margin-right: 4px;
   }
 
   .topbar.is-scrolled .brand {
-    width: 150px;
-    height: 64px;
+    width: 105px;
+    height: 45px;
     margin-right: 4px;
   }
 
@@ -4128,13 +4128,13 @@ textarea:focus {
 
   .topbar .brand,
   .topbar:not(.is-scrolled) .brand {
-    width: 210px;
-    height: 88px;
+    width: 147px;
+    height: 62px;
     margin-right: 0;
   }
 
   .topbar.is-scrolled .brand {
-    width: 164px;
-    height: 68px;
+    width: 115px;
+    height: 48px;
   }
 }
