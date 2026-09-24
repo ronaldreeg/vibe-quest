@@ -30,7 +30,7 @@
     vibetinerary: {
       eyebrow: "Vibetinerary Studio",
       title: "Map a day worth taking.",
-      intro: "Bundle a few good finds into one shareable route. Build a clear stop list or turn the day into a playful treasure map."
+      intro: "Bundle a few good finds into one shareable route. Build a clear stop list or turn the day into a stylized, non-geographic treasure map."
     },
     "vibe-code": {
       eyebrow: "Vibe Code Generator",
@@ -45,6 +45,8 @@
   const pointsContainer = document.querySelector("#vibetineraryPoints");
   const pointCount = document.querySelector("#vibetineraryPointCount");
   const photoInput = document.querySelector("#vibetineraryPhotoInput");
+  const backgroundLabel = document.querySelector("[data-vibetinerary-background-label]");
+  const backgroundHint = document.querySelector("[data-vibetinerary-background-hint]");
   const status = document.querySelector("#vibetineraryStatus");
   if (!view || !form || !pointsContainer || !(canvas instanceof HTMLCanvasElement)) return;
 
@@ -180,23 +182,27 @@
     drawSingleLine("REAL-WORLD DISCOVERY", x, y + 48, size * 1.6, 16, 12, COLORS.cream);
   }
 
+  function drawPhotoCover(image, x, y, width, height) {
+    const sourceWidth = image.naturalWidth || image.width;
+    const sourceHeight = image.naturalHeight || image.height;
+    const scale = Math.max(width / sourceWidth, height / sourceHeight);
+    const drawWidth = sourceWidth * scale;
+    const drawHeight = sourceHeight * scale;
+    context.drawImage(
+      image,
+      x + (width - drawWidth) / 2,
+      y + (height - drawHeight) / 2,
+      drawWidth,
+      drawHeight
+    );
+  }
+
   function drawBackground(overlayOpacity) {
     context.fillStyle = COLORS.charcoal;
     context.fillRect(0, 0, WIDTH, HEIGHT);
     if (!studio.photo) return;
 
-    const sourceWidth = studio.photo.naturalWidth || studio.photo.width;
-    const sourceHeight = studio.photo.naturalHeight || studio.photo.height;
-    const scale = Math.max(WIDTH / sourceWidth, HEIGHT / sourceHeight);
-    const drawWidth = sourceWidth * scale;
-    const drawHeight = sourceHeight * scale;
-    context.drawImage(
-      studio.photo,
-      (WIDTH - drawWidth) / 2,
-      (HEIGHT - drawHeight) / 2,
-      drawWidth,
-      drawHeight
-    );
+    drawPhotoCover(studio.photo, 0, 0, WIDTH, HEIGHT);
     context.fillStyle = rgba(COLORS.charcoal, overlayOpacity);
     context.fillRect(0, 0, WIDTH, HEIGHT);
   }
@@ -424,9 +430,11 @@
 
   function drawMapLayout(copy) {
     const accent = studio.accent;
-    drawBackground(0.72);
+    context.fillStyle = COLORS.charcoal;
+    context.fillRect(0, 0, WIDTH, HEIGHT);
     drawBrand(54, 26, 138);
     drawSingleLine("VIBETINERARY / TREASURE MAP", 232, 68, 770, 28, 19, accent);
+    drawSingleLine("PLAYFUL ROUTE / NOT TO SCALE", 232, 108, 770, 21, 15, COLORS.cream);
 
     const titleEnd = drawText(copy.title, {
       x: 58,
@@ -455,8 +463,20 @@
 
     const mapTop = 420;
     const mapBottom = 1190;
-    context.fillStyle = studio.photo ? rgba(COLORS.charcoalDeep, 0.52) : COLORS.charcoalDeep;
+    context.fillStyle = COLORS.charcoalDeep;
     context.fillRect(46, mapTop, 988, mapBottom - mapTop);
+    if (studio.photo) {
+      context.save();
+      context.beginPath();
+      context.rect(46, mapTop, 988, mapBottom - mapTop);
+      context.clip();
+      drawPhotoCover(studio.photo, 46, mapTop, 988, mapBottom - mapTop);
+      context.fillStyle = rgba(COLORS.charcoalDeep, 0.66);
+      context.fillRect(46, mapTop, 988, mapBottom - mapTop);
+      context.fillStyle = rgba(accent, 0.06);
+      context.fillRect(46, mapTop, 988, mapBottom - mapTop);
+      context.restore();
+    }
     context.strokeStyle = accent;
     context.lineWidth = 4;
     context.strokeRect(46, mapTop, 988, mapBottom - mapTop);
@@ -537,6 +557,7 @@
   }
 
   function updateControlState() {
+    const isTreasureMap = studio.layout === "map";
     view.querySelectorAll("[data-workshop-mode]").forEach((button) => {
       const active = button.dataset.workshopMode === studio.workshopMode;
       button.classList.toggle("is-active", active);
@@ -552,6 +573,16 @@
       button.classList.toggle("is-active", active);
       button.setAttribute("aria-pressed", active ? "true" : "false");
     });
+    if (backgroundLabel) {
+      backgroundLabel.textContent = isTreasureMap
+        ? "Treasure map background (optional)"
+        : "Background image (optional)";
+    }
+    if (backgroundHint) {
+      backgroundHint.textContent = isTreasureMap
+        ? "Adds a subtle photo beneath the illustrated route. This is a playful layout, not a geographic map."
+        : "Adds a soft full-frame image behind the stop list.";
+    }
   }
 
   function setWorkshopMode(mode) {
@@ -611,7 +642,9 @@
       studio.photoUrl = objectUrl;
       const removeButton = view.querySelector('[data-vibetinerary-action="clear-photo"]');
       if (removeButton) removeButton.hidden = false;
-      setStatus("Background added. It stays on this device.");
+      setStatus(studio.layout === "map"
+        ? "Subtle treasure-map background added. It stays on this device."
+        : "Background added. It stays on this device.");
       render();
     });
     image.addEventListener("error", () => {
