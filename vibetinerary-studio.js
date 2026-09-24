@@ -311,15 +311,35 @@
     drawSingleLine("CHOOSE A VIBE. BEGIN THE QUEST.", 64, HEIGHT - 78, 952, 26, 18, contrastColor(accent));
   }
 
+  function regularPolygonPoints(count, centerX = 540, centerY = 850, radius = 260) {
+    return Array.from({ length: count }, (_, index) => {
+      const angle = -Math.PI / 2 + index * (Math.PI * 2 / count);
+      return [
+        centerX + Math.cos(angle) * radius,
+        centerY + Math.sin(angle) * radius
+      ];
+    });
+  }
+
   function mapPlacements(count) {
-    const layouts = {
-      1: [{ point: [540, 790], label: [395, 625] }],
-      2: [{ point: [260, 650], label: [100, 500] }, { point: [790, 930], label: [650, 970] }],
-      3: [{ point: [210, 640], label: [86, 490] }, { point: [800, 610], label: [670, 460] }, { point: [520, 1010], label: [375, 1040] }],
-      4: [{ point: [190, 650], label: [70, 500] }, { point: [745, 575], label: [615, 425] }, { point: [850, 950], label: [700, 985] }, { point: [335, 1030], label: [135, 865] }],
-      5: [{ point: [170, 650], label: [58, 500] }, { point: [470, 570], label: [330, 620] }, { point: [845, 680], label: [700, 520] }, { point: [735, 1030], label: [650, 1060] }, { point: [290, 1010], label: [105, 845] }]
+    if (count === 1) return [{ point: [540, 820], label: [398, 650] }];
+    if (count === 2) {
+      return [
+        { point: [300, 700], label: [70, 530] },
+        { point: [780, 1000], label: [725, 830] }
+      ];
+    }
+
+    const labels = {
+      3: [[398, 440], [725, 835], [70, 835]],
+      4: [[398, 440], [725, 690], [398, 960], [70, 690]],
+      5: [[398, 440], [725, 600], [725, 890], [70, 890], [70, 600]]
     };
-    return layouts[count] || layouts[1];
+    const safeCount = Math.max(3, Math.min(MAX_POINTS, count));
+    return regularPolygonPoints(safeCount).map((point, index) => ({
+      point,
+      label: labels[safeCount][index]
+    }));
   }
 
   function drawMapTexture(mapTop, mapBottom, accent) {
@@ -328,31 +348,34 @@
     context.rect(46, mapTop, 988, mapBottom - mapTop);
     context.clip();
 
-    context.strokeStyle = rgba(COLORS.cream, 0.1);
-    context.lineWidth = 4;
-    [0, 1, 2, 3, 4].forEach((index) => {
-      const y = mapTop + 95 + index * 132;
-      context.beginPath();
-      context.moveTo(-40, y);
-      context.bezierCurveTo(240, y - 100, 350, y + 120, 610, y - 18);
-      context.bezierCurveTo(790, y - 110, 910, y + 86, 1130, y - 46);
-      context.stroke();
-    });
+    const mapLeft = 46;
+    const mapRight = 1034;
+    const cellSize = 52;
+    context.strokeStyle = rgba(COLORS.cream, 0.075);
+    context.lineWidth = 1.5;
+    context.beginPath();
+    for (let x = mapLeft; x <= mapRight; x += cellSize) {
+      context.moveTo(x, mapTop);
+      context.lineTo(x, mapBottom);
+    }
+    for (let y = mapTop; y <= mapBottom; y += cellSize) {
+      context.moveTo(mapLeft, y);
+      context.lineTo(mapRight, y);
+    }
+    context.stroke();
 
-    context.strokeStyle = rgba(accent, 0.13);
+    context.strokeStyle = rgba(accent, 0.065);
     context.lineWidth = 2;
-    [0, 1, 2, 3].forEach((index) => {
-      const x = 155 + index * 245;
-      context.beginPath();
-      context.moveTo(x, mapTop - 40);
-      context.bezierCurveTo(x + 130, mapTop + 190, x - 100, mapTop + 410, x + 80, mapBottom + 30);
-      context.stroke();
-    });
-
-    context.fillStyle = rgba(COLORS.teal, 0.16);
-    [[80, 715, 150, 92], [800, 755, 170, 105], [520, 925, 130, 78]].forEach(([x, y, width, height]) => {
-      context.fillRect(x, y, width, height);
-    });
+    context.beginPath();
+    for (let x = mapLeft; x <= mapRight; x += cellSize * 4) {
+      context.moveTo(x, mapTop);
+      context.lineTo(x, mapBottom);
+    }
+    for (let y = mapTop; y <= mapBottom; y += cellSize * 4) {
+      context.moveTo(mapLeft, y);
+      context.lineTo(mapRight, y);
+    }
+    context.stroke();
     context.restore();
   }
 
