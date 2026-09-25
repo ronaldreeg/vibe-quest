@@ -1996,21 +1996,21 @@ textarea:focus {
 }
 
 .out-there-view {
-  --out-there-content-inset: clamp(16px, 3vw, 40px);
+  --out-there-content-inset: clamp(20px, 4vw, 68px);
   padding-bottom: var(--gap-lg);
 }
 
 .out-there-header {
   max-width: 980px;
-  padding: clamp(54px, 8vw, 112px) 0 clamp(34px, 5vw, 64px);
+  padding: clamp(36px, 5vw, 64px) var(--out-there-content-inset) clamp(28px, 4vw, 48px);
   border-top: 1px solid var(--line);
 }
 
 .out-there-title {
-  max-width: 13ch;
-  margin: 10px 0 22px;
-  font-size: clamp(3.2rem, 8vw, 7.4rem);
-  line-height: 0.9;
+  max-width: 15ch;
+  margin: 10px 0 18px;
+  font-size: clamp(2.8rem, 6vw, 5.6rem);
+  line-height: 0.94;
 }
 
 .out-there-header p {
@@ -3498,10 +3498,6 @@ textarea:focus {
 
   .chip {
     flex: 1 1 calc(50% - 8px);
-  }
-
-  .out-there-title {
-    font-size: clamp(3rem, 14vw, 4.4rem);
   }
 
   .out-there-feature {
