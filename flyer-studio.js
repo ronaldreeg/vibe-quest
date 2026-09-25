@@ -6,10 +6,20 @@
   const FONT_READING = '"Faculty Glyphic", Georgia, serif';
   const FONT_INTERFACE = '"VT323", monospace';
   const BRAND_MARK_URL = "./assets/brand/logo-mark-signal.svg?v=20260911-flyer-v2";
+  const QUEST_MARK_URL = "./assets/brand/vibe-marks-sept25.svg?v=20260925-v2";
+  const QUEST_MARKS = {
+    "mark-1": { x: 0, width: 274 },
+    "mark-2": { x: 274, width: 274 },
+    "mark-3": { x: 548, width: 274 },
+    "mark-4": { x: 822, width: 274 },
+    "mark-5": { x: 1096, width: 274 },
+    "mark-6": { x: 1370, width: 274 },
+    "mark-7": { x: 1640, width: 280 }
+  };
   const DEFAULTS = {
     layout: "full",
     accent: "#f8d23d",
-    symbol: "spark"
+    symbol: "mark-1"
   };
 
   const view = document.querySelector("#shareView");
@@ -35,6 +45,8 @@
 
   const brandMark = new Image();
   brandMark.decoding = "async";
+  const questMarks = new Image();
+  questMarks.decoding = "async";
 
   const studio = {
     layout: DEFAULTS.layout,
@@ -242,6 +254,27 @@
   }
 
   function drawSymbol(type, centerX, centerY, size, color) {
+    const mark = QUEST_MARKS[type] || QUEST_MARKS[DEFAULTS.symbol];
+    if (questMarks.complete && questMarks.naturalWidth > 0 && questMarks.naturalHeight > 0) {
+      const sourceScale = questMarks.naturalWidth / 1920;
+      const sourceX = mark.x * sourceScale;
+      const sourceWidth = mark.width * sourceScale;
+      const sourceHeight = questMarks.naturalHeight;
+      const drawWidth = size * (mark.width / 245.06);
+      context.drawImage(
+        questMarks,
+        sourceX,
+        0,
+        sourceWidth,
+        sourceHeight,
+        centerX - drawWidth / 2,
+        centerY - size / 2,
+        drawWidth,
+        size
+      );
+      return;
+    }
+
     context.save();
     context.translate(centerX, centerY);
     context.fillStyle = color;
@@ -624,7 +657,9 @@
 
   window.vvFlyerStudio = { render };
   brandMark.addEventListener("load", render);
+  questMarks.addEventListener("load", render);
   brandMark.src = BRAND_MARK_URL;
+  questMarks.src = QUEST_MARK_URL;
   updateNoteCount();
   updateSubheaderSizeOutput();
   updateControlState();

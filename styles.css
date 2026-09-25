@@ -1711,8 +1711,17 @@ textarea:focus {
 }
 
 .flyer-symbol {
-  font-size: 1.15rem;
-  font-weight: 900;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.flyer-symbol-art {
+  display: block;
+  width: 38px;
+  height: 38px;
+  overflow: hidden;
+  image-rendering: pixelated;
 }
 
 .flyer-actions {
