@@ -608,7 +608,7 @@ textarea:focus {
   font-family: var(--font-reading);
   font-weight: 400;
   font-size: clamp(3rem, 4.2vw, 4.5rem);
-  line-height: 0.92;
+  line-height: 1.08;
   color: var(--brand-cream);
 }
 
