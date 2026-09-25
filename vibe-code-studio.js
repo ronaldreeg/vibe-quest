@@ -4,7 +4,7 @@
   const SIZE = 1080;
   const FONT_READING = '"Faculty Glyphic", Georgia, serif';
   const FONT_INTERFACE = '"VT323", monospace';
-  const BRAND_MARK_URL = "./assets/brand/logo-mark-signal.svg?v=20260911-flyer-v2";
+  const BRAND_MARK_URL = "./assets/brand/VQ-logo-flyer.svg?v=20260925-v1";
   const ICON_LIBRARY_URL = "./assets/brand/master-icon-library.svg?v=20260921-balanced-icons-v1";
   const ICON_PATTERN_URL = "./assets/brand/icon-pattern.png?v=20260913-v2";
   const GEM_MARK_URL = "./assets/brand/inventory.svg?v=20260912-v1";
@@ -132,10 +132,6 @@
   if (!context) return;
 
   const qrCanvas = document.createElement("canvas");
-  const brandCanvas = document.createElement("canvas");
-  brandCanvas.width = 500;
-  brandCanvas.height = 500;
-  const brandContext = brandCanvas.getContext("2d");
   const brandMark = new Image();
   brandMark.decoding = "async";
   const iconLibrary = new Image();
@@ -313,25 +309,8 @@
   }
 
   function drawBrand(x, y, size, accent) {
-    if (brandMark.complete && brandMark.naturalWidth > 0 && brandContext) {
-      brandContext.clearRect(0, 0, brandCanvas.width, brandCanvas.height);
-      brandContext.drawImage(brandMark, 0, 0, brandCanvas.width, brandCanvas.height);
-      const cropX = brandCanvas.width * 0.18;
-      const cropY = brandCanvas.height * 0.09;
-      const cropWidth = brandCanvas.width * 0.67;
-      const cropHeight = brandCanvas.height * 0.71;
-      const width = size * (cropWidth / cropHeight);
-      context.drawImage(
-        brandCanvas,
-        cropX,
-        cropY,
-        cropWidth,
-        cropHeight,
-        x + (size - width) / 2,
-        y,
-        width,
-        size
-      );
+    if (brandMark.complete && brandMark.naturalWidth > 0) {
+      context.drawImage(brandMark, x, y, size, size);
     } else {
       context.fillStyle = accent;
       context.fillRect(x, y, size, size);

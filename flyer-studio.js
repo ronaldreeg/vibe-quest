@@ -5,7 +5,7 @@
   const HEIGHT = 1350;
   const FONT_READING = '"Faculty Glyphic", Georgia, serif';
   const FONT_INTERFACE = '"VT323", monospace';
-  const BRAND_MARK_URL = "./assets/brand/logo-mark-signal.svg?v=20260911-flyer-v2";
+  const BRAND_MARK_URL = "./assets/brand/VQ-logo-flyer.svg?v=20260925-v1";
   const QUEST_MARK_URL = "./assets/brand/vibe-marks-sept25.svg?v=20260925-v2";
   const QUEST_MARKS = {
     "mark-1": { x: 20.08, width: 245.06 },
@@ -320,8 +320,6 @@
       context.fillStyle = color;
       setFont(34, 800, FONT_INTERFACE);
       context.fillText("VIBE QUEST", x, y);
-      setFont(18, 700, FONT_INTERFACE);
-      context.fillText("REAL-WORLD DISCOVERY", x, y + 44);
     }
   }
 

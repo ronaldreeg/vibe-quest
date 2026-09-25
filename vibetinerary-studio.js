@@ -6,7 +6,7 @@
   const MAX_POINTS = 5;
   const FONT_READING = '"Faculty Glyphic", Georgia, serif';
   const FONT_INTERFACE = '"VT323", monospace';
-  const BRAND_MARK_URL = "./assets/brand/logo-mark-signal.svg?v=20260911-flyer-v2";
+  const BRAND_MARK_URL = "./assets/brand/VQ-logo-flyer.svg?v=20260925-v1";
   const COLORS = {
     charcoal: "#2f3035",
     charcoalDeep: "#22242a",
@@ -179,7 +179,6 @@
       return;
     }
     drawSingleLine("VIBE QUEST", x, y + 8, size * 1.6, 34, 24, COLORS.cream);
-    drawSingleLine("REAL-WORLD DISCOVERY", x, y + 48, size * 1.6, 16, 12, COLORS.cream);
   }
 
   function drawPhotoCover(image, x, y, width, height) {
