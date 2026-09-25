@@ -2995,7 +2995,7 @@ function questMarkOptionMarkup(key, selectedKey) {
       type="button"
       data-action="select-quest-mark"
       data-quest-mark="${escapeHtml(mark.key)}"
-      aria-label="Use ${escapeHtml(mark.label)} quest mark"
+      aria-label="Use ${escapeHtml(mark.label)} quest gem"
       aria-pressed="${selected}"
       title="${escapeHtml(mark.label)}"
     >

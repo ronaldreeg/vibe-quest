@@ -11,7 +11,7 @@ For the hosting and backend handoff, see [`DEPLOYMENT.md`](./DEPLOYMENT.md) and 
 - Supabase sign up and sign in flow with persistent sessions.
 - Editable user profile with a saved home city.
 - Saved activities tied to the signed-in user.
-- Share form for creating, editing, and deleting activities, including verified map placement, vibe tags, a selectable Quest Mark, optional links, and a Storage-backed uploaded photo.
+- Share form for creating, editing, and deleting activities, including verified map placement, vibe tags, selectable Quest Gems, optional links, and a Storage-backed uploaded photo.
 - Activity detail windows with location, price, type, host, external links, and saved-state controls.
 - An editorial Out There page reserved for team news, updates, and photography.
 - Responsive styling for desktop and mobile.
