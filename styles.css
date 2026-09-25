@@ -1325,7 +1325,7 @@ textarea:focus {
   justify-content: start;
   gap: 12px;
   align-items: start;
-  padding: clamp(30px, 4vw, 48px) 0;
+  padding: clamp(30px, 4vw, 48px) clamp(20px, 3vw, 36px);
   text-align: left;
 }
 
@@ -1333,7 +1333,7 @@ textarea:focus {
   max-width: 13ch;
   margin: 0;
   font-size: clamp(2.35rem, 4vw, 3.8rem);
-  line-height: 0.96;
+  line-height: 1.08;
 }
 
 .share-page-header p {
@@ -3362,7 +3362,7 @@ textarea:focus {
 
   .share-page-header {
     gap: 18px;
-    padding: 32px 0;
+    padding: 32px 14px;
   }
 
   .share-page-header h1 {
