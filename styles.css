@@ -392,7 +392,13 @@ h1 {
 .map-board,
 .filter-bar,
 .host-layout,
-.saved-view,
+.saved-view {
+  border: 0;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  backdrop-filter: none;
+}
+
 .modal-card {
   border: 1px solid var(--line);
   background: var(--panel);
@@ -779,7 +785,6 @@ textarea:focus {
   min-height: clamp(560px, calc(100vh - 290px), 720px);
   margin-bottom: 0;
   border: 0;
-  border-top: 1px solid rgba(243, 233, 196, 0.28);
   border-radius: 0;
   box-shadow: none;
 }
@@ -957,7 +962,7 @@ textarea:focus {
   margin: var(--gap) 0;
   padding: var(--gap);
   border-radius: 0;
-  border: 1px solid rgba(243, 233, 196, 0.28);
+  border: 0;
   background: var(--brand-charcoal);
   color: var(--brand-cream);
 }
@@ -1321,7 +1326,6 @@ textarea:focus {
   gap: 12px;
   align-items: start;
   padding: clamp(30px, 4vw, 48px) 0;
-  border-top: 1px solid var(--line);
   text-align: left;
 }
 
@@ -1355,7 +1359,7 @@ textarea:focus {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-bottom: var(--gap);
-  border: 1px solid var(--line);
+  border: 0;
 }
 
 .workshop-mode-switch::before {
@@ -1412,7 +1416,7 @@ textarea:focus {
 .flyer-studio {
   display: grid;
   grid-template-columns: minmax(340px, 460px) minmax(0, 1fr);
-  border: 1px solid var(--line);
+  border: 0;
   background: var(--panel-solid);
   box-shadow: var(--shadow);
 }
@@ -2003,7 +2007,6 @@ textarea:focus {
 .out-there-header {
   max-width: 980px;
   padding: clamp(36px, 5vw, 64px) var(--out-there-content-inset) clamp(28px, 4vw, 48px);
-  border-top: 1px solid var(--line);
 }
 
 .out-there-title {
@@ -2026,7 +2029,7 @@ textarea:focus {
   overflow: visible;
   min-height: clamp(460px, 68vh, 820px);
   margin: 0 0 72px;
-  border: 1px solid var(--line);
+  border: 0;
   background: var(--panel-solid);
 }
 
@@ -2252,7 +2255,7 @@ textarea:focus {
   gap: clamp(24px, 5vw, 72px);
   align-items: start;
   padding: clamp(28px, 5vw, 56px);
-  border: 1px solid var(--line);
+  border: 0;
   background: var(--panel);
 }
 
