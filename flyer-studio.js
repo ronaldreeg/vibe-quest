@@ -8,13 +8,13 @@
   const BRAND_MARK_URL = "./assets/brand/logo-mark-signal.svg?v=20260911-flyer-v2";
   const QUEST_MARK_URL = "./assets/brand/vibe-marks-sept25.svg?v=20260925-v2";
   const QUEST_MARKS = {
-    "mark-1": { x: 0, width: 274 },
-    "mark-2": { x: 274, width: 274 },
-    "mark-3": { x: 548, width: 274 },
-    "mark-4": { x: 822, width: 274 },
-    "mark-5": { x: 1096, width: 274 },
-    "mark-6": { x: 1370, width: 274 },
-    "mark-7": { x: 1640, width: 280 }
+    "mark-1": { x: 20.08, width: 245.06 },
+    "mark-2": { x: 298.47, width: 245.06 },
+    "mark-3": { x: 572.72, width: 245.06 },
+    "mark-4": { x: 849.29, width: 245.06 },
+    "mark-5": { x: 1107.9, width: 245.06 },
+    "mark-6": { x: 1368.82, width: 245.06 },
+    "mark-7": { x: 1630.88, width: 245.06 }
   };
   const DEFAULTS = {
     layout: "full",
