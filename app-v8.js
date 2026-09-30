@@ -682,6 +682,8 @@ const state = {
   mapBrowseActive: false,
   session: store.get("vv_session", null),
   authBusy: false,
+  reportBusy: false,
+  pendingReportId: null,
   editingAdventureId: null,
   pendingDeleteId: null,
   outThereSlideIndex: 0,
@@ -735,6 +737,11 @@ const els = {
   profileHostedList: document.querySelector("#profileHostedList"),
   detailModal: document.querySelector("#detailModal"),
   detailContent: document.querySelector("#detailContent"),
+  reportModal: document.querySelector("#reportModal"),
+  reportForm: document.querySelector("#reportForm"),
+  reportActivityTitle: document.querySelector("#reportActivityTitle"),
+  reportMessage: document.querySelector("#reportMessage"),
+  reportSubmit: document.querySelector("#reportSubmit"),
   deleteModal: document.querySelector("#deleteModal"),
   deletePostTitle: document.querySelector("#deletePostTitle"),
   hostForm: document.querySelector("#hostForm"),
@@ -2669,6 +2676,11 @@ async function handleRemoteAuthSubmit(data, email, password) {
   els.authModal.close();
   toast(state.authMode === "signup" ? "Your profile is ready." : `Welcome back, ${getCurrentUser()?.name?.split(" ")[0] || "explorer"}.`);
   render();
+  if (state.pendingReportId) {
+    const activityId = state.pendingReportId;
+    state.pendingReportId = null;
+    await openReport(activityId);
+  }
 }
 
 async function handleAuthSubmitWork(event) {
@@ -2811,6 +2823,7 @@ function openDetail(id) {
   const links = getAdventureLinks(adventure);
   const saved = getSavedIds().includes(adventure.id);
   const isOwner = Boolean(user && adventure.createdBy === user.id);
+  const canReport = state.backendEnabled && isUuid(adventure.id) && !isOwner;
   const ownerActions = isOwner
     ? `
       <section class="owner-panel">
@@ -2876,8 +2889,114 @@ function openDetail(id) {
         ${saved ? "Remove from saved" : "Save activity"}
       </button>
     </div>
+    ${canReport ? `
+      <div class="detail-trust-row">
+        <span>Something look wrong?</span>
+        <button class="text-button" type="button" data-action="open-report" data-id="${escapeHtml(adventure.id)}">Report listing</button>
+      </div>
+    ` : ""}
   `;
   if (!els.detailModal.open) els.detailModal.showModal();
+}
+
+async function openReport(id) {
+  const adventure = getAdventures().find((item) => item.id === id);
+  if (!state.backendEnabled || !adventure || !isUuid(adventure.id)) {
+    toast("This listing cannot be reported from the prototype yet.");
+    return;
+  }
+  const user = getCurrentUser();
+  if (!user) {
+    state.pendingReportId = adventure.id;
+    showAuth("signin");
+    toast("Sign in so we can securely receive your report.");
+    return;
+  }
+  if (adventure.createdBy === user.id) {
+    toast("You can edit or remove your own listing from your profile.");
+    return;
+  }
+
+  const { data, error } = await window.vvSupabase
+    .from("activity_reports")
+    .select("id, status")
+    .eq("activity_id", adventure.id)
+    .eq("reporter_id", user.id)
+    .in("status", ["open", "reviewing"])
+    .maybeSingle();
+  if (error) {
+    toast("We could not open the report form yet. Please try again.");
+    return;
+  }
+  if (data) {
+    toast("Your report for this listing is already in the review queue.");
+    return;
+  }
+
+  state.pendingReportId = adventure.id;
+  els.reportForm.reset();
+  els.reportForm.elements.activityId.value = adventure.id;
+  els.reportActivityTitle.textContent = adventure.title;
+  els.reportMessage.textContent = "";
+  if (!els.reportModal.open) els.reportModal.showModal();
+}
+
+function closeReport() {
+  state.pendingReportId = null;
+  state.reportBusy = false;
+  els.reportSubmit.disabled = false;
+  els.reportForm.reset();
+  els.reportMessage.textContent = "";
+  if (els.reportModal.open) els.reportModal.close();
+}
+
+async function submitReport(event) {
+  event.preventDefault();
+  if (state.reportBusy) return;
+  const user = getCurrentUser();
+  const data = new FormData(els.reportForm);
+  const activityId = String(data.get("activityId") || "");
+  const reason = String(data.get("reason") || "");
+  const details = String(data.get("details") || "").trim();
+  const adventure = getAdventures().find((item) => item.id === activityId);
+
+  if (!user || !state.backendEnabled) {
+    closeReport();
+    state.pendingReportId = activityId;
+    showAuth("signin");
+    toast("Sign in so we can securely receive your report.");
+    return;
+  }
+  if (!adventure || !isUuid(activityId) || adventure.createdBy === user.id) {
+    els.reportMessage.textContent = "This listing is not available for reporting.";
+    return;
+  }
+  if (!reason) {
+    els.reportMessage.textContent = "Choose the reason that fits best.";
+    return;
+  }
+
+  state.reportBusy = true;
+  els.reportSubmit.disabled = true;
+  els.reportMessage.textContent = "Sending report...";
+  const { error } = await window.vvSupabase.from("activity_reports").insert({
+    activity_id: activityId,
+    reporter_id: user.id,
+    reason,
+    details: details || null
+  });
+  state.reportBusy = false;
+  els.reportSubmit.disabled = false;
+
+  if (error) {
+    els.reportMessage.textContent = error.code === "23505"
+      ? "Your report for this listing is already in the review queue."
+      : "We could not send that report yet. Please try again.";
+    return;
+  }
+
+  closeReport();
+  toast("Report sent. Thank you for helping keep the map useful.");
 }
 
 function openProfile() {
@@ -3587,7 +3706,10 @@ document.addEventListener("click", async (event) => {
     openProfile();
   }
   if (action === "open-signup") showAuth("signup");
-  if (action === "close-auth") els.authModal.close();
+  if (action === "close-auth") {
+    state.pendingReportId = null;
+    els.authModal.close();
+  }
   if (action === "close-profile") els.profileModal.close();
   if (action === "toggle-save") await toggleSave(target.dataset.id);
   if (action === "open-detail") openDetail(target.dataset.id);
@@ -3595,6 +3717,8 @@ document.addEventListener("click", async (event) => {
   if (action === "show-on-map") showAdventureOnMap(target.dataset.id);
   if (action === "share-activity") await shareActivity(target.dataset.id);
   if (action === "copy-activity-link") await copyActivityLink(target.dataset.id);
+  if (action === "open-report") await openReport(target.dataset.id);
+  if (action === "close-report") closeReport();
   if (action === "toggle-map-interaction") updateMapInteractionMode(!mobileMapInteractionEnabled);
   if (action === "out-there-prev") updateOutThereSlideshow(state.outThereSlideIndex - 1);
   if (action === "out-there-next") updateOutThereSlideshow(state.outThereSlideIndex + 1);
@@ -3650,6 +3774,7 @@ document.addEventListener("error", (event) => {
 }, true);
 
 els.authForm.addEventListener("submit", handleAuthSubmit);
+els.reportForm.addEventListener("submit", submitReport);
 els.profileForm.addEventListener("submit", saveProfile);
 els.hostForm.addEventListener("submit", publishAdventure);
 els.hostForm.addEventListener("change", (event) => {

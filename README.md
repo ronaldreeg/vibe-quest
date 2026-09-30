@@ -13,13 +13,14 @@ For the hosting and backend handoff, see [`DEPLOYMENT.md`](./DEPLOYMENT.md) and 
 - Saved activities tied to the signed-in user.
 - Share form for creating, editing, and deleting activities, including verified map placement, vibe tags, selectable Quest Gems, optional links, and a Storage-backed uploaded photo.
 - Activity detail windows with location, price, type, host, external links, and saved-state controls.
+- Private, signed-in listing reports backed by a protected moderation queue.
 - An editorial Out There page reserved for team news, updates, and photography.
 - Responsive styling for desktop and mobile.
 - Launch-readiness hardening for local storage failures, map position, keyboard navigation, reduced motion, links, dates, and image uploads.
 
 ## Backend note
 
-The app is now connected to Supabase for real account sessions, profiles, user-created activities, saved remote activities, and activity photo uploads. The original demo listings and their local-only demo saves remain as a temporary bridge while the database is populated.
+The app is now connected to Supabase for real account sessions, profiles, user-created activities, saved remote activities, activity photo uploads, and private listing reports. The original demo listings and their local-only demo saves remain as a temporary bridge while the database is populated.
 
 The complete production foundation lives in Supabase: Auth, Postgres, Storage, and row-level security policies. See [`SUPABASE_SETUP.md`](./SUPABASE_SETUP.md) for the dashboard redirect configuration and security notes.
 

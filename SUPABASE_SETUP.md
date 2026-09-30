@@ -10,6 +10,7 @@ The Vibe Quest prototype is connected to the active Supabase project for `vibe-q
 - `activity_links` for optional social, signup, and information links.
 - `activity_media` for activity photos and future moderation.
 - `saved_activities` for each user's saved list.
+- `activity_reports` for private, signed-in trust-and-safety reports.
 - `adventure_logs` for the future personal field-note/journey feature.
 - `out_there_posts` for future team editorial publishing.
 - Storage buckets for activity photos, private adventure media, and editorial media.
@@ -27,6 +28,10 @@ The app sends users back to the current site after email confirmation. Add the l
 ## Key safety
 
 The browser uses the Supabase **publishable** key. That key is designed to be public and is protected by row-level security. Never put a secret or `service_role` key in `index.html`, `app-v8.js`, Storage, or GitHub.
+
+## Report operations
+
+Until the admin moderation screen is built, authorized project admins can review the private `activity_reports` queue in the Supabase Table Editor. Reports begin as `open`; avoid changing or deleting them casually so the review history remains intact. This is an interim operating path, not a replacement for the launch moderation screen and audit trail.
 
 ## Data transition
 
