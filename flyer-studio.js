@@ -323,6 +323,27 @@
     }
   }
 
+  function drawFooterBar(copy, accent, options) {
+    const { x, y, width, height, paddingX } = options;
+    const centerY = y + height / 2;
+    const symbolSize = Math.min(82, height - 28);
+    const symbolX = x + width - paddingX;
+    const textX = x + paddingX;
+    const textMaxWidth = Math.max(160, symbolX - symbolSize / 2 - 28 - textX);
+
+    context.fillStyle = accent;
+    context.fillRect(x, y, width, height);
+    drawSingleLine(copy.details.toUpperCase(), {
+      x: textX,
+      y: centerY,
+      maxWidth: textMaxWidth,
+      startSize: 28,
+      minSize: 18,
+      color: contrastColor(accent)
+    });
+    drawSymbol(studio.symbol, symbolX, centerY, symbolSize, contrastColor(accent));
+  }
+
   function drawFullFrame(copy, accent) {
     drawMedia(0, 0, WIDTH, HEIGHT, accent);
     context.fillStyle = "rgba(8, 10, 14, 0.58)";
@@ -330,7 +351,6 @@
     context.fillStyle = accent;
     context.fillRect(0, 0, 22, HEIGHT);
     drawBrand(72, 60, "#f3e9c4", 96);
-    drawSymbol(studio.symbol, 940, 108, 96, accent);
 
     context.fillStyle = accent;
     setFont(28, 800, FONT_INTERFACE);
@@ -362,15 +382,12 @@
       color: "#f3e9c4"
     });
 
-    context.fillStyle = accent;
-    context.fillRect(0, HEIGHT - 122, WIDTH, 122);
-    drawSingleLine(copy.details.toUpperCase(), {
-      x: 72,
-      y: HEIGHT - 61,
-      maxWidth: 936,
-      startSize: 28,
-      minSize: 20,
-      color: contrastColor(accent)
+    drawFooterBar(copy, accent, {
+      x: 0,
+      y: HEIGHT - 122,
+      width: WIDTH,
+      height: 122,
+      paddingX: 72
     });
   }
 
@@ -382,7 +399,6 @@
     context.fillStyle = accent;
     context.fillRect(0, 108, WIDTH, 10);
     drawBrand(64, 19, "#f3e9c4", 72);
-    drawSymbol(studio.symbol, 950, 55, 72, accent);
     drawMedia(0, 118, WIDTH, 590, accent);
 
     context.fillStyle = "#2f3035";
@@ -417,14 +433,12 @@
       color: "#f3e9c4"
     });
 
-    drawSingleLine(copy.details.toUpperCase(), {
-      x: 64,
-      y: HEIGHT - 50,
-      maxWidth: 952,
-      startSize: 25,
-      minSize: 18,
-      color: "#f3e9c4",
-      baseline: "bottom"
+    drawFooterBar(copy, accent, {
+      x: 0,
+      y: HEIGHT - 112,
+      width: WIDTH,
+      height: 112,
+      paddingX: 64
     });
   }
 
@@ -442,7 +456,6 @@
     context.fillRect(panelX, panelY, panelWidth, panelHeight);
     context.fillStyle = accent;
     context.fillRect(panelX, panelY, panelWidth, 24);
-    drawSymbol(studio.symbol, panelX + panelWidth - 90, panelY + 105, 108, accent);
 
     context.fillStyle = "#2f3035";
     setFont(27, 800, FONT_INTERFACE);
@@ -474,15 +487,12 @@
       color: "#2f3035"
     });
 
-    context.fillStyle = accent;
-    context.fillRect(panelX, panelY + panelHeight - 112, panelWidth, 112);
-    drawSingleLine(copy.details.toUpperCase(), {
-      x: panelX + 54,
-      y: panelY + panelHeight - 56,
-      maxWidth: panelWidth - 108,
-      startSize: 25,
-      minSize: 18,
-      color: contrastColor(accent)
+    drawFooterBar(copy, accent, {
+      x: panelX,
+      y: panelY + panelHeight - 112,
+      width: panelWidth,
+      height: 112,
+      paddingX: 62
     });
 
     context.fillStyle = "#f3e9c4";
