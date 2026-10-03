@@ -348,7 +348,7 @@ const DEFAULT_MAP_CENTER = [39.8283, -98.5795];
 const LOCATION_STORAGE_KEY = "vv_location_preference";
 const PUBLIC_SITE_URL = "https://www.vibe-quest.net/";
 const SHARED_ACTIVITY_PARAM = "activity";
-const INCLUDE_DEMO_LISTINGS = !["vibe-quest.net", "www.vibe-quest.net"].includes(window.location.hostname);
+const INCLUDE_EXAMPLE_LISTINGS = true;
 
 const DEFAULT_ADVENTURES = [
   {
@@ -649,6 +649,11 @@ const DEFAULT_ADVENTURES = [
   }
 ];
 
+const EXAMPLE_ADVENTURES = DEFAULT_ADVENTURES.map((adventure) => ({
+  ...adventure,
+  isExample: true
+}));
+
 const store = {
   get(key, fallback) {
     try {
@@ -851,14 +856,14 @@ function normalizeAdventureRecord(adventure, index, users = getUsers()) {
 }
 
 function getAdventures() {
-  const demoListings = INCLUDE_DEMO_LISTINGS ? DEFAULT_ADVENTURES : [];
+  const exampleListings = INCLUDE_EXAMPLE_LISTINGS ? EXAMPLE_ADVENTURES : [];
   if (state.backendEnabled) {
-    return [...demoListings, ...state.remoteActivities].map((adventure, index) => normalizeAdventureRecord(adventure, index));
+    return [...exampleListings, ...state.remoteActivities].map((adventure, index) => normalizeAdventureRecord(adventure, index));
   }
   const userAdventures = store.get("vv_adventures", []);
   const hosted = Array.isArray(userAdventures) ? userAdventures : [];
   const users = getUsers();
-  return [...demoListings, ...hosted].map((adventure, index) => normalizeAdventureRecord(adventure, index, users));
+  return [...exampleListings, ...hosted].map((adventure, index) => normalizeAdventureRecord(adventure, index, users));
 }
 
 function getOwnedAdventures() {
@@ -1065,8 +1070,8 @@ async function loadRemoteSavedIds() {
   state.remoteSavedIds = [...new Set([...(data || []).map((item) => item.activity_id), ...localDemoIds])];
   const remoteIds = state.remoteSavedIds.filter(isUuid);
   if (!remoteIds.length) {
-    state.remoteSavedActivities = INCLUDE_DEMO_LISTINGS
-      ? DEFAULT_ADVENTURES.filter((item) => localDemoIds.includes(item.id))
+    state.remoteSavedActivities = INCLUDE_EXAMPLE_LISTINGS
+      ? EXAMPLE_ADVENTURES.filter((item) => localDemoIds.includes(item.id))
       : [];
     return;
   }
@@ -1077,8 +1082,8 @@ async function loadRemoteSavedIds() {
     .limit(REMOTE_ACTIVITY_LIMIT);
   if (savedError) throw savedError;
   const remoteSaved = await hydrateRemoteActivities(savedRows || []);
-  const demoSaved = INCLUDE_DEMO_LISTINGS
-    ? DEFAULT_ADVENTURES.filter((item) => localDemoIds.includes(item.id))
+  const demoSaved = INCLUDE_EXAMPLE_LISTINGS
+    ? EXAMPLE_ADVENTURES.filter((item) => localDemoIds.includes(item.id))
     : [];
   state.remoteSavedActivities = [...remoteSaved, ...demoSaved]
     .map((item, index) => normalizeAdventureRecord(item, index));
@@ -1681,6 +1686,7 @@ function adventureCard(adventure) {
       <div class="card-art">
         ${photoMarkup(adventure)}
         <div class="badge-row">
+          ${adventure.isExample ? `<span class="badge example-badge">Example</span>` : ""}
           <span class="badge timing-badge">${escapeHtml(timingLabel(adventure))}</span>
           <span class="badge">${escapeHtml(type)}</span>
           <span class="badge">${escapeHtml(adventure.price)}</span>
@@ -2107,7 +2113,7 @@ function renderMap(markerAdventures, visibleAdventures = markerAdventures) {
       .bindPopup(
         `<strong>${escapeHtml(adventure.title)}</strong><br>${escapeHtml(primaryVibe)} · ${escapeHtml(timingLabel(adventure))}<br>${escapeHtml(getListingType(adventure))} · ${escapeHtml(adventure.area)}${
           adventure.locationAccuracy === "approximate" ? "<br><em>Approximate area</em>" : ""
-        }`
+        }${adventure.isExample ? "<br><em>Example listing</em>" : ""}`
       )
       .bindTooltip(`${escapeHtml(adventure.title)}<br><span>${escapeHtml(primaryVibe)} · ${escapeHtml(timingLabel(adventure))}</span>`, {
         className: "vv-map-tooltip",
@@ -3105,6 +3111,12 @@ function openDetail(id) {
     : "";
   els.detailContent.innerHTML = `
     <div class="detail-hero" style="${styleVars(adventure)}">${photoMarkup(adventure, "detail-photo")}</div>
+    ${adventure.isExample ? `
+      <div class="example-listing-note">
+        <strong>Example listing</strong>
+        <span>This sample shows what people can discover and share on Vibe Quest.</span>
+      </div>
+    ` : ""}
     <span class="detail-location-label">${escapeHtml(adventure.area)} · ${escapeHtml(adventure.city)}</span>
     ${!isLive ? `<span class="status-badge status-${escapeHtml(adventure.status || "published")}">${escapeHtml(activityStatusLabel(adventure))}</span>` : ""}
     <h2>${escapeHtml(adventure.title)}</h2>

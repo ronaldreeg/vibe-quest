@@ -21,7 +21,7 @@ Start with [`LAUNCH_READINESS.md`](./LAUNCH_READINESS.md). Operational steps liv
 
 ## Production boundary
 
-Production loads only real Supabase listings. The illustrative demo listings remain available on `localhost` and `file:` previews for design work, but they are excluded from `vibe-quest.net`.
+Production combines real Supabase listings with a small built-in set of clearly labeled example listings. Examples let new visitors understand, filter, save, share, and explore the experience before a city has many live posts, while real listing data remains separate in Supabase.
 
 The public client contains only the Supabase publishable key. Authorization is enforced by Postgres row-level security and protected Edge Functions; the `service_role` key never ships to the browser.
 

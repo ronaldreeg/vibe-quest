@@ -11,7 +11,7 @@ Do not announce a broad public launch until the manual launch gates below are co
 ## Foundation complete
 
 - [x] Supabase Auth, Postgres, Storage, and row-level security back real accounts and listings.
-- [x] Real listings load by map bounds as visitors pan and zoom; production excludes demo listings.
+- [x] Real listings load by map bounds as visitors pan and zoom; a clearly labeled static example set fills out the early discovery experience without entering fake rows in Supabase.
 - [x] Users can create, edit, pause, republish, cancel, archive, delete, save, link to, and share listings.
 - [x] Past one-time listings and stale recurring/anytime listings are hidden from public discovery.
 - [x] Listing time zones and last-confirmed dates are stored and validated.
@@ -30,7 +30,7 @@ Do not announce a broad public launch until the manual launch gates below are co
 - [ ] Configure custom SMTP in Supabase and complete real signup, confirmation, recovery, and changed-password tests on both phone and desktop.
 - [ ] Decide whether to upgrade Supabase for leaked-password protection and downloadable managed backups. The current Free plan does not provide those launch protections.
 - [ ] Assign a named person to monitor reports and `hello@vibe-quest.net`, with the response expectations in `LAUNCH_RUNBOOK.md`.
-- [ ] Publish a small, current, verified launch set. The October 3 anonymous production query correctly returned zero discoverable listings after expired and stale tests were hidden.
+- [ ] Publish a small, current, verified launch set. Examples now demonstrate the product, but they should complement rather than replace verified community listings.
 - [ ] Take and securely retain a pre-launch database export, then perform the smoke test in `LAUNCH_RUNBOOK.md` against production.
 
 ## Advisor status

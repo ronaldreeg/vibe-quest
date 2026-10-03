@@ -1192,6 +1192,11 @@ textarea:focus {
   color: var(--brand-charcoal);
 }
 
+.example-badge {
+  background: var(--brand-teal);
+  color: var(--brand-cream);
+}
+
 .card-body {
   display: flex;
   flex: 1;
@@ -3141,6 +3146,25 @@ textarea:focus {
   line-height: 1.25;
   overflow-wrap: anywhere;
   text-transform: uppercase;
+}
+
+.example-listing-note {
+  display: grid;
+  gap: 3px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  background: var(--brand-teal);
+  color: var(--brand-cream);
+}
+
+.example-listing-note strong {
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.example-listing-note span {
+  line-height: 1.35;
 }
 
 .detail-list {
