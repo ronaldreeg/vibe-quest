@@ -547,6 +547,10 @@ textarea:focus {
   margin-bottom: var(--gap);
 }
 
+.results-area .toolbar {
+  padding-inline: var(--gap);
+}
+
 .toolbar h2,
 .section-heading h2,
 .host-layout h2 {
