@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Discover pop-ups, meet-ups, classes, local gems, and day-trip-worthy happenings nearby and beyond." />
     <meta name="theme-color" content="#2f3035" />
+    <link rel="canonical" href="https://www.vibe-quest.net/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Vibe Quest" />
+    <meta property="og:title" content="Vibe Quest | Choose your vibe. Begin the quest." />
+    <meta property="og:description" content="Discover pop-ups, artisan workshops, local legends, and good reasons to wander off the main path." />
+    <meta property="og:url" content="https://www.vibe-quest.net/" />
+    <meta property="og:image" content="https://www.vibe-quest.net/assets/brand/apple-touch-icon.png" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Vibe Quest | Real-world discovery" />
+    <meta name="twitter:description" content="Choose your vibe. Begin the quest." />
     <title>Vibe Quest</title>
     <link rel="icon" type="image/png" sizes="32x32" href="./assets/brand/favicon-32.png?v=20260818-black-yellow-v1" />
     <link rel="icon" type="image/svg+xml" sizes="any" href="./assets/brand/vibe-quest-mark.svg?v=20260818-black-yellow-v1" />
@@ -14,7 +24,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Faculty+Glyphic&family=VT323&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" />
-    <link rel="stylesheet" href="./styles.css?v=20260930-reporting-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20261003-auth-modal-v1" />
   </head>
   <body>
     <div class="app-shell">
@@ -290,7 +300,20 @@
                   <input name="city" required maxlength="120" autocomplete="address-level2" placeholder="Galveston, TX" aria-describedby="locationHelp locationFeedback" />
                 </label>
               </div>
-              <p class="location-help" id="locationHelp">Use a named venue, park, landmark, or full address. Broader areas will be shown as approximate.</p>
+              <fieldset class="field location-privacy-field">
+                <legend>Map location</legend>
+                <div class="location-privacy-options">
+                  <label class="location-privacy-option">
+                    <input name="locationVisibility" type="radio" value="public" checked />
+                    <span><strong>Public place</strong><small>Show the venue or address and an exact pin.</small></span>
+                  </label>
+                  <label class="location-privacy-option">
+                    <input name="locationVisibility" type="radio" value="private" />
+                    <span><strong>Private meetup</strong><small>Keep the exact address private and show only an approximate area.</small></span>
+                  </label>
+                </div>
+              </fieldset>
+              <p class="location-help" id="locationHelp">Use a named venue, park, landmark, or full address. Private meetup details are protected and never placed on the public map.</p>
               <p class="location-feedback" id="locationFeedback" role="status" aria-live="polite"></p>
               <fieldset class="field checklist-field">
                 <legend>Vibes <span>Choose up to 3.</span></legend>
@@ -410,7 +433,19 @@
                     <input name="recurringTime" type="time" />
                   </label>
                 </div>
-                <p class="anytime-note" data-schedule-panel="anytime" hidden>No date needed. This listing stays discoverable until you remove it.</p>
+                <p class="anytime-note" data-schedule-panel="anytime" hidden>No date needed. We will ask you to confirm it every 90 days so the map stays fresh.</p>
+                <label class="field schedule-time-zone">
+                  <span>Time zone</span>
+                  <select name="timeZone" required>
+                    <option value="America/New_York">Eastern</option>
+                    <option value="America/Chicago">Central</option>
+                    <option value="America/Denver">Mountain</option>
+                    <option value="America/Phoenix">Arizona</option>
+                    <option value="America/Los_Angeles">Pacific</option>
+                    <option value="America/Anchorage">Alaska</option>
+                    <option value="Pacific/Honolulu">Hawaii</option>
+                  </select>
+                </label>
               </fieldset>
               <label class="field">
                 <span>Short description</span>
@@ -803,6 +838,10 @@
           <button type="button" data-view="discover">Scout the map</button>
           <button type="button" data-view="host">Post a quest</button>
           <button type="button" data-view="share">Make a flyer</button>
+          <a href="./policies.html#guidelines">Community rules</a>
+          <a href="./policies.html#privacy">Privacy</a>
+          <a href="./policies.html#terms">Terms</a>
+          <a href="./policies.html#accessibility">Accessibility</a>
           <a href="mailto:hello@vibe-quest.net?subject=Hello%20Vibe%20Quest">Contact</a>
         </nav>
         <div class="site-footer-signoff">
@@ -839,11 +878,12 @@
         </label>
         <p class="form-message" id="authMessage"></p>
         <button class="primary-button full-width" id="authSubmit" type="submit">Sign in</button>
+        <button class="text-button auth-recovery-link signin-only" type="button" data-action="request-password-reset">Forgot your password?</button>
       </form>
     </dialog>
 
     <dialog class="modal" id="profileModal">
-      <form method="dialog" class="modal-card" id="profileForm">
+      <form method="dialog" class="modal-card profile-card" id="profileForm">
         <button class="icon-button modal-close" type="button" data-action="close-profile" aria-label="Close">×</button>
         <span class="mini-label">Profile</span>
         <h2>Your discovery settings</h2>
@@ -871,9 +911,63 @@
             <div class="profile-list" id="profileHostedList"></div>
           </section>
         </div>
+        <section class="moderation-panel" id="moderationPanel" hidden>
+          <div class="section-heading compact-heading">
+            <span class="mini-label">Admin desk</span>
+            <h3>Reports to review</h3>
+          </div>
+          <p class="moderation-summary" id="moderationSummary">Loading the queue...</p>
+          <div class="moderation-list" id="moderationList"></div>
+        </section>
+        <section class="account-panel">
+          <div>
+            <span class="mini-label">Account</span>
+            <p id="profileEmailStatus"></p>
+          </div>
+          <div class="account-actions">
+            <button class="secondary-button" type="button" data-action="send-account-reset">Reset password</button>
+            <button class="compact-button danger-button" type="button" data-action="request-account-delete">Delete account</button>
+          </div>
+        </section>
         <div class="modal-actions">
           <button class="secondary-button" type="button" data-action="sign-out">Sign out</button>
           <button class="primary-button" type="submit">Save profile</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal" id="passwordResetModal">
+      <form class="modal-card" id="passwordResetForm">
+        <button class="icon-button modal-close" type="button" data-action="close-password-reset" aria-label="Close password reset">×</button>
+        <span class="mini-label">Account recovery</span>
+        <h2>Choose a new password</h2>
+        <label class="field">
+          <span>New password</span>
+          <input name="password" type="password" minlength="8" autocomplete="new-password" required />
+        </label>
+        <label class="field">
+          <span>Confirm password</span>
+          <input name="confirmPassword" type="password" minlength="8" autocomplete="new-password" required />
+        </label>
+        <p class="form-message" id="passwordResetMessage" role="status" aria-live="polite"></p>
+        <button class="primary-button full-width" type="submit">Update password</button>
+      </form>
+    </dialog>
+
+    <dialog class="modal" id="accountDeleteModal">
+      <form class="modal-card confirm-card" id="accountDeleteForm">
+        <button class="icon-button modal-close" type="button" data-action="cancel-account-delete" aria-label="Close account deletion">×</button>
+        <span class="mini-label">Delete account</span>
+        <h2>Leave Vibe Quest?</h2>
+        <p>This permanently removes your profile, saved activities, posts, and uploaded activity photos. This cannot be undone.</p>
+        <label class="field">
+          <span>Type DELETE to confirm</span>
+          <input name="confirmation" autocomplete="off" required />
+        </label>
+        <p class="form-message" id="accountDeleteMessage" role="status" aria-live="polite"></p>
+        <div class="confirm-actions">
+          <button class="secondary-button" type="button" data-action="cancel-account-delete">Keep my account</button>
+          <button class="compact-button danger-button" type="submit">Delete permanently</button>
         </div>
       </form>
     </dialog>
@@ -895,7 +989,7 @@
         <input name="activityId" type="hidden" />
         <fieldset class="report-reasons">
           <legend>What is going on?</legend>
-          <label><input name="reason" type="radio" value="incorrect" required /><span>Details are incorrect</span></label>
+          <label><input name="reason" type="radio" value="incorrect" required /><span>Location or details are incorrect</span></label>
           <label><input name="reason" type="radio" value="cancelled" /><span>Cancelled or no longer happening</span></label>
           <label><input name="reason" type="radio" value="spam" /><span>Spam or misleading</span></label>
           <label><input name="reason" type="radio" value="unsafe" /><span>Safety concern</span></label>
@@ -933,7 +1027,7 @@
   <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.3/leaflet-maplibre-gl.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.min.js"></script>
   <script src="./supabase-client.js?v=20260722"></script>
-  <script src="./app-v8.js?v=20260930-reporting-v1"></script>
+  <script src="./app-v8.js?v=20261003-launch-trust-v2"></script>
   <script src="./vendor/qrcode.min.js?v=1.5.4"></script>
   <script src="./flyer-studio.js?v=20260930-footer-gems-v1"></script>
   <script src="./vibetinerary-studio.js?v=20260925-flyer-logo-v1"></script>

@@ -1,72 +1,42 @@
 # Vibe Quest
 
-This is the current functional Vibe Quest prototype, prepared for the Vibe Quest repository on July 22, 2026.
+Vibe Quest is a map-first discovery platform for real-world pop-ups, classes, groups, markets, tours, local lore, and other things worth leaving the house for.
 
-For the launch boundary, see [`LAUNCH_READINESS.md`](./LAUNCH_READINESS.md).
-For the hosting and backend handoff, see [`DEPLOYMENT.md`](./DEPLOYMENT.md) and [`SUPABASE_SETUP.md`](./SUPABASE_SETUP.md).
+Start with [`LAUNCH_READINESS.md`](./LAUNCH_READINESS.md). Operational steps live in [`LAUNCH_RUNBOOK.md`](./LAUNCH_RUNBOOK.md), and backend details live in [`SUPABASE_SETUP.md`](./SUPABASE_SETUP.md).
 
 ## What is included
 
-- Discovery-first layout with city search, activity type and vibe filters, activity cards, and an OpenStreetMap map.
-- Supabase sign up and sign in flow with persistent sessions.
-- Editable user profile with a saved home city.
-- Saved activities tied to the signed-in user.
-- Share form for creating, editing, and deleting activities, including verified map placement, vibe tags, selectable Quest Gems, optional links, and a Storage-backed uploaded photo.
-- Activity detail windows with location, price, type, host, external links, and saved-state controls.
-- Private, signed-in listing reports backed by a protected moderation queue.
-- An editorial Out There page reserved for team news, updates, and photography.
-- Responsive styling for desktop and mobile.
-- Launch-readiness hardening for local storage failures, map position, keyboard navigation, reduced motion, links, dates, and image uploads.
+- Map-bound discovery that refreshes listings as visitors pan and zoom between cities.
+- Multi-select vibe and type filters, date filters, saves, sharing, and random discovery.
+- Supabase email/password accounts with confirmation, recovery, persistent sessions, profile editing, and account deletion.
+- User-created listings with photos, optional links, Quest Gems, exact geocoding, local time zones, and one-time, recurring, or anytime schedules.
+- Published, paused, cancelled, archived, and rejected listing states, plus automatic expiry and recurring-listing freshness rules.
+- Private-meetup support that stores the exact location separately and exposes only an approximate public point.
+- Private listing reports, an admin moderation queue, resolution notes, listing controls, and an audit trail.
+- Storage-backed uploads with client-side image resizing and mobile-safe display.
+- A server-side geocoding gateway with validation, caching, per-client limits, and upstream throttling.
+- Community rules, Privacy, Terms, Accessibility, and Contact pages.
+- Editorial Out There, Workshop flyer tools, Vibetinerary, and Vibe Code generation.
+- Responsive keyboard- and touch-friendly layouts for desktop and mobile.
 
-## Backend note
+## Production boundary
 
-The app is now connected to Supabase for real account sessions, profiles, user-created activities, saved remote activities, activity photo uploads, and private listing reports. The original demo listings and their local-only demo saves remain as a temporary bridge while the database is populated.
+Production loads only real Supabase listings. The illustrative demo listings remain available on `localhost` and `file:` previews for design work, but they are excluded from `vibe-quest.net`.
 
-The complete production foundation lives in Supabase: Auth, Postgres, Storage, and row-level security policies. See [`SUPABASE_SETUP.md`](./SUPABASE_SETUP.md) for the dashboard redirect configuration and security notes.
+The public client contains only the Supabase publishable key. Authorization is enforced by Postgres row-level security and protected Edge Functions; the `service_role` key never ships to the browser.
 
-## Early schema sketch
+## Run locally
 
-The following schema documents the prototype's original direction only. It is not the recommended final production model because it does not yet separate organizers, recurring occurrences, location privacy, media, moderation, or listing lifecycle.
+From this directory:
 
-The production database should follow the foundation plan kept with the project notes, with separate organizer ownership, recurring occurrences, location privacy, media, moderation, and listing lifecycle fields.
-
-```sql
-create table profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
-  full_name text not null,
-  home_city text,
-  created_at timestamptz default now()
-);
-
-create table activities (
-  id uuid primary key default gen_random_uuid(),
-  created_by uuid references profiles(id) on delete set null,
-  title text not null,
-  city text not null,
-  area text,
-  activity_type text not null,
-  vibes text[] default '{}',
-  links jsonb default '[]',
-  description text not null,
-  price text,
-  seats integer,
-  status text default 'draft',
-  created_at timestamptz default now()
-);
-
-create table saved_activities (
-  user_id uuid references profiles(id) on delete cascade,
-  activity_id uuid references activities(id) on delete cascade,
-  created_at timestamptz default now(),
-  primary key (user_id, activity_id)
-);
-
+```sh
+python3 -m http.server 4173 --bind 127.0.0.1
 ```
 
-## How to run
+Then open `http://127.0.0.1:4173/`.
 
-Open `index.html` in a browser, or serve the folder with any static web server.
+## Deployment
 
-## Deployment preparation
+Pushing `main` triggers the GitHub Pages workflow in `.github/workflows/deploy-pages.yml`. The hourly launch-health workflow checks JavaScript syntax, required release files, public pages, and the public discovery endpoint.
 
-The repository-ready files include a `CNAME` for `www.vibe-quest.net`, a `.nojekyll` marker, and a GitHub Pages workflow under `.github/workflows/`. These prepare the site for Pages hosting once the repository is connected with write access and Pages is enabled.
+The repository includes `CNAME` for `www.vibe-quest.net` and `.nojekyll` for GitHub Pages.

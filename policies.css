@@ -1,0 +1,314 @@
+@font-face {
+  font-family: "MEK Mono";
+  src:
+    url("./assets/fonts/MEK-Mono.woff2") format("woff2"),
+    url("./assets/fonts/MEK-Mono.woff") format("woff");
+  font-display: swap;
+}
+
+:root {
+  --cream: #f3e9c4;
+  --charcoal: #2f3035;
+  --teal: #0f8fb1;
+  --orange: #fa622e;
+  --pink: #f45077;
+  --yellow: #f8d23d;
+  --line: rgba(243, 233, 196, 0.28);
+  --muted: rgba(243, 233, 196, 0.76);
+  --reading: "Faculty Glyphic", Georgia, serif;
+  --interface: "MEK Mono", "VT323", monospace;
+}
+
+* {
+  box-sizing: border-box;
+  border-radius: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 124px;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  overflow-x: clip;
+  background: var(--charcoal);
+  color: var(--cream);
+  font-family: var(--reading);
+}
+
+a {
+  color: var(--yellow);
+}
+
+a:focus-visible {
+  outline: 3px solid var(--pink);
+  outline-offset: 4px;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 100;
+  top: 8px;
+  left: 8px;
+  padding: 12px 16px;
+  transform: translateY(-180%);
+  background: var(--yellow);
+  color: var(--charcoal);
+  font-family: var(--interface);
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+.policy-header {
+  position: sticky;
+  z-index: 20;
+  top: 0;
+  display: flex;
+  min-height: 112px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px clamp(20px, 4vw, 64px);
+  border-bottom: 1px solid var(--line);
+  background: rgba(47, 48, 53, 0.96);
+}
+
+.policy-brand {
+  display: block;
+  width: clamp(170px, 19vw, 258px);
+}
+
+.policy-brand img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.return-link,
+.primary-link {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border: 1px solid var(--cream);
+  color: var(--cream);
+  font-family: var(--interface);
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.return-link:hover,
+.primary-link:hover {
+  border-color: var(--yellow);
+  background: var(--yellow);
+  color: var(--charcoal);
+}
+
+.policy-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.45fr);
+  gap: clamp(48px, 8vw, 132px);
+  width: min(1480px, 100%);
+  margin: 0 auto;
+  padding: clamp(44px, 7vw, 110px) clamp(20px, 5vw, 84px);
+}
+
+.policy-index {
+  position: sticky;
+  top: 158px;
+  align-self: start;
+}
+
+.policy-kicker,
+.section-number,
+.policy-index nav,
+.policy-index > p,
+.policy-footer {
+  font-family: var(--interface);
+  text-transform: uppercase;
+}
+
+.policy-kicker,
+.section-number {
+  color: var(--orange);
+}
+
+.policy-index h1 {
+  max-width: 12ch;
+  margin: 18px 0 38px;
+  font-size: clamp(2.6rem, 5vw, 5.8rem);
+  font-weight: 400;
+  line-height: 0.98;
+}
+
+.policy-index nav {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+
+.policy-index nav a {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  color: var(--cream);
+  text-decoration: none;
+}
+
+.policy-index nav a::after {
+  content: "+";
+  color: var(--yellow);
+}
+
+.policy-index nav a:hover {
+  color: var(--yellow);
+}
+
+.policy-index > p {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.policy-content {
+  min-width: 0;
+}
+
+.policy-content section {
+  padding: 0 0 clamp(68px, 9vw, 132px);
+  border: 0;
+}
+
+.policy-content h2 {
+  max-width: 15ch;
+  margin: 14px 0 30px;
+  color: var(--teal);
+  font-size: clamp(3rem, 6vw, 7rem);
+  font-weight: 400;
+  line-height: 0.94;
+}
+
+.policy-content h3 {
+  margin: 38px 0 10px;
+  color: var(--yellow);
+  font-family: var(--interface);
+  font-size: 1.1rem;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.policy-content p,
+.policy-content li {
+  max-width: 76ch;
+  color: var(--muted);
+  font-size: clamp(1rem, 1.35vw, 1.17rem);
+  line-height: 1.72;
+}
+
+.policy-content strong {
+  color: var(--cream);
+}
+
+.policy-content ul {
+  margin: 0;
+  padding-left: 1.25em;
+}
+
+.policy-content li + li {
+  margin-top: 8px;
+}
+
+.policy-callout {
+  max-width: 76ch;
+  margin-top: 42px;
+  padding: 26px;
+  border-left: 10px solid var(--pink);
+  background: rgba(244, 80, 119, 0.09);
+}
+
+.policy-callout > strong {
+  color: var(--pink);
+  font-family: var(--interface);
+  text-transform: uppercase;
+}
+
+.policy-callout p {
+  margin-bottom: 0;
+}
+
+.primary-link {
+  margin-top: 18px;
+  background: var(--teal);
+  color: var(--charcoal);
+}
+
+.policy-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px clamp(20px, 5vw, 84px);
+  border-top: 12px solid transparent;
+  border-image: url("./assets/brand/retro-accent.svg") 12 stretch;
+  color: var(--muted);
+}
+
+@media (max-width: 860px) {
+  html {
+    scroll-padding-top: 94px;
+  }
+
+  .policy-header {
+    min-height: 86px;
+  }
+
+  .policy-layout {
+    grid-template-columns: 1fr;
+    gap: 64px;
+  }
+
+  .policy-index {
+    position: static;
+  }
+
+  .policy-index h1 {
+    max-width: 14ch;
+  }
+}
+
+@media (max-width: 560px) {
+  .policy-brand {
+    width: 150px;
+  }
+
+  .return-link {
+    min-height: 42px;
+    padding: 8px 10px;
+    font-size: 0.78rem;
+  }
+
+  .policy-layout {
+    padding-top: 34px;
+  }
+
+  .policy-index h1,
+  .policy-content h2 {
+    overflow-wrap: anywhere;
+  }
+
+  .policy-footer {
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+

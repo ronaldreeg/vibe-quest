@@ -1,42 +1,60 @@
 # Supabase setup
 
-The Vibe Quest prototype is connected to the active Supabase project for `vibe-quest.net`.
+Vibe Quest is connected to Supabase project `wyebrsyiauxgoabzigrg`.
 
-## What is live
+## Live services
 
-- Supabase Auth for email/password accounts.
-- `profiles` for display name, home city, bio, and future avatar storage.
-- `activities` for shared listings, verified coordinates, timing, vibes, type, a selected map icon, and lifecycle status.
-- `activity_links` for optional social, signup, and information links.
-- `activity_media` for activity photos and future moderation.
-- `saved_activities` for each user's saved list.
-- `activity_reports` for private, signed-in trust-and-safety reports.
-- `adventure_logs` for the future personal field-note/journey feature.
-- `out_there_posts` for future team editorial publishing.
-- Storage buckets for activity photos, private adventure media, and editorial media.
-- Row-level security on every application table and Storage policy.
+- Auth: email/password signup, confirmation, persistent sessions, password recovery, and account deletion.
+- Database: profiles, activities, links, media, saves, field notes, editorial posts, reports, moderation history, and protected private locations.
+- Storage: activity photos, private adventure media, and editorial media.
+- Edge Functions: `geocode` and `delete-account`.
+- Security: row-level security on application tables and ownership-aware Storage policies.
 
-## One dashboard step
+## Auth configuration
 
-In Supabase, open **Authentication > URL Configuration** and set:
+Configured in **Authentication > URL Configuration**:
 
-- **Site URL:** `https://www.vibe-quest.net`
-- **Redirect URLs:** `https://www.vibe-quest.net/` and `https://vibe-quest.net/`
+- Site URL: `https://www.vibe-quest.net/`
+- Allowed redirect URLs: `https://www.vibe-quest.net/` and `https://vibe-quest.net/`
 
-The app sends users back to the current site after email confirmation. Add the local development URL too when testing locally, such as `http://127.0.0.1:4173/`.
+Add `http://127.0.0.1:4173/` only when a local email-flow test requires it. Remove temporary preview URLs after testing.
 
-## Key safety
+Email confirmation is enabled. Before a public launch, configure custom SMTP under **Authentication > Emails > SMTP Settings** using the credentials from the chosen mail provider. A mailbox such as `hello@vibe-quest.net` is not itself an SMTP integration; Supabase needs the server host, port, username, password, sender address, and sender name.
 
-The browser uses the Supabase **publishable** key. That key is designed to be public and is protected by row-level security. Never put a secret or `service_role` key in `index.html`, `app-v8.js`, Storage, or GitHub.
+After SMTP is configured, test signup confirmation and password recovery from a fresh address on phone and desktop. Disable link tracking in the SMTP provider because rewritten links can break Supabase confirmation URLs.
 
-## Report operations
+## Authorization model
 
-Until the admin moderation screen is built, authorized project admins can review the private `activity_reports` queue in the Supabase Table Editor. Reports begin as `open`; avoid changing or deleting them casually so the review history remains intact. This is an interim operating path, not a replacement for the launch moderation screen and audit trail.
+- Members may manage only their own profile, listings, media, saves, and protected locations.
+- Public discovery exposes only currently discoverable published listings and approved media.
+- Exact private-meetup coordinates are visible only to the owner and admins.
+- Reporters may read their own reports; admins may review all reports and write moderation actions.
+- Admin authority is stored in the protected profile `role`, never user-editable metadata.
+- Geocoding cache and throttle tables grant no access to `anon` or `authenticated` clients.
 
-## Data transition
+## Edge Functions
 
-The original demo listings remain in the front-end so the map is not empty while the project is being populated. New accounts, user-created listings, saved remote listings, profile edits, and uploaded activity photos now use Supabase. The personal field-note and editorial tables are ready for their future UI passes.
+### `geocode`
+
+Accepts validated search or reverse-geocode requests from the Vibe Quest client. It verifies the publishable API key and allowed origin, hashes the client network signature, enforces database-backed limits, caches responses, and throttles upstream traffic.
+
+### `delete-account`
+
+Requires an authenticated JWT and explicit confirmation. It removes owned activity and adventure media from Storage, then deletes the Auth user. Database cascades remove the user's listings and related records.
+
+## Plan-dependent settings
+
+The current Free plan does not provide leaked-password protection or downloadable managed backups. Decide whether to upgrade before a broad launch. Until then, keep a manual export outside the repository and never commit database dumps containing user information.
+
+Free projects may also be paused after low activity. A public launch that promises continuous availability should use a plan that will not pause for inactivity.
 
 ## Migrations
 
-The database migrations live in `supabase/migrations/` and are applied to the connected project. Keep future schema changes as new timestamped migration files rather than editing an already-applied migration.
+Migrations live in `supabase/migrations/` and are applied to the connected project. Add future schema changes as new timestamped migrations; do not edit an already-applied migration.
+
+After every schema change:
+
+1. Run Supabase security and performance advisors.
+2. Test public, member, owner, and admin access paths.
+3. Confirm no `service_role` or secret keys appear in browser assets or Git history.
+4. Update `LAUNCH_RUNBOOK.md` when operations change.

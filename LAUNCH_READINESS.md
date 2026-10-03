@@ -1,97 +1,62 @@
 # Vibe Quest Launch Readiness
 
-Audit date: September 30, 2026
+Audit date: October 3, 2026
 
 ## Current status
 
-Vibe Quest is ready for continued private testing and a tightly watched local pilot. The product now has a real Supabase foundation, shared listings, cross-device accounts, Storage-backed photos, saves, ownership controls, map-bound loading, and private reporting intake.
+The application foundation is ready for a closely watched one-city pilot. Core discovery, publishing, accounts, lifecycle controls, private locations, moderation, legal basics, and production geocoding are implemented.
 
-It is not ready for a broad public launch yet. The remaining blockers are mostly trust, lifecycle, privacy, recovery, and operations rather than visual design.
+Do not announce a broad public launch until the manual launch gates below are complete. Two depend on outside credentials or a Supabase plan choice and cannot be completed safely in source code.
 
 ## Foundation complete
 
-- [x] Supabase Auth, Postgres, and Storage replace browser-only data for real accounts and user-created listings.
-- [x] Row-level security protects profiles, owned listings, links, media, saves, field notes, and reports.
-- [x] Password handling for production accounts lives in Supabase Auth.
-- [x] Uploaded activity photos are compressed before upload and stored in Supabase Storage.
-- [x] Shared listings load by visible map bounds as the map moves and zooms.
-- [x] Users can create, edit, delete, save, link to, and share real listings.
-- [x] `www.vibe-quest.net` is connected with HTTPS, and `hello@vibe-quest.net` is the public contact address.
-- [x] Signed-in users can privately report a real listing. Duplicate open reports are blocked, owners cannot report their own post, and reports are protected by RLS.
+- [x] Supabase Auth, Postgres, Storage, and row-level security back real accounts and listings.
+- [x] Real listings load by map bounds as visitors pan and zoom; production excludes demo listings.
+- [x] Users can create, edit, pause, republish, cancel, archive, delete, save, link to, and share listings.
+- [x] Past one-time listings and stale recurring/anytime listings are hidden from public discovery.
+- [x] Listing time zones and last-confirmed dates are stored and validated.
+- [x] Private-meetup exact locations live in a protected table; public listings receive approximate points.
+- [x] Signed-in users can file private reports; duplicate open reports and owner self-reports are blocked.
+- [x] Admins have a private moderation queue, listing actions, resolution notes, and an audit trail.
+- [x] Password recovery and account deletion are available in the interface.
+- [x] Community Rules, Privacy, Terms, Accessibility, and Contact pages are published with the app.
+- [x] Geocoding runs through a rate-limited, cached Edge Function instead of direct production browser requests.
+- [x] Client images are compressed before Storage upload and rendered lazily in listing grids.
+- [x] Hourly health checks cover public pages and the discovery backend.
+- [x] Supabase Auth Site URL and production redirect URLs point to `https://www.vibe-quest.net/`.
 
-## Required before public launch
+## Manual launch gates
 
-### 1. Trust and moderation
+- [ ] Configure custom SMTP in Supabase and complete real signup, confirmation, recovery, and changed-password tests on both phone and desktop.
+- [ ] Decide whether to upgrade Supabase for leaked-password protection and downloadable managed backups. The current Free plan does not provide those launch protections.
+- [ ] Assign a named person to monitor reports and `hello@vibe-quest.net`, with the response expectations in `LAUNCH_RUNBOOK.md`.
+- [ ] Publish a small, current, verified launch set. The October 3 anonymous production query correctly returned zero discoverable listings after expired and stale tests were hidden.
+- [ ] Take and securely retain a pre-launch database export, then perform the smoke test in `LAUNCH_RUNBOOK.md` against production.
 
-- [x] Private listing-report intake and moderation-ready database queue.
-- [ ] Add a small admin moderation view for open reports, listing removal, resolution notes, and an audit trail.
-- [ ] Publish clear prohibited-content and community-safety rules.
-- [ ] Add a correction path for inaccurate or unsafe map locations.
+## Advisor status
 
-### 2. Listing lifecycle
+The October 3 database review found no missing foreign-key indexes or duplicate permissive policies.
 
-- [ ] Add owner controls for published, paused, cancelled, and archived states instead of relying on deletion.
-- [ ] Automatically hide and expire past one-time listings while preserving them in the owner's private history.
-- [ ] Store and display the listing's local time zone.
-- [ ] Add last-confirmed dates and reconfirmation for recurring or anytime listings.
+- Security advisor: the three geocoding service tables intentionally have RLS with no client policies. They are default-deny and reachable only by the service-role Edge Function.
+- Security advisor: leaked-password protection remains disabled because it is a paid Supabase feature.
+- Performance advisor: unused-index notices are expected before production traffic and should be reviewed after the pilot, not removed speculatively.
 
-### 3. Location privacy
+## Scale decisions
 
-- [ ] Separate a protected private address from the public map point.
-- [ ] Make private-home listings default to an approximate public location.
-- [ ] Add a deliberate future path for an organizer to share exact details with an accepted attendee.
+The current bounded query retrieves at most 250 rows and renders at most 150 map markers. That is appropriate for the first city pilot because only the visible padded map area is fetched.
 
-### 4. Account safety and legal basics
-
-- [ ] Add password recovery to the sign-in window and test the complete email flow.
-- [ ] Confirm email-verification messaging and redirect behavior on desktop and mobile.
-- [ ] Add Privacy, Terms, Community Guidelines, and basic accessibility/contact pages.
-- [ ] Add account deletion and explain what happens to owned listings and uploaded media.
-- [ ] Enable Supabase leaked-password protection.
-
-### 5. Production services and scale
-
-- [ ] Move geocoding away from direct client-side Nominatim usage to a production provider or server function with rate limits and caching.
-- [ ] Add PostGIS-backed viewport queries and clustering before dense-city inventory grows.
-- [ ] Add responsive image variants or transformations and verify mobile delivery size on slower connections.
-- [ ] Add error monitoring, uptime checks, privacy-respecting analytics, and a documented backup/restore drill.
-- [ ] Remove remaining demo-only `example.com` links and decide when demo listings leave the public map.
-
-## Recommended order
-
-1. Finish moderation operations and safety rules.
-2. Build listing pause, cancellation, and expiration behavior.
-3. Add password recovery, account deletion, and legal pages.
-4. Protect private-home locations.
-5. Move geocoding server-side and add PostGIS/clustering.
-6. Add monitoring, image delivery checks, and a launch-day operations runbook.
+Add a PostGIS viewport RPC and marker clustering when dense viewports regularly approach 100 markers, the 250-row query cap is reached, or measured map interaction slows. Add generated image variants when real mobile transfer measurements show the current compressed originals are too heavy.
 
 ## Pilot quality bar
 
-Before inviting a city beyond trusted testers, verify that:
-
-- A first-time organizer can publish without help.
-- A visitor can move the map between cities and receive the correct listings.
-- Past, paused, cancelled, rejected, and expired listings never appear as current.
-- Private addresses cannot leak through the interface or API.
+- A first-time organizer can confirm an account and publish without help.
+- Panning from one city to another replaces the visible discovery set correctly.
+- Past, paused, cancelled, rejected, archived, and stale listings never appear as current.
+- Exact private locations are absent from anonymous API responses and page content.
 - One user cannot edit another user's listing or read another user's report.
-- Uploaded images stay fast and correctly cropped on mobile.
-- Empty, loading, error, and offline states explain what happened.
+- Uploads work from a current iPhone and Android photo library.
+- Empty, loading, offline, rate-limit, and backend-error states explain what happened.
 - Keyboard navigation, contrast, touch targets, and responsive layouts work throughout.
-- A real person is assigned to review reports and respond to urgent issues.
-
-## Release sequence
-
-### Private testing
-
-Keep testing complete discovery, publishing, saving, sharing, reporting, recovery, and cancellation flows with a small trusted group.
-
-### One-city pilot
-
-Launch with a deliberately small set of excellent listings, review every first-time publishing flow, and watch freshness and reports closely.
-
-### Public expansion
-
-Expand only after lifecycle automation, private-location handling, moderation operations, map clustering, monitoring, and recovery flows have been exercised in the pilot.
+- A real person is watching reports, contact email, health checks, and auth-email delivery.
 
 The durable product and data-model direction remains in [`../FOUNDATION_PLAN.md`](../FOUNDATION_PLAN.md).

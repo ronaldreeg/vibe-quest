@@ -1,27 +1,50 @@
 # Vibe Quest Deployment Handoff
 
-## GitHub Pages
+## Production
 
-The static prototype is prepared to publish from the repository's `main` branch through GitHub Actions. After the repository is populated:
+- Site: `https://www.vibe-quest.net/`
+- Hosting: GitHub Pages
+- Source branch: `main`
+- Backend: Supabase project `wyebrsyiauxgoabzigrg`
+- Public contact: `hello@vibe-quest.net`
 
-1. Enable GitHub Pages using the Actions deployment source.
-2. Confirm the Pages custom domain is `www.vibe-quest.net`.
-3. At the domain registrar, point the `www` DNS record to the GitHub Pages hostname for this account.
-4. Turn on HTTPS after DNS verification completes.
-5. Confirm both the `www` address and the preferred root-domain redirect before sharing the site.
+The repository's `CNAME` and GitHub Pages settings define the custom domain. HTTPS should remain enforced in GitHub Pages.
 
-The exact DNS records depend on the registrar's current interface, so they should be entered from the values GitHub shows during custom-domain verification.
+## Release flow
 
-## Supabase handoff
+1. Run the local checks and responsive smoke test.
+2. Commit a coherent release to `main`.
+3. Push `main`.
+4. Watch **Deploy Vibe Quest** in GitHub Actions.
+5. Confirm the live footer, policy page, discovery map, and Supabase listing request.
+6. Follow the full checklist in [`LAUNCH_RUNBOOK.md`](./LAUNCH_RUNBOOK.md) for a public release.
 
-The Supabase project reference supplied for Vibe Quest is `wyebrsyiauxgoabzigrg`. It identifies the project, but it is not an application secret.
+The **Launch health** workflow runs static checks on every push and production smoke checks hourly and on manual dispatch.
 
-Before production launch, the browser storage adapter in `app-v8.js` should be replaced with:
+## Supabase
 
-- Supabase Auth for sign-up, sign-in, email verification, recovery, and sessions.
-- Postgres tables for profiles, activities, activity occurrences, saves, field notes, media, reports, and editorial posts.
-- Storage buckets for photos with size limits, transformations, thumbnails, and appropriate public/private access.
-- Row Level Security policies so users can edit only their own content and public visitors can read only published listings.
-- Edge/server functions for geocoding, moderation actions, and any provider keys that must stay private.
+Production Supabase services are already connected:
 
-No Supabase service-role key or user credential belongs in this repository. Only the browser-safe project URL and publishable key may eventually be exposed to the frontend, and only after the database policies are in place.
+- Auth for signup, confirmation, recovery, and sessions;
+- Postgres with row-level security;
+- Storage for uploaded media;
+- `geocode` and `delete-account` Edge Functions.
+
+See [`SUPABASE_SETUP.md`](./SUPABASE_SETUP.md) for configuration and plan-dependent launch items.
+
+## Secret handling
+
+The browser may contain only the Supabase project URL and publishable key. Never commit:
+
+- a `service_role` or `sb_secret_` key;
+- the database password or connection string;
+- SMTP credentials;
+- database exports containing user data.
+
+Edge Functions read secrets from Supabase-managed environment variables. GitHub Actions should use repository or environment secrets for any future private credential.
+
+## Rollback
+
+For a front-end regression, revert the responsible commit and push the revert. Do not rewrite shared branch history.
+
+For database behavior, ship a new forward migration. Do not edit an already-applied migration. Export production data before any corrective migration that could alter user records.

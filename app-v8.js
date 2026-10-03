@@ -348,6 +348,7 @@ const DEFAULT_MAP_CENTER = [39.8283, -98.5795];
 const LOCATION_STORAGE_KEY = "vv_location_preference";
 const PUBLIC_SITE_URL = "https://www.vibe-quest.net/";
 const SHARED_ACTIVITY_PARAM = "activity";
+const INCLUDE_DEMO_LISTINGS = !["vibe-quest.net", "www.vibe-quest.net"].includes(window.location.hostname);
 
 const DEFAULT_ADVENTURES = [
   {
@@ -683,6 +684,8 @@ const state = {
   session: store.get("vv_session", null),
   authBusy: false,
   reportBusy: false,
+  moderationBusy: false,
+  accountBusy: false,
   pendingReportId: null,
   editingAdventureId: null,
   pendingDeleteId: null,
@@ -690,6 +693,9 @@ const state = {
   backendEnabled: Boolean(window.vvSupabase),
   remoteUser: null,
   remoteActivities: [],
+  remoteOwnedActivities: [],
+  remoteSavedActivities: [],
+  moderationReports: [],
   remoteSavedIds: []
 };
 
@@ -735,6 +741,10 @@ const els = {
   profileForm: document.querySelector("#profileForm"),
   profileSavedList: document.querySelector("#profileSavedList"),
   profileHostedList: document.querySelector("#profileHostedList"),
+  profileEmailStatus: document.querySelector("#profileEmailStatus"),
+  moderationPanel: document.querySelector("#moderationPanel"),
+  moderationSummary: document.querySelector("#moderationSummary"),
+  moderationList: document.querySelector("#moderationList"),
   detailModal: document.querySelector("#detailModal"),
   detailContent: document.querySelector("#detailContent"),
   reportModal: document.querySelector("#reportModal"),
@@ -742,6 +752,12 @@ const els = {
   reportActivityTitle: document.querySelector("#reportActivityTitle"),
   reportMessage: document.querySelector("#reportMessage"),
   reportSubmit: document.querySelector("#reportSubmit"),
+  passwordResetModal: document.querySelector("#passwordResetModal"),
+  passwordResetForm: document.querySelector("#passwordResetForm"),
+  passwordResetMessage: document.querySelector("#passwordResetMessage"),
+  accountDeleteModal: document.querySelector("#accountDeleteModal"),
+  accountDeleteForm: document.querySelector("#accountDeleteForm"),
+  accountDeleteMessage: document.querySelector("#accountDeleteMessage"),
   deleteModal: document.querySelector("#deleteModal"),
   deletePostTitle: document.querySelector("#deletePostTitle"),
   hostForm: document.querySelector("#hostForm"),
@@ -780,6 +796,16 @@ function getCurrentUser() {
 
 function hashString(value) {
   return String(value || "").split("").reduce((hash, char) => hash + char.charCodeAt(0), 0);
+}
+
+function approximatePrivateCoordinates(latitude, longitude, seed) {
+  const hash = hashString(seed);
+  const angle = ((hash * 137.508) % 360) * (Math.PI / 180);
+  const miles = 0.45 + ((hash % 37) / 100);
+  const latitudeOffset = (miles / 69) * Math.sin(angle);
+  const longitudeScale = Math.max(0.25, Math.cos(Number(latitude) * (Math.PI / 180)));
+  const longitudeOffset = (miles / (69 * longitudeScale)) * Math.cos(angle);
+  return [Number(latitude) + latitudeOffset, Number(longitude) + longitudeOffset];
 }
 
 function createId(prefix = "id") {
@@ -825,13 +851,30 @@ function normalizeAdventureRecord(adventure, index, users = getUsers()) {
 }
 
 function getAdventures() {
+  const demoListings = INCLUDE_DEMO_LISTINGS ? DEFAULT_ADVENTURES : [];
   if (state.backendEnabled) {
-    return [...DEFAULT_ADVENTURES, ...state.remoteActivities].map((adventure, index) => normalizeAdventureRecord(adventure, index));
+    return [...demoListings, ...state.remoteActivities].map((adventure, index) => normalizeAdventureRecord(adventure, index));
   }
   const userAdventures = store.get("vv_adventures", []);
   const hosted = Array.isArray(userAdventures) ? userAdventures : [];
   const users = getUsers();
-  return [...DEFAULT_ADVENTURES, ...hosted].map((adventure, index) => normalizeAdventureRecord(adventure, index, users));
+  return [...demoListings, ...hosted].map((adventure, index) => normalizeAdventureRecord(adventure, index, users));
+}
+
+function getOwnedAdventures() {
+  if (state.backendEnabled) return state.remoteOwnedActivities;
+  const user = getCurrentUser();
+  if (!user) return [];
+  const stored = store.get("vv_adventures", []);
+  return (Array.isArray(stored) ? stored : [])
+    .filter((adventure) => adventure.createdBy === user.id)
+    .map((adventure, index) => normalizeAdventureRecord(adventure, index));
+}
+
+function getSavedAdventures() {
+  if (state.backendEnabled) return state.remoteSavedActivities;
+  const savedIds = getSavedIds();
+  return getAdventures().filter((item) => savedIds.includes(item.id));
 }
 
 function getSavedIds() {
@@ -879,6 +922,7 @@ function mapRemoteActivity(row, linkRows, profileMap) {
     area: row.location_name,
     locationQuery: row.location_query || row.location_name,
     locationAccuracy: row.location_accuracy,
+    locationVisibility: row.location_visibility || "public",
     geocodeLabel: row.location_name,
     category: row.type,
     type: row.type,
@@ -895,6 +939,9 @@ function mapRemoteActivity(row, linkRows, profileMap) {
     description: row.description,
     links,
     listingMode: row.listing_mode,
+    status: row.status || "published",
+    timeZone: row.time_zone || "America/Chicago",
+    lastConfirmedAt: row.last_confirmed_at || row.updated_at || row.created_at,
     startDate: row.start_date || "",
     startTime: normalizeDatabaseTime(row.start_time),
     recurringDay: row.recurring_day,
@@ -903,6 +950,30 @@ function mapRemoteActivity(row, linkRows, profileMap) {
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
+}
+
+function dateKeyInTimeZone(timeZone) {
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: timeZone || "UTC",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).formatToParts(new Date());
+    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+    return `${values.year}-${values.month}-${values.day}`;
+  } catch {
+    return formatInputDate(startOfToday());
+  }
+}
+
+function isRemoteActivityDiscoverable(activity) {
+  if (activity.status !== "published") return false;
+  if (activity.listingMode === "one-time") {
+    return Boolean(activity.startDate && activity.startDate >= dateKeyInTimeZone(activity.timeZone));
+  }
+  const confirmedAt = new Date(activity.lastConfirmedAt || 0).getTime();
+  return Number.isFinite(confirmedAt) && confirmedAt >= Date.now() - (90 * 86400000);
 }
 
 async function hydrateRemoteActivities(rows) {
@@ -951,7 +1022,8 @@ async function loadRemoteActivities({ bounds = null, merge = false } = {}) {
 
   const { data: rows, error } = await query;
   if (error) throw error;
-  const activities = await hydrateRemoteActivities(rows);
+  const hydrated = await hydrateRemoteActivities(rows);
+  const activities = hydrated.filter(isRemoteActivityDiscoverable);
   if (merge) mergeRemoteActivities(activities);
   else {
     state.remoteActivities = activities;
@@ -960,10 +1032,27 @@ async function loadRemoteActivities({ bounds = null, merge = false } = {}) {
   return activities;
 }
 
+async function loadRemoteOwnedActivities() {
+  const user = getCurrentUser();
+  if (!state.backendEnabled || !user) {
+    state.remoteOwnedActivities = [];
+    return [];
+  }
+  const { data: rows, error } = await window.vvSupabase
+    .from("activities")
+    .select("*")
+    .eq("owner_id", user.id)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  state.remoteOwnedActivities = await hydrateRemoteActivities(rows || []);
+  return state.remoteOwnedActivities;
+}
+
 async function loadRemoteSavedIds() {
   const user = getCurrentUser();
   if (!state.backendEnabled || !user) {
     state.remoteSavedIds = [];
+    state.remoteSavedActivities = [];
     return;
   }
   const { data, error } = await window.vvSupabase
@@ -974,19 +1063,41 @@ async function loadRemoteSavedIds() {
   const demoSaves = store.get("vv_demo_saves", {});
   const localDemoIds = Array.isArray(demoSaves?.[user.id]) ? demoSaves[user.id] : [];
   state.remoteSavedIds = [...new Set([...(data || []).map((item) => item.activity_id), ...localDemoIds])];
+  const remoteIds = state.remoteSavedIds.filter(isUuid);
+  if (!remoteIds.length) {
+    state.remoteSavedActivities = INCLUDE_DEMO_LISTINGS
+      ? DEFAULT_ADVENTURES.filter((item) => localDemoIds.includes(item.id))
+      : [];
+    return;
+  }
+  const { data: savedRows, error: savedError } = await window.vvSupabase
+    .from("activities")
+    .select("*")
+    .in("id", remoteIds)
+    .limit(REMOTE_ACTIVITY_LIMIT);
+  if (savedError) throw savedError;
+  const remoteSaved = await hydrateRemoteActivities(savedRows || []);
+  const demoSaved = INCLUDE_DEMO_LISTINGS
+    ? DEFAULT_ADVENTURES.filter((item) => localDemoIds.includes(item.id))
+    : [];
+  state.remoteSavedActivities = [...remoteSaved, ...demoSaved]
+    .map((item, index) => normalizeAdventureRecord(item, index));
 }
 
 async function syncRemoteSession(session) {
   state.remoteUser = null;
   if (!session?.user) {
     state.remoteSavedIds = [];
+    state.remoteSavedActivities = [];
+    state.remoteOwnedActivities = [];
+    state.moderationReports = [];
     render();
     return;
   }
   const authUser = session.user;
   const { data: profile, error } = await window.vvSupabase
     .from("profiles")
-    .select("id, display_name, city, bio, avatar_path, created_at")
+    .select("id, display_name, city, bio, avatar_path, role, created_at")
     .eq("id", authUser.id)
     .maybeSingle();
   if (error) throw error;
@@ -997,27 +1108,43 @@ async function syncRemoteSession(session) {
     city: profile?.city || authUser.user_metadata?.city || "",
     bio: profile?.bio || "",
     avatarPath: profile?.avatar_path || "",
+    role: profile?.role || "member",
+    isAdmin: profile?.role === "admin",
+    emailConfirmed: Boolean(authUser.email_confirmed_at),
     createdAt: profile?.created_at || authUser.created_at
   };
   state.location = state.remoteUser.city || state.location;
   prepareMapFocus(knownCenterForLocation(state.location) || state.mapCenter);
   els.locationInput.value = state.location;
-  await loadRemoteSavedIds();
+  await Promise.all([
+    loadRemoteSavedIds(),
+    loadRemoteOwnedActivities(),
+    profile?.role === "admin" ? loadModerationReports() : Promise.resolve([])
+  ]);
   render();
+}
+
+async function handleRemoteAuthState(event, session) {
+  await syncRemoteSession(session);
+  if (event === "PASSWORD_RECOVERY") {
+    els.passwordResetForm.reset();
+    els.passwordResetMessage.textContent = "";
+    if (!els.passwordResetModal.open) els.passwordResetModal.showModal();
+  }
 }
 
 async function bootstrapSupabase() {
   if (!state.backendEnabled) return false;
   try {
+    window.vvSupabase.auth.onAuthStateChange((event, session) => {
+      window.setTimeout(() => handleRemoteAuthState(event, session).catch(() => {
+        toast("Your account session needs a refresh. Please sign in again.");
+      }), 0);
+    });
     const { data, error } = await window.vvSupabase.auth.getSession();
     if (error) throw error;
     await loadRemoteActivities();
     await syncRemoteSession(data.session);
-    window.vvSupabase.auth.onAuthStateChange((_event, session) => {
-      window.setTimeout(() => syncRemoteSession(session).catch(() => {
-        toast("Your account session needs a refresh. Please sign in again.");
-      }), 0);
-    });
     return true;
   } catch {
     state.remoteActivities = [];
@@ -2140,37 +2267,115 @@ function renderSaved() {
     : `<div class="empty-state">Your saved activities will live here after you tap the star.</div>`;
 }
 
-function profileListItem(item) {
+function isListingLive(item) {
+  if ((item.status || "published") !== "published") return false;
+  if (item.listingMode === "one-time") return getListingSchedule(item).bucket !== "expired";
+  if (item.lastConfirmedAt) {
+    return new Date(item.lastConfirmedAt).getTime() >= Date.now() - (90 * 86400000);
+  }
+  return true;
+}
+
+function activityStatusLabel(item) {
+  if ((item.status || "published") === "published" && !isListingLive(item)) {
+    return item.listingMode === "one-time" ? "Expired" : "Needs confirmation";
+  }
+  return {
+    published: "Live",
+    paused: "Paused",
+    cancelled: "Cancelled",
+    archived: "Archived",
+    rejected: "Removed",
+    pending: "Pending review",
+    draft: "Draft"
+  }[item.status] || "Live";
+}
+
+function profileListItem(item, { showStatus = false } = {}) {
   return `
     <button class="profile-list-item" type="button" data-action="open-detail" data-id="${item.id}">
       <span>
         <strong>${escapeHtml(item.title)}</strong>
         <small>${escapeHtml(item.area)} · ${escapeHtml(item.city)}</small>
       </span>
-      <em>${escapeHtml(item.price)}</em>
+      <em class="${showStatus ? `status-${escapeHtml(item.status || "published")}` : ""}">${escapeHtml(showStatus ? activityStatusLabel(item) : item.price)}</em>
     </button>
   `;
 }
 
 function profileOwnedItem(item) {
+  const schedule = getListingSchedule(item);
+  const canPublish = item.status !== "published" && item.status !== "rejected" && !(item.listingMode === "one-time" && schedule.bucket === "expired");
+  const canConfirm = item.status === "published" && ["recurring", "anytime"].includes(item.listingMode);
   return `
     <div class="profile-owned-item">
-      ${profileListItem(item)}
+      ${profileListItem(item, { showStatus: true })}
       <div class="profile-item-actions" aria-label="Manage ${escapeHtml(item.title)}">
         <button class="compact-button" type="button" data-action="edit-post" data-id="${item.id}">Edit</button>
+        ${item.status === "published" ? `<button class="compact-button" type="button" data-action="set-post-status" data-status="paused" data-id="${item.id}">Pause</button>` : ""}
+        ${canPublish ? `<button class="compact-button" type="button" data-action="set-post-status" data-status="published" data-id="${item.id}">Publish</button>` : ""}
+        ${item.status === "published" && item.listingMode === "one-time" ? `<button class="compact-button" type="button" data-action="set-post-status" data-status="cancelled" data-id="${item.id}">Cancel event</button>` : ""}
+        ${canConfirm ? `<button class="compact-button" type="button" data-action="confirm-post" data-id="${item.id}">Confirm active</button>` : ""}
+        ${item.status !== "archived" && item.status !== "rejected" ? `<button class="compact-button" type="button" data-action="set-post-status" data-status="archived" data-id="${item.id}">Archive</button>` : ""}
         <button class="compact-button danger-button" type="button" data-action="delete-post" data-id="${item.id}">Delete</button>
       </div>
     </div>
   `;
 }
 
+const REPORT_REASON_LABELS = {
+  incorrect: "Location or details are incorrect",
+  cancelled: "Cancelled or no longer happening",
+  spam: "Spam or misleading",
+  unsafe: "Safety concern",
+  duplicate: "Duplicate listing",
+  other: "Something else"
+};
+
+function moderationReportMarkup(report) {
+  const created = report.created_at
+    ? new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(report.created_at))
+    : "Recently";
+  return `
+    <article class="moderation-item">
+      <div class="moderation-item-heading">
+        <div>
+          <span class="status-badge status-${escapeHtml(report.status)}">${escapeHtml(report.status)}</span>
+          <strong>${escapeHtml(report.activity_title_snapshot || "Deleted listing")}</strong>
+        </div>
+        <time>${escapeHtml(created)}</time>
+      </div>
+      <p><strong>${escapeHtml(REPORT_REASON_LABELS[report.reason] || report.reason)}</strong>${report.details ? ` · ${escapeHtml(report.details)}` : ""}</p>
+      <small>${escapeHtml(report.activity_location_snapshot || "Location unavailable")}</small>
+      <div class="moderation-actions">
+        ${report.status === "open" ? `<button class="compact-button" type="button" data-action="moderate-report" data-report-action="reviewing" data-report-id="${report.id}">Start review</button>` : ""}
+        ${report.activity_id ? `<button class="compact-button danger-button" type="button" data-action="moderate-report" data-report-action="hide" data-report-id="${report.id}">Hide listing</button>` : ""}
+        <button class="compact-button" type="button" data-action="moderate-report" data-report-action="resolve" data-report-id="${report.id}">Resolve</button>
+        <button class="compact-button" type="button" data-action="moderate-report" data-report-action="dismiss" data-report-id="${report.id}">Dismiss</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderModerationQueue() {
+  const user = getCurrentUser();
+  if (!els.moderationPanel || !els.moderationList) return;
+  els.moderationPanel.hidden = !user?.isAdmin;
+  if (!user?.isAdmin) return;
+  const reports = state.moderationReports;
+  els.moderationSummary.textContent = reports.length
+    ? `${reports.length} ${reports.length === 1 ? "report needs" : "reports need"} a decision.`
+    : "The review queue is clear.";
+  els.moderationList.innerHTML = reports.length
+    ? reports.map(moderationReportMarkup).join("")
+    : `<div class="empty-state">No open reports.</div>`;
+}
+
 function renderProfileLists() {
   const user = getCurrentUser();
   if (!user || !els.profileSavedList || !els.profileHostedList) return;
-  const listings = getAdventures();
-  const savedIds = getSavedIds();
-  const saved = listings.filter((item) => savedIds.includes(item.id));
-  const hosted = listings.filter((item) => item.createdBy === user.id);
+  const saved = getSavedAdventures();
+  const hosted = getOwnedAdventures();
 
   els.profileSavedList.innerHTML = saved.length
     ? saved.map(profileListItem).join("")
@@ -2179,6 +2384,12 @@ function renderProfileLists() {
   els.profileHostedList.innerHTML = hosted.length
     ? hosted.map(profileOwnedItem).join("")
     : `<div class="empty-state">Activities you post will appear here.</div>`;
+  if (els.profileEmailStatus) {
+    els.profileEmailStatus.textContent = user.emailConfirmed
+      ? `${user.email} · email verified`
+      : `${user.email} · verification pending`;
+  }
+  renderModerationQueue();
 }
 
 function render() {
@@ -2196,6 +2407,24 @@ async function fetchGeocodeResults(location, limit = 5) {
   if (!query) return [];
   const cacheKey = `${normalize(query)}:${limit}`;
   if (geocodeCache.has(cacheKey)) return geocodeCache.get(cacheKey);
+
+  if (window.vvSupabase) {
+    try {
+      const { data, error } = await window.vvSupabase.functions.invoke("geocode", {
+        body: { action: "search", query, limit }
+      });
+      if (!error && Array.isArray(data?.results)) {
+        geocodeCache.set(cacheKey, data.results);
+        return data.results;
+      }
+    } catch {
+      // The local preview fallback below keeps design work usable if the function is offline.
+    }
+  }
+
+  const isLocalPreview = window.location.protocol === "file:"
+    || ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  if (!isLocalPreview) return [];
   try {
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=us&limit=${limit}&q=${encodeURIComponent(query)}`
@@ -2220,10 +2449,27 @@ function formatReverseGeocodeLabel(address = {}) {
     .replace(/^us-/i, "")
     .trim()
     .toUpperCase();
-  return stateCode ? `${locality}, ${stateCode}` : locality;
+  const stateLabel = stateCode || String(address.state || "").trim();
+  return stateLabel ? `${locality}, ${stateLabel}` : locality;
 }
 
 async function reverseGeocodeLocation(latitude, longitude) {
+  if (window.vvSupabase) {
+    try {
+      const { data, error } = await window.vvSupabase.functions.invoke("geocode", {
+        body: { action: "reverse", latitude, longitude }
+      });
+      if (!error && data?.result) {
+        return formatReverseGeocodeLabel(data.result.address || {});
+      }
+    } catch {
+      // The local preview fallback below keeps design work usable if the function is offline.
+    }
+  }
+
+  const isLocalPreview = window.location.protocol === "file:"
+    || ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  if (!isLocalPreview) return "";
   try {
     const response = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=10&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}`
@@ -2614,9 +2860,11 @@ function showAuth(mode = "signin") {
 function updateAuthMode() {
   const signup = state.authMode === "signup";
   els.authForm.classList.toggle("is-signup", signup);
+  els.authForm.classList.toggle("is-signin", !signup);
   els.authTitle.textContent = signup ? "Create your Vibe Quest profile" : "Sign in to Vibe Quest";
   els.authModeLabel.textContent = signup ? "Save your vibe" : "Welcome back";
   els.authSubmit.textContent = signup ? "Create account" : "Sign in";
+  els.authForm.elements.password.autocomplete = signup ? "new-password" : "current-password";
   document.querySelectorAll(".auth-tab").forEach((tab) => {
     tab.classList.toggle("is-active", tab.dataset.authMode === state.authMode);
   });
@@ -2811,28 +3059,45 @@ async function toggleSave(id) {
     toast("Saved to your profile.");
   }
   if (state.backendEnabled) state.remoteSavedIds = [...saved];
+  if (state.backendEnabled) {
+    if (wasSaved) {
+      state.remoteSavedActivities = state.remoteSavedActivities.filter((item) => item.id !== id);
+    } else {
+      const activity = getStoredAdventure(id) || getAdventures().find((item) => item.id === id);
+      if (activity && !state.remoteSavedActivities.some((item) => item.id === id)) {
+        state.remoteSavedActivities = [activity, ...state.remoteSavedActivities];
+      }
+    }
+  }
   render();
   if (els.detailModal.open) openDetail(id);
 }
 
 function openDetail(id) {
-  const adventure = getAdventures().find((item) => item.id === id);
+  const adventure = getStoredAdventure(id) || getAdventures().find((item) => item.id === id);
   if (!adventure) return;
   const user = getCurrentUser();
   const type = getListingType(adventure);
   const links = getAdventureLinks(adventure);
   const saved = getSavedIds().includes(adventure.id);
   const isOwner = Boolean(user && adventure.createdBy === user.id);
-  const canReport = state.backendEnabled && isUuid(adventure.id) && !isOwner;
+  const isLive = isListingLive(adventure);
+  const canReport = state.backendEnabled && isUuid(adventure.id) && !isOwner && isLive;
+  const schedule = getListingSchedule(adventure);
+  const canPublish = isOwner && adventure.status !== "published" && adventure.status !== "rejected" && !(adventure.listingMode === "one-time" && schedule.bucket === "expired");
   const ownerActions = isOwner
     ? `
       <section class="owner-panel">
         <div>
           <span class="mini-label">Your post</span>
-          <p>Keep the details current or remove this activity.</p>
+          <p>Status: <strong>${escapeHtml(activityStatusLabel(adventure))}</strong>. Keep the details current so the map stays useful.</p>
         </div>
         <div class="owner-actions">
           <button class="compact-button" type="button" data-action="edit-post" data-id="${adventure.id}">Edit post</button>
+          ${isLive ? `<button class="compact-button" type="button" data-action="set-post-status" data-status="paused" data-id="${adventure.id}">Pause</button>` : ""}
+          ${canPublish ? `<button class="compact-button" type="button" data-action="set-post-status" data-status="published" data-id="${adventure.id}">Publish</button>` : ""}
+          ${isLive && adventure.listingMode === "one-time" ? `<button class="compact-button" type="button" data-action="set-post-status" data-status="cancelled" data-id="${adventure.id}">Cancel event</button>` : ""}
+          ${adventure.status === "published" && ["recurring", "anytime"].includes(adventure.listingMode) ? `<button class="compact-button" type="button" data-action="confirm-post" data-id="${adventure.id}">Confirm active</button>` : ""}
           <button class="compact-button danger-button" type="button" data-action="delete-post" data-id="${adventure.id}">Delete post</button>
         </div>
       </section>
@@ -2841,6 +3106,7 @@ function openDetail(id) {
   els.detailContent.innerHTML = `
     <div class="detail-hero" style="${styleVars(adventure)}">${photoMarkup(adventure, "detail-photo")}</div>
     <span class="detail-location-label">${escapeHtml(adventure.area)} · ${escapeHtml(adventure.city)}</span>
+    ${!isLive ? `<span class="status-badge status-${escapeHtml(adventure.status || "published")}">${escapeHtml(activityStatusLabel(adventure))}</span>` : ""}
     <h2>${escapeHtml(adventure.title)}</h2>
     <p>${escapeHtml(adventure.description)}</p>
     <div class="detail-list">
@@ -2853,7 +3119,9 @@ function openDetail(id) {
       >
         <span>Where</span>
         <strong>${escapeHtml(adventure.area)}</strong>
-        ${adventure.locationAccuracy === "approximate" ? `<em class="location-accuracy">Approximate map area</em>` : ""}
+        ${adventure.locationVisibility === "private"
+          ? `<em class="location-accuracy">Private meetup · exact details are not public</em>`
+          : adventure.locationAccuracy === "approximate" ? `<em class="location-accuracy">Approximate map area</em>` : ""}
       </button>
       <div><span>Price</span><strong>${escapeHtml(adventure.price)}</strong></div>
       <div><span>When</span><strong>${escapeHtml(timingLabel(adventure, true))}</strong></div>
@@ -2875,7 +3143,7 @@ function openDetail(id) {
         `).join("") : `<div class="empty-state">No links yet.</div>`}
       </div>
     </section>
-    <div class="modal-actions">
+    ${isLive ? `<div class="modal-actions">
       <button class="secondary-button" type="button" data-action="show-on-map" data-id="${adventure.id}">
         Show on map
       </button>
@@ -2888,7 +3156,7 @@ function openDetail(id) {
       <button class="primary-button" data-action="toggle-save" data-id="${adventure.id}">
         ${saved ? "Remove from saved" : "Save activity"}
       </button>
-    </div>
+    </div>` : ""}
     ${canReport ? `
       <div class="detail-trust-row">
         <span>Something look wrong?</span>
@@ -2999,7 +3267,81 @@ async function submitReport(event) {
   toast("Report sent. Thank you for helping keep the map useful.");
 }
 
-function openProfile() {
+async function loadModerationReports() {
+  const user = getCurrentUser();
+  if (!state.backendEnabled || !user?.isAdmin) {
+    state.moderationReports = [];
+    return [];
+  }
+  const { data, error } = await window.vvSupabase
+    .from("activity_reports")
+    .select("id, activity_id, reporter_id, reason, details, status, created_at, reviewed_at, activity_title_snapshot, activity_owner_id_snapshot, activity_location_snapshot")
+    .in("status", ["open", "reviewing"])
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  state.moderationReports = data || [];
+  return state.moderationReports;
+}
+
+async function moderateReport(reportId, action) {
+  const user = getCurrentUser();
+  if (!state.backendEnabled || !user?.isAdmin || state.moderationBusy) return;
+  const report = state.moderationReports.find((item) => item.id === reportId);
+  if (!report) {
+    toast("That report is no longer in the queue.");
+    return;
+  }
+  const actionMap = {
+    reviewing: { status: "reviewing", audit: "reviewing", note: "Review started" },
+    resolve: { status: "resolved", audit: "resolved", note: "Report resolved" },
+    dismiss: { status: "dismissed", audit: "dismissed", note: "Report dismissed" },
+    hide: { status: "resolved", audit: "listing_paused", note: "Listing paused during report review" }
+  };
+  const next = actionMap[action];
+  if (!next) return;
+
+  state.moderationBusy = true;
+  renderModerationQueue();
+  try {
+    if (action === "hide" && report.activity_id) {
+      const { error: activityError } = await window.vvSupabase
+        .from("activities")
+        .update({ status: "paused" })
+        .eq("id", report.activity_id);
+      if (activityError) throw activityError;
+    }
+    const reviewedAt = next.status === "reviewing" ? null : new Date().toISOString();
+    const { error: reportError } = await window.vvSupabase
+      .from("activity_reports")
+      .update({
+        status: next.status,
+        reviewed_by: user.id,
+        reviewed_at: reviewedAt,
+        resolution_note: next.note
+      })
+      .eq("id", report.id);
+    if (reportError) throw reportError;
+
+    const { error: auditError } = await window.vvSupabase.from("moderation_actions").insert({
+      report_id: report.id,
+      activity_id: report.activity_id,
+      moderator_id: user.id,
+      action: next.audit,
+      note: next.note
+    });
+    if (auditError) throw auditError;
+
+    await Promise.all([loadModerationReports(), loadRemoteActivities(), loadRemoteOwnedActivities()]);
+    toast(action === "hide" ? "Listing hidden and report resolved." : "Report updated.");
+  } catch {
+    toast("We could not update that report yet.");
+  } finally {
+    state.moderationBusy = false;
+    render();
+  }
+}
+
+async function openProfile() {
   const user = getCurrentUser();
   if (!user) {
     showAuth("signin");
@@ -3009,6 +3351,14 @@ function openProfile() {
   els.profileForm.elements.city.value = user.city || "";
   renderProfileLists();
   els.profileModal.showModal();
+  if (user.isAdmin) {
+    try {
+      await loadModerationReports();
+      renderModerationQueue();
+    } catch {
+      els.moderationSummary.textContent = "The moderation queue could not be loaded yet.";
+    }
+  }
 }
 
 async function saveProfile(event) {
@@ -3073,6 +3423,9 @@ async function signOut() {
     }
     state.remoteUser = null;
     state.remoteSavedIds = [];
+    state.remoteSavedActivities = [];
+    state.remoteOwnedActivities = [];
+    state.moderationReports = [];
     els.profileModal.close();
     toast("Signed out.");
     render();
@@ -3086,9 +3439,112 @@ async function signOut() {
   render();
 }
 
+function accountRedirectUrl() {
+  return ["http:", "https:"].includes(window.location.protocol)
+    ? `${window.location.origin}${window.location.pathname}`
+    : "https://www.vibe-quest.net/";
+}
+
+async function sendPasswordReset(email, messageTarget = els.authMessage) {
+  const normalizedEmail = normalize(email);
+  if (!state.backendEnabled) {
+    messageTarget.textContent = "Password recovery is available on the live site.";
+    return false;
+  }
+  if (!normalizedEmail) {
+    messageTarget.textContent = "Enter your email address first.";
+    return false;
+  }
+  messageTarget.textContent = "Sending a recovery link...";
+  const { error } = await window.vvSupabase.auth.resetPasswordForEmail(normalizedEmail, {
+    redirectTo: accountRedirectUrl()
+  });
+  messageTarget.textContent = error
+    ? "We could not send that link yet. Wait a moment and try again."
+    : "If that email has an account, a password reset link is on the way.";
+  return !error;
+}
+
+async function requestPasswordResetFromAuth() {
+  await sendPasswordReset(els.authForm.elements.email.value);
+}
+
+async function handlePasswordReset(event) {
+  event.preventDefault();
+  const data = new FormData(els.passwordResetForm);
+  const password = String(data.get("password") || "");
+  const confirmation = String(data.get("confirmPassword") || "");
+  if (password.length < 8) {
+    els.passwordResetMessage.textContent = "Use at least 8 characters.";
+    return;
+  }
+  if (password !== confirmation) {
+    els.passwordResetMessage.textContent = "Those passwords do not match.";
+    return;
+  }
+  els.passwordResetMessage.textContent = "Updating your password...";
+  const { error } = await window.vvSupabase.auth.updateUser({ password });
+  if (error) {
+    els.passwordResetMessage.textContent = "That recovery link may have expired. Request a new one and try again.";
+    return;
+  }
+  els.passwordResetModal.close();
+  window.history.replaceState({}, "", window.location.pathname);
+  toast("Password updated. You are signed in.");
+}
+
+function requestAccountDelete() {
+  els.accountDeleteForm.reset();
+  els.accountDeleteMessage.textContent = "";
+  if (!els.accountDeleteModal.open) els.accountDeleteModal.showModal();
+}
+
+function cancelAccountDelete() {
+  state.accountBusy = false;
+  els.accountDeleteMessage.textContent = "";
+  if (els.accountDeleteModal.open) els.accountDeleteModal.close();
+}
+
+async function deleteCurrentAccount(event) {
+  event.preventDefault();
+  if (state.accountBusy) return;
+  const user = getCurrentUser();
+  const confirmation = String(new FormData(els.accountDeleteForm).get("confirmation") || "").trim();
+  if (!user || !state.backendEnabled) {
+    els.accountDeleteMessage.textContent = "Sign in before deleting your account.";
+    return;
+  }
+  if (confirmation !== "DELETE") {
+    els.accountDeleteMessage.textContent = "Type DELETE exactly to continue.";
+    return;
+  }
+  state.accountBusy = true;
+  els.accountDeleteMessage.textContent = "Deleting your account and uploads...";
+  const { error } = await window.vvSupabase.functions.invoke("delete-account", { body: { confirmation } });
+  if (error) {
+    state.accountBusy = false;
+    els.accountDeleteMessage.textContent = "We could not delete the account yet. Please try again or contact hello@vibe-quest.net.";
+    return;
+  }
+  await window.vvSupabase.auth.signOut({ scope: "local" }).catch(() => {});
+  state.remoteUser = null;
+  state.remoteSavedIds = [];
+  state.remoteSavedActivities = [];
+  state.remoteOwnedActivities = [];
+  state.moderationReports = [];
+  state.accountBusy = false;
+  els.accountDeleteModal.close();
+  els.profileModal.close();
+  toast("Your account has been deleted.");
+  render();
+}
+
 function getStoredAdventure(id) {
   if (state.backendEnabled) {
-    return state.remoteActivities.find((item) => item.id === id) || null;
+    return state.remoteOwnedActivities.find((item) => item.id === id)
+      || state.remoteSavedActivities.find((item) => item.id === id)
+      || state.remoteActivities.find((item) => item.id === id)
+      || null;
   }
   const storedAdventures = store.get("vv_adventures", []);
   return (Array.isArray(storedAdventures) ? storedAdventures : []).find((item) => item.id === id) || null;
@@ -3172,6 +3628,15 @@ function updateScheduleFields() {
   els.hostForm.elements.recurringTime.required = mode === "recurring";
 }
 
+function updateLocationPrivacyUi() {
+  const isPrivate = els.hostForm.elements.locationVisibility?.value === "private";
+  const help = document.querySelector("#locationHelp");
+  if (!help) return;
+  help.textContent = isPrivate
+    ? "The exact address is stored privately for you and Vibe Quest admins. Everyone else sees an offset pin and your city area; use a signup or contact link to share arrival details."
+    : "Use a named venue, park, landmark, or full address. Broader areas will be shown as approximate.";
+}
+
 function resetHostForm() {
   state.editingAdventureId = null;
   els.hostForm.reset();
@@ -3184,7 +3649,13 @@ function resetHostForm() {
   els.hostForm.elements.startTime.value = "18:00";
   els.hostForm.elements.recurringDay.value = String(startOfToday().getDay());
   els.hostForm.elements.recurringTime.value = "18:00";
+  const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const supportedTimeZone = [...els.hostForm.elements.timeZone.options].some((option) => option.value === browserTimeZone)
+    ? browserTimeZone
+    : "America/Chicago";
+  els.hostForm.elements.timeZone.value = supportedTimeZone;
   updateScheduleFields();
+  updateLocationPrivacyUi();
   renderQuestMarkPicker();
   delete els.hostForm.dataset.approximateLocationKey;
   setLocationFeedback();
@@ -3234,6 +3705,7 @@ async function saveRemoteActivity(adventure, existing, photoDataUrl) {
     latitude: adventure.lat,
     longitude: adventure.lng,
     location_accuracy: adventure.locationAccuracy,
+    location_visibility: adventure.locationVisibility || "public",
     type: adventure.type,
     vibes: adventure.vibes,
     icon_key: adventure.iconKey || null,
@@ -3243,7 +3715,9 @@ async function saveRemoteActivity(adventure, existing, photoDataUrl) {
     start_time: adventure.startTime || null,
     recurring_day: Number.isInteger(adventure.recurringDay) ? adventure.recurringDay : null,
     recurring_time: adventure.recurringTime || null,
-    status: "published",
+    time_zone: adventure.timeZone || "America/Chicago",
+    last_confirmed_at: existing?.lastConfirmedAt || new Date().toISOString(),
+    status: existing?.status || "published",
     cover_photo_path: photoPath || null
   };
   let activityResult;
@@ -3252,6 +3726,27 @@ async function saveRemoteActivity(adventure, existing, photoDataUrl) {
       ? await window.vvSupabase.from("activities").update(record).eq("id", existing.id).eq("owner_id", user.id).select("*").single()
       : await window.vvSupabase.from("activities").insert(record).select("*").single();
     if (activityResult.error) throw activityResult.error;
+
+    if (adventure.locationVisibility === "private" && adventure.privateLocation) {
+      const { error: privateLocationError } = await window.vvSupabase
+        .from("activity_private_locations")
+        .upsert({
+          activity_id: adventure.id,
+          owner_id: user.id,
+          location_name: adventure.privateLocation.locationName,
+          location_query: adventure.privateLocation.locationQuery,
+          latitude: adventure.privateLocation.lat,
+          longitude: adventure.privateLocation.lng
+        }, { onConflict: "activity_id" });
+      if (privateLocationError) throw privateLocationError;
+    } else {
+      const { error: deletePrivateLocationError } = await window.vvSupabase
+        .from("activity_private_locations")
+        .delete()
+        .eq("activity_id", adventure.id)
+        .eq("owner_id", user.id);
+      if (deletePrivateLocationError) throw deletePrivateLocationError;
+    }
 
     const { error: deleteLinksError } = await window.vvSupabase
       .from("activity_links")
@@ -3285,10 +3780,78 @@ async function saveRemoteActivity(adventure, existing, photoDataUrl) {
     }
     throw error;
   }
-  await loadRemoteActivities();
+  await Promise.all([loadRemoteActivities(), loadRemoteOwnedActivities()]);
 }
 
-function editPost(id) {
+async function setPostStatus(id, status) {
+  const allowed = new Set(["published", "paused", "cancelled", "archived"]);
+  const user = getCurrentUser();
+  const adventure = getStoredAdventure(id);
+  if (!allowed.has(status) || !user || !adventure || adventure.createdBy !== user.id) {
+    toast("That post cannot be updated from this account.");
+    return;
+  }
+  if (status === "published" && adventure.listingMode === "one-time" && getListingSchedule(adventure).bucket === "expired") {
+    toast("Edit the date before publishing this expired event again.");
+    return;
+  }
+  if (state.backendEnabled) {
+    const updates = {
+      status,
+      ...(status === "published" && ["recurring", "anytime"].includes(adventure.listingMode)
+        ? { last_confirmed_at: new Date().toISOString() }
+        : {})
+    };
+    const { error } = await window.vvSupabase
+      .from("activities")
+      .update(updates)
+      .eq("id", id)
+      .eq("owner_id", user.id);
+    if (error) {
+      toast("We could not update that post yet.");
+      return;
+    }
+    await Promise.all([loadRemoteActivities(), loadRemoteOwnedActivities()]);
+  } else {
+    const stored = store.get("vv_adventures", []);
+    const next = (Array.isArray(stored) ? stored : []).map((item) => item.id === id
+      ? { ...item, status, updatedAt: new Date().toISOString() }
+      : item);
+    store.set("vv_adventures", next);
+  }
+  toast({ published: "Post is live.", paused: "Post paused.", cancelled: "Event marked cancelled.", archived: "Post archived." }[status]);
+  render();
+  if (els.detailModal.open) openDetail(id);
+}
+
+async function confirmPost(id) {
+  const user = getCurrentUser();
+  const adventure = getStoredAdventure(id);
+  if (!user || !adventure || adventure.createdBy !== user.id || !["recurring", "anytime"].includes(adventure.listingMode)) return;
+  const confirmedAt = new Date().toISOString();
+  if (state.backendEnabled) {
+    const { error } = await window.vvSupabase
+      .from("activities")
+      .update({ last_confirmed_at: confirmedAt })
+      .eq("id", id)
+      .eq("owner_id", user.id);
+    if (error) {
+      toast("We could not confirm that listing yet.");
+      return;
+    }
+    await Promise.all([loadRemoteActivities(), loadRemoteOwnedActivities()]);
+  } else {
+    const stored = store.get("vv_adventures", []);
+    store.set("vv_adventures", (Array.isArray(stored) ? stored : []).map((item) => item.id === id
+      ? { ...item, lastConfirmedAt: confirmedAt }
+      : item));
+  }
+  toast("Confirmed. This listing stays discoverable for another 90 days.");
+  render();
+  if (els.detailModal.open) openDetail(id);
+}
+
+async function editPost(id) {
   const user = getCurrentUser();
   const adventure = getStoredAdventure(id);
   if (!user || !adventure || adventure.createdBy !== user.id) {
@@ -3296,12 +3859,30 @@ function editPost(id) {
     return;
   }
 
+  let privateLocation = null;
+  if (state.backendEnabled && adventure.locationVisibility === "private") {
+    const { data, error } = await window.vvSupabase
+      .from("activity_private_locations")
+      .select("location_name, location_query, latitude, longitude")
+      .eq("activity_id", adventure.id)
+      .maybeSingle();
+    if (error || !data) {
+      toast("The protected address could not be loaded. Please try again before editing.");
+      return;
+    }
+    privateLocation = data;
+  }
+
   state.editingAdventureId = id;
   const form = els.hostForm.elements;
   form.title.value = adventure.title || "";
   const legacyCombinedLocation = isPlaceholderArea(adventure.area) && !adventure.locationQuery;
-  form.location.value = adventure.locationQuery || (legacyCombinedLocation ? adventure.city : adventure.area) || "";
+  form.location.value = privateLocation?.location_name
+    || adventure.locationQuery
+    || (legacyCombinedLocation ? adventure.city : adventure.area)
+    || "";
   form.city.value = legacyCombinedLocation ? (user.city || adventure.city || "") : (adventure.city || "");
+  form.locationVisibility.value = adventure.locationVisibility || "public";
   form.type.value = getListingType(adventure);
   const schedule = getListingSchedule(adventure);
   form.listingMode.value = schedule.listingMode;
@@ -3309,6 +3890,7 @@ function editPost(id) {
   form.startTime.value = adventure.startTime || schedule.time || "";
   form.recurringDay.value = String(adventure.recurringDay ?? schedule.weekday ?? startOfToday().getDay());
   form.recurringTime.value = adventure.recurringTime || schedule.time || "";
+  form.timeZone.value = adventure.timeZone || "America/Chicago";
   form.description.value = adventure.description || "";
   form.price.value = adventure.price || "";
   form.websiteUrl.value = hostLinkValue(adventure, ["website or social", "website", "instagram", "facebook"]);
@@ -3321,6 +3903,7 @@ function editPost(id) {
   form.iconKey.value = QUEST_MARK_BY_KEY.has(storedQuestMark) ? storedQuestMark : "";
   form.iconKey.dataset.manual = String(QUEST_MARK_BY_KEY.has(storedQuestMark));
   updateScheduleFields();
+  updateLocationPrivacyUi();
   renderQuestMarkPicker();
 
   updateHostFormMode();
@@ -3361,8 +3944,7 @@ async function removeRemoteActivity(adventure) {
   if (adventure.photoPath) {
     await window.vvSupabase.storage.from("activity-media").remove([adventure.photoPath]);
   }
-  await loadRemoteActivities();
-  await loadRemoteSavedIds();
+  await Promise.all([loadRemoteActivities(), loadRemoteOwnedActivities(), loadRemoteSavedIds()]);
 }
 
 async function confirmDeletePost() {
@@ -3423,6 +4005,8 @@ async function publishAdventure(event) {
   const listingMode = LISTING_MODES.includes(String(data.get("listingMode")))
     ? String(data.get("listingMode"))
     : "one-time";
+  const locationVisibility = data.get("locationVisibility") === "private" ? "private" : "public";
+  const timeZone = String(data.get("timeZone") || "America/Chicago");
   const vibes = [...new Set(data.getAll("vibes").map(String))].slice(0, 3);
   const submittedIconKey = String(data.get("iconKey") || "");
   const iconKey = QUEST_MARK_BY_KEY.has(submittedIconKey)
@@ -3466,14 +4050,18 @@ async function publishAdventure(event) {
       return;
     }
     delete els.hostForm.dataset.approximateLocationKey;
-    const center = [geocode.lat, geocode.lng];
+    const exactCenter = [geocode.lat, geocode.lng];
+    const existing = state.editingAdventureId ? getStoredAdventure(state.editingAdventureId) : null;
+    const activityId = existing?.id || createId("hosted");
+    const center = locationVisibility === "private"
+      ? approximatePrivateCoordinates(geocode.lat, geocode.lng, activityId)
+      : exactCenter;
     const photoFile = data.get("photoFile");
     let uploadedPhoto = "";
     if (photoFile instanceof File && photoFile.size) {
       uploadedPhoto = await optimizeImageFile(photoFile);
     }
     const links = normalizeHostLinks(submittedLinkInputs);
-    const existing = state.editingAdventureId ? getStoredAdventure(state.editingAdventureId) : null;
     if (state.editingAdventureId && (!existing || existing.createdBy !== user.id)) {
       resetHostForm();
       toast("That post is no longer available to edit.");
@@ -3481,16 +4069,19 @@ async function publishAdventure(event) {
     }
     const adventure = {
       ...(existing || {}),
-      id: existing?.id || createId("hosted"),
+      id: activityId,
       title,
       city,
-      area: location,
-      locationQuery: location,
-      locationAccuracy: geocode.accuracy,
-      geocodeLabel: geocode.label,
+      area: locationVisibility === "private" ? `${city} area` : location,
+      locationQuery: locationVisibility === "private" ? city : location,
+      locationAccuracy: locationVisibility === "private" ? "approximate" : geocode.accuracy,
+      locationVisibility,
+      geocodeLabel: locationVisibility === "private" ? `${city} area` : geocode.label,
       category: type,
       type,
       listingMode,
+      timeZone,
+      lastConfirmedAt: existing?.lastConfirmedAt || new Date().toISOString(),
       startDate: listingMode === "one-time" ? String(data.get("startDate") || "") : "",
       startTime: listingMode === "one-time" ? String(data.get("startTime") || "") : "",
       recurringDay: listingMode === "recurring" ? Number(data.get("recurringDay")) : undefined,
@@ -3503,6 +4094,12 @@ async function publishAdventure(event) {
       distance: 1.5,
       lat: center[0],
       lng: center[1],
+      privateLocation: locationVisibility === "private" ? {
+        locationName: location,
+        locationQuery: `${location}, ${city}`,
+        lat: exactCenter[0],
+        lng: exactCenter[1]
+      } : null,
       photo: uploadedPhoto || existing?.photo || "",
       links,
       linkUrl: links[0]?.url || "",
@@ -3703,9 +4300,19 @@ document.addEventListener("click", async (event) => {
   }
   if (action === "open-profile") {
     setMobileNavOpen(false);
-    openProfile();
+    await openProfile();
   }
   if (action === "open-signup") showAuth("signup");
+  if (action === "request-password-reset") await requestPasswordResetFromAuth();
+  if (action === "close-password-reset") els.passwordResetModal.close();
+  if (action === "send-account-reset") {
+    const user = getCurrentUser();
+    if (user && await sendPasswordReset(user.email, els.profileEmailStatus)) {
+      toast("Password reset email sent.");
+    }
+  }
+  if (action === "request-account-delete") requestAccountDelete();
+  if (action === "cancel-account-delete") cancelAccountDelete();
   if (action === "close-auth") {
     state.pendingReportId = null;
     els.authModal.close();
@@ -3723,7 +4330,10 @@ document.addEventListener("click", async (event) => {
   if (action === "out-there-prev") updateOutThereSlideshow(state.outThereSlideIndex - 1);
   if (action === "out-there-next") updateOutThereSlideshow(state.outThereSlideIndex + 1);
   if (action === "out-there-slide") updateOutThereSlideshow(target.dataset.slideIndex);
-  if (action === "edit-post") editPost(target.dataset.id);
+  if (action === "edit-post") await editPost(target.dataset.id);
+  if (action === "set-post-status") await setPostStatus(target.dataset.id, target.dataset.status);
+  if (action === "confirm-post") await confirmPost(target.dataset.id);
+  if (action === "moderate-report") await moderateReport(target.dataset.reportId, target.dataset.reportAction);
   if (action === "delete-post") requestDeletePost(target.dataset.id);
   if (action === "cancel-delete") cancelDeletePost();
   if (action === "confirm-delete") await confirmDeletePost();
@@ -3773,7 +4383,23 @@ document.addEventListener("error", (event) => {
   event.target.classList.add("is-broken");
 }, true);
 
+window.addEventListener("offline", () => {
+  toast("You are offline. The map may pause until your connection returns.");
+});
+
+window.addEventListener("online", () => {
+  toast("Back online. Refreshing nearby listings...");
+  if (state.backendEnabled) {
+    const bounds = currentMapBounds();
+    loadRemoteActivities({ bounds: bounds ? expandMapBounds(bounds) : null })
+      .then(() => render())
+      .catch(() => toast("Connected, but listings still need a moment."));
+  }
+});
+
 els.authForm.addEventListener("submit", handleAuthSubmit);
+els.passwordResetForm.addEventListener("submit", handlePasswordReset);
+els.accountDeleteForm.addEventListener("submit", deleteCurrentAccount);
 els.reportForm.addEventListener("submit", submitReport);
 els.profileForm.addEventListener("submit", saveProfile);
 els.hostForm.addEventListener("submit", publishAdventure);
@@ -3781,6 +4407,10 @@ els.hostForm.addEventListener("change", (event) => {
   const input = event.target;
   if (input instanceof HTMLInputElement && input.name === "listingMode") {
     updateScheduleFields();
+    return;
+  }
+  if (input instanceof HTMLInputElement && input.name === "locationVisibility") {
+    updateLocationPrivacyUi();
     return;
   }
   if (input instanceof HTMLSelectElement && input.name === "type") {
