@@ -2761,9 +2761,21 @@ textarea:focus {
   background: color-mix(in srgb, var(--brand-teal) 14%, transparent);
 }
 
-.location-privacy-option input {
+.location-privacy-option input[type="radio"] {
+  width: 18px;
+  min-width: 18px;
+  max-width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
   flex: 0 0 auto;
   margin-top: 4px;
+  accent-color: var(--brand-teal);
+}
+
+.location-privacy-option > span {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .location-privacy-option strong,
