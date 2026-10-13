@@ -18,7 +18,7 @@
   };
   const DEFAULTS = {
     layout: "full",
-    accent: "#f8d23d",
+    accent: "#494726",
     symbol: "mark-1"
   };
 
@@ -30,6 +30,11 @@
   const noteCountOutput = document.querySelector("#flyerNoteCount");
   const subheaderSizeInput = document.querySelector("#flyerSubheaderSize");
   const subheaderSizeOutput = document.querySelector("#flyerSubheaderSizeValue");
+  const photoPositionControls = document.querySelector("#flyerPhotoPosition");
+  const photoXInput = document.querySelector("#flyerPhotoX");
+  const photoYInput = document.querySelector("#flyerPhotoY");
+  const photoXOutput = document.querySelector("#flyerPhotoXValue");
+  const photoYOutput = document.querySelector("#flyerPhotoYValue");
   const status = document.querySelector("#flyerStatus");
   const dropZone = document.querySelector(".flyer-canvas-shell");
   if (!view || !form || !(canvas instanceof HTMLCanvasElement)) return;
@@ -54,7 +59,9 @@
     symbol: DEFAULTS.symbol,
     photo: null,
     photoUrl: "",
-    photoRequest: 0
+    photoRequest: 0,
+    photoX: 50,
+    photoY: 50
   };
 
   function fieldValue(name, fallback = "") {
@@ -82,6 +89,21 @@
   function updateSubheaderSizeOutput() {
     if (!subheaderSizeOutput) return;
     subheaderSizeOutput.value = `${Math.round(Number(subheaderSizeInput?.value || 100))}%`;
+  }
+
+  function positionLabel(value, start, end) {
+    const position = Number(value);
+    if (position <= 35) return start;
+    if (position >= 65) return end;
+    return "Center";
+  }
+
+  function updatePhotoPositionControls() {
+    if (photoPositionControls) photoPositionControls.disabled = !studio.photo;
+    if (photoXInput) photoXInput.value = String(studio.photoX);
+    if (photoYInput) photoYInput.value = String(studio.photoY);
+    if (photoXOutput) photoXOutput.value = positionLabel(studio.photoX, "Left", "Right");
+    if (photoYOutput) photoYOutput.value = positionLabel(studio.photoY, "Up", "Down");
   }
 
   function updateNoteCount() {
@@ -230,10 +252,12 @@
       const scale = Math.max(width / sourceWidth, height / sourceHeight);
       const drawWidth = sourceWidth * scale;
       const drawHeight = sourceHeight * scale;
+      const horizontalCrop = Math.max(0, drawWidth - width);
+      const verticalCrop = Math.max(0, drawHeight - height);
       context.drawImage(
         studio.photo,
-        x + (width - drawWidth) / 2,
-        y + (height - drawHeight) / 2,
+        x - horizontalCrop * (studio.photoX / 100),
+        y - verticalCrop * (studio.photoY / 100),
         drawWidth,
         drawHeight
       );
@@ -543,7 +567,10 @@
     studio.photo = null;
     if (studio.photoUrl) URL.revokeObjectURL(studio.photoUrl);
     studio.photoUrl = "";
+    studio.photoX = 50;
+    studio.photoY = 50;
     if (photoInput) photoInput.value = "";
+    updatePhotoPositionControls();
   }
 
   function loadPhoto(file) {
@@ -567,6 +594,9 @@
       if (studio.photoUrl) URL.revokeObjectURL(studio.photoUrl);
       studio.photo = image;
       studio.photoUrl = objectUrl;
+      studio.photoX = 50;
+      studio.photoY = 50;
+      updatePhotoPositionControls();
       setStatus("Photo added. It stays on this device.");
       render();
     });
@@ -622,6 +652,14 @@
     if (event.target === photoInput) return;
     if (event.target === noteInput) updateNoteCount();
     if (event.target === subheaderSizeInput) updateSubheaderSizeOutput();
+    if (event.target === photoXInput) {
+      studio.photoX = Number(photoXInput.value);
+      updatePhotoPositionControls();
+    }
+    if (event.target === photoYInput) {
+      studio.photoY = Number(photoYInput.value);
+      updatePhotoPositionControls();
+    }
     render();
   });
   photoInput?.addEventListener("change", (event) => {
@@ -670,6 +708,7 @@
   questMarks.src = QUEST_MARK_URL;
   updateNoteCount();
   updateSubheaderSizeOutput();
+  updatePhotoPositionControls();
   updateControlState();
   render();
   document.fonts?.ready.then(render).catch(() => {});

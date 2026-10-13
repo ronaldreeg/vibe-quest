@@ -695,6 +695,13 @@ const state = {
   editingAdventureId: null,
   pendingDeleteId: null,
   outThereSlideIndex: 0,
+  outThereFallback: null,
+  publishedFieldNotes: [],
+  editorialPosts: [],
+  editorialBusy: false,
+  editingFieldNoteId: null,
+  pendingEditorialFiles: [],
+  removedEditorialMediaIds: [],
   backendEnabled: Boolean(window.vvSupabase),
   remoteUser: null,
   remoteActivities: [],
@@ -705,6 +712,9 @@ const state = {
 };
 
 const REMOTE_ACTIVITY_LIMIT = 250;
+const EDITORIAL_MEDIA_BUCKET = "editorial-media";
+const FIELD_NOTE_LIMIT = 24;
+const FIELD_NOTE_MEDIA_LIMIT = 8;
 const MAP_QUERY_PADDING_RATIO = 0.75;
 const MAX_CACHED_MAP_AREAS = 12;
 const DISCOVERY_AREA_ZOOM = 9;
@@ -732,6 +742,15 @@ const els = {
   resultsTitle: document.querySelector("#resultsTitle"),
   savedView: document.querySelector("#savedView"),
   outThereView: document.querySelector("#outThereView"),
+  outThereAdminTools: document.querySelector("#outThereAdminTools"),
+  outThereSlides: document.querySelector("#outThereSlides"),
+  outThereSlideDots: document.querySelector("#outThereSlideDots"),
+  outThereMapTitle: document.querySelector("#outThereMapTitle"),
+  outThereMapNote: document.querySelector("#outThereMapNote"),
+  outThereExploreLink: document.querySelector("#outThereExploreLink"),
+  outThereFieldLabel: document.querySelector("#outThereFieldLabel"),
+  outThereStoryTitle: document.querySelector("#outThereStoryTitle"),
+  outThereStoryBody: document.querySelector("#outThereStoryBody"),
   outThereSlideCount: document.querySelector("#outThereSlideCount"),
   hostView: document.querySelector("#hostView"),
   shareView: document.querySelector("#shareView"),
@@ -750,6 +769,15 @@ const els = {
   moderationPanel: document.querySelector("#moderationPanel"),
   moderationSummary: document.querySelector("#moderationSummary"),
   moderationList: document.querySelector("#moderationList"),
+  editorialAdminPanel: document.querySelector("#editorialAdminPanel"),
+  editorialAdminSummary: document.querySelector("#editorialAdminSummary"),
+  editorialAdminList: document.querySelector("#editorialAdminList"),
+  fieldNoteModal: document.querySelector("#fieldNoteModal"),
+  fieldNoteForm: document.querySelector("#fieldNoteForm"),
+  fieldNoteEditorTitle: document.querySelector("#fieldNoteEditorTitle"),
+  fieldNoteMediaList: document.querySelector("#fieldNoteMediaList"),
+  fieldNoteMessage: document.querySelector("#fieldNoteMessage"),
+  fieldNoteSubmit: document.querySelector("#fieldNoteSubmit"),
   detailModal: document.querySelector("#detailModal"),
   detailContent: document.querySelector("#detailContent"),
   reportModal: document.querySelector("#reportModal"),
@@ -907,6 +935,11 @@ function setSavedIds(ids) {
 function publicActivityPhoto(path) {
   if (!path || !window.vvSupabase) return "";
   return window.vvSupabase.storage.from("activity-media").getPublicUrl(path).data.publicUrl || "";
+}
+
+function publicEditorialPhoto(path) {
+  if (!path || !window.vvSupabase) return "";
+  return window.vvSupabase.storage.from(EDITORIAL_MEDIA_BUCKET).getPublicUrl(path).data.publicUrl || "";
 }
 
 function normalizeDatabaseTime(value) {
@@ -1089,13 +1122,73 @@ async function loadRemoteSavedIds() {
     .map((item, index) => normalizeAdventureRecord(item, index));
 }
 
+async function hydrateFieldNotes(posts = []) {
+  if (!posts.length) return [];
+  const postIds = posts.map((post) => post.id);
+  const { data: mediaRows, error } = await window.vvSupabase
+    .from("out_there_media")
+    .select("id, post_id, storage_path, alt_text, caption, sort_order, created_at")
+    .in("post_id", postIds)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  const mediaByPost = new Map();
+  (mediaRows || []).forEach((media) => {
+    const items = mediaByPost.get(media.post_id) || [];
+    items.push({
+      ...media,
+      url: publicEditorialPhoto(media.storage_path)
+    });
+    mediaByPost.set(media.post_id, items);
+  });
+  return posts.map((post) => ({
+    ...post,
+    latitude: post.latitude == null ? null : Number(post.latitude),
+    longitude: post.longitude == null ? null : Number(post.longitude),
+    media: mediaByPost.get(post.id) || []
+  }));
+}
+
+async function loadPublishedFieldNotes() {
+  if (!state.backendEnabled) return [];
+  const { data, error } = await window.vvSupabase
+    .from("out_there_posts")
+    .select("id, author_id, field_note_number, title, dek, body, city, map_label, map_note, latitude, longitude, cover_photo_path, status, featured, published_at, created_at, updated_at")
+    .eq("status", "published")
+    .order("featured", { ascending: false })
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .limit(FIELD_NOTE_LIMIT);
+  if (error) throw error;
+  state.publishedFieldNotes = await hydrateFieldNotes(data || []);
+  renderOutThereFeature();
+  return state.publishedFieldNotes;
+}
+
+async function loadEditorialPosts() {
+  const user = getCurrentUser();
+  if (!state.backendEnabled || !user?.isAdmin) {
+    state.editorialPosts = [];
+    return [];
+  }
+  const { data, error } = await window.vvSupabase
+    .from("out_there_posts")
+    .select("id, author_id, field_note_number, title, dek, body, city, map_label, map_note, latitude, longitude, cover_photo_path, status, featured, published_at, created_at, updated_at")
+    .order("updated_at", { ascending: false })
+    .limit(FIELD_NOTE_LIMIT);
+  if (error) throw error;
+  state.editorialPosts = await hydrateFieldNotes(data || []);
+  renderEditorialAdmin();
+  return state.editorialPosts;
+}
+
 async function syncRemoteSession(session) {
   state.remoteUser = null;
+  state.remoteSavedIds = [];
+  state.remoteSavedActivities = [];
+  state.remoteOwnedActivities = [];
+  state.moderationReports = [];
+  state.editorialPosts = [];
   if (!session?.user) {
-    state.remoteSavedIds = [];
-    state.remoteSavedActivities = [];
-    state.remoteOwnedActivities = [];
-    state.moderationReports = [];
     render();
     return;
   }
@@ -1121,12 +1214,24 @@ async function syncRemoteSession(session) {
   state.location = state.remoteUser.city || state.location;
   prepareMapFocus(knownCenterForLocation(state.location) || state.mapCenter);
   els.locationInput.value = state.location;
-  await Promise.all([
+  // Show the authenticated shell immediately. Saved items and admin desks are
+  // independent enhancements and should never hold up the signed-in state.
+  render();
+  const loadResults = await Promise.allSettled([
     loadRemoteSavedIds(),
     loadRemoteOwnedActivities(),
-    profile?.role === "admin" ? loadModerationReports() : Promise.resolve([])
+    profile?.role === "admin" ? loadModerationReports() : Promise.resolve([]),
+    profile?.role === "admin" ? loadEditorialPosts() : Promise.resolve([])
   ]);
   render();
+  if (profile?.role === "admin") {
+    if (loadResults[2].status === "rejected" && els.moderationSummary) {
+      els.moderationSummary.textContent = "The moderation queue could not be loaded yet.";
+    }
+    if (loadResults[3].status === "rejected" && els.editorialAdminSummary) {
+      els.editorialAdminSummary.textContent = "The Editorial Desk could not be loaded yet.";
+    }
+  }
 }
 
 async function handleRemoteAuthState(event, session) {
@@ -1148,7 +1253,12 @@ async function bootstrapSupabase() {
     });
     const { data, error } = await window.vvSupabase.auth.getSession();
     if (error) throw error;
-    await loadRemoteActivities();
+    const publicLoadResults = await Promise.allSettled([
+      loadRemoteActivities(),
+      loadPublishedFieldNotes()
+    ]);
+    if (publicLoadResults[0].status === "rejected") state.remoteActivities = [];
+    if (publicLoadResults[1].status === "rejected") state.publishedFieldNotes = [];
     await syncRemoteSession(data.session);
     return true;
   } catch {
@@ -2178,6 +2288,127 @@ function showAdventureOnMap(id) {
   }, 120);
 }
 
+function fieldNoteLabel(number) {
+  const parsed = Number(number);
+  return `Field note ${Number.isFinite(parsed) ? String(parsed).padStart(3, "0") : ""}`.trim();
+}
+
+function captureOutThereFallback() {
+  state.outThereFallback = {
+    slides: els.outThereSlides?.innerHTML || "",
+    dots: els.outThereSlideDots?.innerHTML || "",
+    mapTitle: els.outThereMapTitle?.textContent || "",
+    mapNote: els.outThereMapNote?.textContent || "",
+    exploreText: els.outThereExploreLink?.textContent || "",
+    exploreCity: els.outThereExploreLink?.dataset.city || "",
+    fieldLabel: els.outThereFieldLabel?.textContent || "",
+    storyTitle: els.outThereStoryTitle?.textContent || "",
+    storyBody: els.outThereStoryBody?.innerHTML || ""
+  };
+}
+
+function restoreOutThereFallback() {
+  const fallback = state.outThereFallback;
+  if (!fallback) return;
+  if (els.outThereSlides) els.outThereSlides.innerHTML = fallback.slides;
+  if (els.outThereSlideDots) els.outThereSlideDots.innerHTML = fallback.dots;
+  if (els.outThereMapTitle) els.outThereMapTitle.textContent = fallback.mapTitle;
+  if (els.outThereMapNote) els.outThereMapNote.textContent = fallback.mapNote;
+  if (els.outThereExploreLink) {
+    els.outThereExploreLink.textContent = fallback.exploreText;
+    els.outThereExploreLink.dataset.city = fallback.exploreCity;
+    delete els.outThereExploreLink.dataset.lat;
+    delete els.outThereExploreLink.dataset.lng;
+  }
+  if (els.outThereFieldLabel) els.outThereFieldLabel.textContent = fallback.fieldLabel;
+  if (els.outThereStoryTitle) els.outThereStoryTitle.textContent = fallback.storyTitle;
+  if (els.outThereStoryBody) els.outThereStoryBody.innerHTML = fallback.storyBody;
+  document.querySelectorAll(".out-there-slide-button").forEach((button) => {
+    button.hidden = false;
+  });
+  state.outThereSlideIndex = 0;
+  updateOutThereSlideshow(0);
+}
+
+function renderOutThereFeature() {
+  const post = state.publishedFieldNotes[0];
+  if (!post) {
+    restoreOutThereFallback();
+    return;
+  }
+
+  const media = post.media?.length
+    ? post.media
+    : post.cover_photo_path
+      ? [{
+          storage_path: post.cover_photo_path,
+          url: publicEditorialPhoto(post.cover_photo_path),
+          alt_text: `${post.title} field note photograph`
+        }]
+      : [];
+
+  if (media.length && els.outThereSlides && els.outThereSlideDots) {
+    els.outThereSlides.innerHTML = media.map((photo, index) => `
+      <img
+        class="out-there-slide${index === 0 ? " is-active" : ""}"
+        data-out-there-slide
+        src="${escapeHtml(photo.url)}"
+        alt="${escapeHtml(photo.alt_text || `${post.title} photograph ${index + 1}`)}"
+        ${index === 0 ? "" : 'loading="lazy" aria-hidden="true"'}
+        decoding="async"
+      />
+    `).join("");
+    els.outThereSlideDots.innerHTML = media.map((_, index) => `
+      <button
+        class="out-there-slide-dot${index === 0 ? " is-active" : ""}"
+        type="button"
+        data-action="out-there-slide"
+        data-slide-index="${index}"
+        aria-label="Show photo ${index + 1}"
+        ${index === 0 ? 'aria-current="true"' : ""}
+      ></button>
+    `).join("");
+    document.querySelectorAll(".out-there-slide-button").forEach((button) => {
+      button.hidden = media.length < 2;
+    });
+  }
+
+  const city = post.city || post.map_label || "";
+  const mapLabel = post.map_label || city || "Somewhere worth noticing";
+  if (els.outThereMapTitle) els.outThereMapTitle.textContent = mapLabel;
+  if (els.outThereMapNote) {
+    els.outThereMapNote.textContent = post.map_note || post.dek || "A field note from out there.";
+  }
+  if (els.outThereExploreLink) {
+    const shortCity = city.split(",")[0].trim() || "this area";
+    els.outThereExploreLink.textContent = `Explore ${shortCity} vibes →`;
+    els.outThereExploreLink.dataset.city = city;
+    if (Number.isFinite(post.latitude) && Number.isFinite(post.longitude)) {
+      els.outThereExploreLink.dataset.lat = String(post.latitude);
+      els.outThereExploreLink.dataset.lng = String(post.longitude);
+    } else {
+      delete els.outThereExploreLink.dataset.lat;
+      delete els.outThereExploreLink.dataset.lng;
+    }
+  }
+  if (els.outThereFieldLabel) els.outThereFieldLabel.textContent = fieldNoteLabel(post.field_note_number);
+  if (els.outThereStoryTitle) els.outThereStoryTitle.textContent = post.title;
+  if (els.outThereStoryBody) {
+    const paragraphs = String(post.body || "")
+      .split(/\n\s*\n/)
+      .map((paragraph) => paragraph.trim())
+      .filter(Boolean);
+    const dek = String(post.dek || "").trim();
+    els.outThereStoryBody.innerHTML = [
+      dek ? `<p class="out-there-dek">${escapeHtml(dek)}</p>` : "",
+      ...paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br>")}</p>`)
+    ].join("");
+  }
+  document.querySelector("#outThereMap")?.setAttribute("aria-label", `Stylized map showing the field note location near ${mapLabel}`);
+  state.outThereSlideIndex = 0;
+  updateOutThereSlideshow(0);
+}
+
 function updateOutThereSlideshow(index = state.outThereSlideIndex) {
   const slides = [...document.querySelectorAll("[data-out-there-slide]")];
   if (!slides.length) return;
@@ -2204,12 +2435,21 @@ function updateOutThereSlideshow(index = state.outThereSlideIndex) {
   }
 }
 
+function syncAdminSurfaces() {
+  const user = getCurrentUser();
+  const isAdmin = Boolean(user?.isAdmin);
+  if (els.outThereAdminTools) els.outThereAdminTools.hidden = !isAdmin;
+  if (els.moderationPanel) els.moderationPanel.hidden = !isAdmin;
+  if (els.editorialAdminPanel) els.editorialAdminPanel.hidden = !isAdmin;
+}
+
 function renderStats() {
   const user = getCurrentUser();
   els.profilePills.forEach((pill) => {
     pill.textContent = user ? user.name.split(" ")[0] : "Sign in";
   });
   if (els.shareAuthPrompt) els.shareAuthPrompt.hidden = Boolean(user);
+  syncAdminSurfaces();
 }
 
 function renderViews() {
@@ -2377,6 +2617,127 @@ function renderModerationQueue() {
     : `<div class="empty-state">No open reports.</div>`;
 }
 
+function editorialPostMarkup(post) {
+  const updated = post.updated_at
+    ? new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" }).format(new Date(post.updated_at))
+    : "Recently";
+  const photoCount = post.media?.length || 0;
+  return `
+    <article class="editorial-admin-row">
+      <div class="editorial-admin-row-main">
+        <span class="status-badge status-${escapeHtml(post.status)}">${escapeHtml(post.status)}</span>
+        <div>
+          <strong>${escapeHtml(post.title)}</strong>
+          <small>${escapeHtml(fieldNoteLabel(post.field_note_number))} · ${photoCount} ${photoCount === 1 ? "photo" : "photos"} · ${escapeHtml(updated)}${post.featured ? " · featured" : ""}</small>
+        </div>
+      </div>
+      <div class="editorial-admin-actions" aria-label="Manage ${escapeHtml(post.title)}">
+        <button class="compact-button" type="button" data-action="edit-field-note" data-id="${post.id}">Edit</button>
+        <button class="compact-button danger-button" type="button" data-action="delete-field-note" data-id="${post.id}">Delete</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderEditorialAdmin() {
+  const user = getCurrentUser();
+  if (!els.editorialAdminPanel || !els.editorialAdminList) return;
+  els.editorialAdminPanel.hidden = !user?.isAdmin;
+  if (!user?.isAdmin) return;
+  const posts = state.editorialPosts;
+  els.editorialAdminSummary.textContent = state.editorialBusy
+    ? "Saving the editorial desk..."
+    : posts.length
+      ? `${posts.length} ${posts.length === 1 ? "field note" : "field notes"} across drafts, published stories, and the archive.`
+      : "No field notes in the desk yet. Start with a draft and publish when it is ready.";
+  els.editorialAdminList.innerHTML = posts.length
+    ? posts.map(editorialPostMarkup).join("")
+    : `<div class="empty-state">Your first Field Note starts here.</div>`;
+}
+
+function clearPendingEditorialFiles() {
+  state.pendingEditorialFiles.forEach((item) => {
+    if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+  });
+  state.pendingEditorialFiles = [];
+}
+
+function activeEditorialPost() {
+  return state.editorialPosts.find((post) => post.id === state.editingFieldNoteId) || null;
+}
+
+function renderFieldNoteMediaList() {
+  if (!els.fieldNoteMediaList) return;
+  const post = activeEditorialPost();
+  const existing = (post?.media || []).filter((media) => !state.removedEditorialMediaIds.includes(media.id));
+  const existingMarkup = existing.map((media) => `
+    <figure class="field-note-media-item">
+      <img src="${escapeHtml(media.url)}" alt="${escapeHtml(media.alt_text || "Field note photograph")}" />
+      <button type="button" data-action="remove-field-note-media" data-media-id="${media.id}" aria-label="Remove this photo">×</button>
+    </figure>
+  `).join("");
+  const pendingMarkup = state.pendingEditorialFiles.map((item, index) => `
+    <figure class="field-note-media-item">
+      <img src="${escapeHtml(item.previewUrl)}" alt="New upload preview ${index + 1}" />
+      <button type="button" data-action="remove-field-note-media" data-file-index="${index}" aria-label="Remove this new photo">×</button>
+    </figure>
+  `).join("");
+  els.fieldNoteMediaList.innerHTML = existingMarkup || pendingMarkup
+    ? `${existingMarkup}${pendingMarkup}`
+    : `<div class="field-note-media-empty">No slideshow photos yet.</div>`;
+}
+
+function openFieldNoteEditor(postId = "") {
+  const user = getCurrentUser();
+  if (!user?.isAdmin || !els.fieldNoteForm || !els.fieldNoteModal) {
+    toast("The Editorial Desk is available to site admins.");
+    return;
+  }
+  clearPendingEditorialFiles();
+  state.removedEditorialMediaIds = [];
+  state.editingFieldNoteId = postId || null;
+  const post = activeEditorialPost();
+  els.fieldNoteForm.reset();
+  els.fieldNoteForm.elements.postId.value = post?.id || "";
+  els.fieldNoteForm.elements.title.value = post?.title || "";
+  els.fieldNoteForm.elements.dek.value = post?.dek || "";
+  els.fieldNoteForm.elements.body.value = post?.body || "";
+  els.fieldNoteForm.elements.city.value = post?.city || "";
+  els.fieldNoteForm.elements.mapLabel.value = post?.map_label || "";
+  els.fieldNoteForm.elements.mapNote.value = post?.map_note || "";
+  els.fieldNoteForm.elements.latitude.value = Number.isFinite(post?.latitude) ? post.latitude : "";
+  els.fieldNoteForm.elements.longitude.value = Number.isFinite(post?.longitude) ? post.longitude : "";
+  els.fieldNoteForm.elements.status.value = post?.status || "draft";
+  els.fieldNoteForm.elements.featured.checked = Boolean(post?.featured);
+  els.fieldNoteEditorTitle.textContent = post ? `Edit ${fieldNoteLabel(post.field_note_number)}` : "New field note";
+  els.fieldNoteMessage.textContent = "";
+  els.fieldNoteSubmit.disabled = false;
+  els.fieldNoteSubmit.textContent = post ? "Save changes" : "Create field note";
+  renderFieldNoteMediaList();
+  if (els.profileModal.open) els.profileModal.close();
+  if (!els.fieldNoteModal.open) els.fieldNoteModal.showModal();
+}
+
+async function closeFieldNoteEditor({ reopenProfile = true } = {}) {
+  clearPendingEditorialFiles();
+  state.removedEditorialMediaIds = [];
+  state.editingFieldNoteId = null;
+  els.fieldNoteForm?.reset();
+  if (els.fieldNoteModal?.open) els.fieldNoteModal.close();
+  if (reopenProfile && getCurrentUser()?.isAdmin) await openProfile();
+}
+
+function removeFieldNoteMediaSelection(target) {
+  if (target.dataset.mediaId) {
+    state.removedEditorialMediaIds = [...new Set([...state.removedEditorialMediaIds, target.dataset.mediaId])];
+  } else if (target.dataset.fileIndex != null) {
+    const index = Number(target.dataset.fileIndex);
+    const [removed] = state.pendingEditorialFiles.splice(index, 1);
+    if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
+  }
+  renderFieldNoteMediaList();
+}
+
 function renderProfileLists() {
   const user = getCurrentUser();
   if (!user || !els.profileSavedList || !els.profileHostedList) return;
@@ -2396,6 +2757,7 @@ function renderProfileLists() {
       : `${user.email} · verification pending`;
   }
   renderModerationQueue();
+  renderEditorialAdmin();
 }
 
 function render() {
@@ -3364,11 +3726,17 @@ async function openProfile() {
   renderProfileLists();
   els.profileModal.showModal();
   if (user.isAdmin) {
-    try {
-      await loadModerationReports();
-      renderModerationQueue();
-    } catch {
+    const [moderationResult, editorialResult] = await Promise.allSettled([
+      loadModerationReports(),
+      loadEditorialPosts()
+    ]);
+    renderModerationQueue();
+    renderEditorialAdmin();
+    if (moderationResult.status === "rejected") {
       els.moderationSummary.textContent = "The moderation queue could not be loaded yet.";
+    }
+    if (editorialResult.status === "rejected") {
+      els.editorialAdminSummary.textContent = "The Editorial Desk could not be loaded yet.";
     }
   }
 }
@@ -3438,6 +3806,8 @@ async function signOut() {
     state.remoteSavedActivities = [];
     state.remoteOwnedActivities = [];
     state.moderationReports = [];
+    state.editorialPosts = [];
+    if (els.fieldNoteModal?.open) await closeFieldNoteEditor({ reopenProfile: false });
     els.profileModal.close();
     toast("Signed out.");
     render();
@@ -3687,6 +4057,208 @@ function dataUrlToBlob(dataUrl) {
   const binary = atob(match[2]);
   const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
   return new Blob([bytes], { type: match[1] });
+}
+
+async function uploadEditorialPhoto(postId, file) {
+  const user = getCurrentUser();
+  if (!user?.isAdmin) throw new Error("admin-required");
+  const optimized = await optimizeImageFile(file);
+  const blob = dataUrlToBlob(optimized);
+  const extension = blob.type === "image/jpeg" ? "jpg" : "webp";
+  const path = `${user.id}/out-there/${postId}/${createId("field-note")}.${extension}`;
+  const { error } = await window.vvSupabase.storage
+    .from(EDITORIAL_MEDIA_BUCKET)
+    .upload(path, blob, {
+      cacheControl: "31536000",
+      contentType: blob.type,
+      upsert: false
+    });
+  if (error) throw error;
+  return path;
+}
+
+function fieldNoteNumberValue(value) {
+  if (String(value || "").trim() === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+async function saveFieldNote(event) {
+  event.preventDefault();
+  const user = getCurrentUser();
+  if (!state.backendEnabled || !user?.isAdmin || state.editorialBusy) return;
+
+  const form = els.fieldNoteForm;
+  const existing = activeEditorialPost();
+  const title = form.elements.title.value.trim();
+  const body = form.elements.body.value.trim();
+  const status = form.elements.status.value;
+  const keptMedia = (existing?.media || []).filter((media) => !state.removedEditorialMediaIds.includes(media.id));
+  const totalPhotos = keptMedia.length + state.pendingEditorialFiles.length;
+
+  if (status === "published" && !body) {
+    els.fieldNoteMessage.textContent = "Add the story before publishing. Drafts can be saved without it.";
+    form.elements.body.focus();
+    return;
+  }
+  if (status === "published" && totalPhotos < 1) {
+    els.fieldNoteMessage.textContent = "Add at least one slideshow photo before publishing.";
+    form.elements.photos.focus();
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const payload = {
+    title,
+    dek: form.elements.dek.value.trim() || null,
+    body: body || null,
+    city: form.elements.city.value.trim() || null,
+    map_label: form.elements.mapLabel.value.trim() || null,
+    map_note: form.elements.mapNote.value.trim() || null,
+    latitude: fieldNoteNumberValue(form.elements.latitude.value),
+    longitude: fieldNoteNumberValue(form.elements.longitude.value)
+  };
+  const finalState = {
+    status,
+    featured: status === "published" && form.elements.featured.checked,
+    published_at: status === "published" ? (existing?.published_at || now) : existing?.published_at || null
+  };
+
+  state.editorialBusy = true;
+  els.fieldNoteSubmit.disabled = true;
+  els.fieldNoteSubmit.textContent = "Saving...";
+  els.fieldNoteMessage.textContent = "Saving the field note and preparing its photographs...";
+  renderEditorialAdmin();
+  const uploadedPaths = [];
+
+  try {
+    let savedPost;
+    if (existing) {
+      const { data, error } = await window.vvSupabase
+        .from("out_there_posts")
+        .update(payload)
+        .eq("id", existing.id)
+        .select("id, field_note_number")
+        .single();
+      if (error) throw error;
+      savedPost = data;
+    } else {
+      const { data, error } = await window.vvSupabase
+        .from("out_there_posts")
+        .insert({ ...payload, author_id: user.id, status: "draft", featured: false, published_at: null })
+        .select("id, field_note_number")
+        .single();
+      if (error) throw error;
+      savedPost = data;
+      state.editingFieldNoteId = savedPost.id;
+    }
+
+    const nextSortOrder = keptMedia.reduce((highest, media) => Math.max(highest, Number(media.sort_order) || 0), -1) + 1;
+    for (let index = 0; index < state.pendingEditorialFiles.length; index += 1) {
+      const path = await uploadEditorialPhoto(savedPost.id, state.pendingEditorialFiles[index].file);
+      uploadedPaths.push(path);
+    }
+
+    if (uploadedPaths.length) {
+      const { error: mediaError } = await window.vvSupabase.from("out_there_media").insert(
+        uploadedPaths.map((path, index) => ({
+          post_id: savedPost.id,
+          storage_path: path,
+          alt_text: `${title} — photograph ${keptMedia.length + index + 1}`,
+          sort_order: nextSortOrder + index
+        }))
+      );
+      if (mediaError) throw mediaError;
+    }
+
+    const removedMedia = (existing?.media || []).filter((media) => state.removedEditorialMediaIds.includes(media.id));
+    if (removedMedia.length) {
+      const { error: removeRowsError } = await window.vvSupabase
+        .from("out_there_media")
+        .delete()
+        .in("id", removedMedia.map((media) => media.id));
+      if (removeRowsError) throw removeRowsError;
+      await window.vvSupabase.storage
+        .from(EDITORIAL_MEDIA_BUCKET)
+        .remove(removedMedia.map((media) => media.storage_path));
+    }
+
+    const coverPath = keptMedia[0]?.storage_path || uploadedPaths[0] || null;
+    if (finalState.featured) {
+      const { error: featureError } = await window.vvSupabase
+        .from("out_there_posts")
+        .update({ featured: false })
+        .neq("id", savedPost.id)
+        .eq("featured", true);
+      if (featureError) throw featureError;
+    }
+
+    const { error: finalizeError } = await window.vvSupabase
+      .from("out_there_posts")
+      .update({ ...finalState, cover_photo_path: coverPath })
+      .eq("id", savedPost.id);
+    if (finalizeError) throw finalizeError;
+
+    await Promise.all([loadEditorialPosts(), loadPublishedFieldNotes()]);
+    toast(existing ? "Field note updated." : "Field note created.");
+    await closeFieldNoteEditor({ reopenProfile: true });
+  } catch (error) {
+    if (uploadedPaths.length) {
+      await window.vvSupabase.from("out_there_media").delete().in("storage_path", uploadedPaths);
+      await window.vvSupabase.storage.from(EDITORIAL_MEDIA_BUCKET).remove(uploadedPaths);
+    }
+    if (!existing && state.editingFieldNoteId) {
+      await loadEditorialPosts().catch(() => {});
+    }
+    const message = error?.message === "image-too-large-after-optimization"
+      ? "One photo could not be reduced enough. Try a smaller image or export it as JPEG."
+      : "The Field Note is still a private draft. Check the details and try saving again.";
+    els.fieldNoteMessage.textContent = message;
+  } finally {
+    state.editorialBusy = false;
+    els.fieldNoteSubmit.disabled = false;
+    els.fieldNoteSubmit.textContent = activeEditorialPost() ? "Save changes" : "Create field note";
+    renderEditorialAdmin();
+  }
+}
+
+async function deleteFieldNote(postId) {
+  const user = getCurrentUser();
+  const post = state.editorialPosts.find((item) => item.id === postId);
+  if (!state.backendEnabled || !user?.isAdmin || !post || state.editorialBusy) return;
+  if (!window.confirm(`Delete “${post.title}”? This removes the story and its uploaded photos permanently.`)) return;
+
+  state.editorialBusy = true;
+  renderEditorialAdmin();
+  try {
+    const mediaPaths = (post.media || []).map((media) => media.storage_path);
+    const { error } = await window.vvSupabase.from("out_there_posts").delete().eq("id", post.id);
+    if (error) throw error;
+    if (mediaPaths.length) {
+      await window.vvSupabase.storage.from(EDITORIAL_MEDIA_BUCKET).remove(mediaPaths);
+    }
+    await Promise.all([loadEditorialPosts(), loadPublishedFieldNotes()]);
+    toast("Field note deleted.");
+  } catch {
+    toast("That field note could not be deleted yet.");
+  } finally {
+    state.editorialBusy = false;
+    renderEditorialAdmin();
+  }
+}
+
+function handleEditorialPhotoSelection(event) {
+  const files = [...(event.target.files || [])];
+  if (!files.length) return;
+  const post = activeEditorialPost();
+  const existingCount = (post?.media || []).filter((media) => !state.removedEditorialMediaIds.includes(media.id)).length;
+  const room = Math.max(0, FIELD_NOTE_MEDIA_LIMIT - existingCount - state.pendingEditorialFiles.length);
+  files.slice(0, room).forEach((file) => {
+    state.pendingEditorialFiles.push({ file, previewUrl: URL.createObjectURL(file) });
+  });
+  if (files.length > room) toast(`A Field Note can hold up to ${FIELD_NOTE_MEDIA_LIMIT} photos.`);
+  event.target.value = "";
+  renderFieldNoteMediaList();
 }
 
 async function uploadRemoteActivityPhoto(activityId, dataUrl) {
@@ -4281,11 +4853,22 @@ document.addEventListener("click", async (event) => {
     await useBrowserLocation({ force: true });
   }
   if (action === "apply-filters") await applyFilters();
-  if (action === "explore-galveston") {
-    state.location = "Galveston, TX";
+  if (action === "explore-out-there-city") {
+    const city = target.dataset.city || "";
+    const latitude = Number(target.dataset.lat);
+    const longitude = Number(target.dataset.lng);
+    if (!city && (!Number.isFinite(latitude) || !Number.isFinite(longitude))) {
+      toast("This Field Note does not have a map location yet.");
+      return;
+    }
+    state.location = city;
     state.locationSource = "manual";
     state.locationStatus = "ready";
-    prepareMapFocus(CITY_CENTERS["galveston, tx"]);
+    prepareMapFocus(
+      Number.isFinite(latitude) && Number.isFinite(longitude)
+        ? [latitude, longitude]
+        : knownCenterForLocation(city) || state.mapCenter
+    );
     state.activeTypes = [];
     state.activeVibes = [];
     state.activeTiming = "all";
@@ -4314,6 +4897,10 @@ document.addEventListener("click", async (event) => {
     setMobileNavOpen(false);
     await openProfile();
   }
+  if (action === "open-editorial-desk") {
+    await openProfile();
+    els.editorialAdminPanel?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }
   if (action === "open-signup") showAuth("signup");
   if (action === "request-password-reset") await requestPasswordResetFromAuth();
   if (action === "close-password-reset") els.passwordResetModal.close();
@@ -4330,6 +4917,11 @@ document.addEventListener("click", async (event) => {
     els.authModal.close();
   }
   if (action === "close-profile") els.profileModal.close();
+  if (action === "new-field-note") openFieldNoteEditor();
+  if (action === "edit-field-note") openFieldNoteEditor(target.dataset.id);
+  if (action === "delete-field-note") await deleteFieldNote(target.dataset.id);
+  if (action === "close-field-note") await closeFieldNoteEditor({ reopenProfile: true });
+  if (action === "remove-field-note-media") removeFieldNoteMediaSelection(target);
   if (action === "toggle-save") await toggleSave(target.dataset.id);
   if (action === "open-detail") openDetail(target.dataset.id);
   if (action === "close-detail") els.detailModal.close();
@@ -4414,6 +5006,12 @@ els.passwordResetForm.addEventListener("submit", handlePasswordReset);
 els.accountDeleteForm.addEventListener("submit", deleteCurrentAccount);
 els.reportForm.addEventListener("submit", submitReport);
 els.profileForm.addEventListener("submit", saveProfile);
+els.fieldNoteForm.addEventListener("submit", saveFieldNote);
+els.fieldNoteForm.elements.photos.addEventListener("change", handleEditorialPhotoSelection);
+els.fieldNoteModal.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeFieldNoteEditor({ reopenProfile: true });
+});
 els.hostForm.addEventListener("submit", publishAdventure);
 els.hostForm.addEventListener("change", (event) => {
   const input = event.target;
@@ -4477,6 +5075,7 @@ const handleMobileHeaderChange = (event) => {
 if (mobileHeaderQuery.addEventListener) mobileHeaderQuery.addEventListener("change", handleMobileHeaderChange);
 else mobileHeaderQuery.addListener?.(handleMobileHeaderChange);
 els.realMap?.addEventListener("wheel", handleMapPinchZoom, { passive: false });
+captureOutThereFallback();
 resetHostForm();
 render();
 

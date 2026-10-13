@@ -195,9 +195,13 @@
             <span class="mini-label">From the Vibe Quest team</span>
             <h1 class="out-there-title">Good things are happening out there.</h1>
             <p>News, updates, and photographs from the places, people, and unexpected local moments inspiring Vibe Quest.</p>
+            <div class="out-there-admin-tools" id="outThereAdminTools" hidden>
+              <button class="secondary-button" type="button" data-action="open-editorial-desk">Editorial desk</button>
+              <button class="primary-button" type="button" data-action="new-field-note">New field note</button>
+            </div>
           </header>
           <figure class="out-there-feature" data-out-there-slideshow>
-            <div class="out-there-slides" aria-live="polite">
+            <div class="out-there-slides" id="outThereSlides" aria-live="polite">
               <img class="out-there-slide is-active" data-out-there-slide src="./assets/out-there/field-note-001-harbor.jpg" alt="Shrimp boat returning across Galveston harbor with seabirds overhead" />
               <img class="out-there-slide out-there-slide-portrait" data-out-there-slide src="./assets/out-there/field-note-001-martini.jpg" alt="Vintage blue-toned photograph of the Martini Theatre facade in Galveston" loading="lazy" aria-hidden="true" />
               <img class="out-there-slide" data-out-there-slide src="./assets/out-there/field-note-001-maceo.jpg" alt="Black-and-white view of Maceo Spice and Import Company beneath storm clouds" loading="lazy" aria-hidden="true" />
@@ -205,7 +209,7 @@
             </div>
             <div class="out-there-slide-controls" aria-label="Out There photo slideshow">
               <button class="out-there-slide-button" type="button" data-action="out-there-prev" aria-label="Previous photo">&larr;</button>
-              <div class="out-there-slide-dots" role="tablist" aria-label="Choose Out There photo">
+              <div class="out-there-slide-dots" id="outThereSlideDots" role="tablist" aria-label="Choose Out There photo">
                 <button class="out-there-slide-dot is-active" type="button" data-action="out-there-slide" data-slide-index="0" aria-label="Show photo 1"></button>
                 <button class="out-there-slide-dot" type="button" data-action="out-there-slide" data-slide-index="1" aria-label="Show photo 2"></button>
                 <button class="out-there-slide-dot" type="button" data-action="out-there-slide" data-slide-index="2" aria-label="Show photo 3"></button>
@@ -216,7 +220,7 @@
             <figcaption class="editorial-map-window">
               <div class="editorial-map-titlebar">
                 <span class="mini-label">Photo location</span>
-                <strong>Galveston Island, TX</strong>
+                <strong id="outThereMapTitle">Galveston Island, TX</strong>
               </div>
               <div class="editorial-map" id="outThereMap" role="img" aria-label="Stylized map showing the field note location on Galveston Island">
                 <svg class="editorial-map-art" viewBox="0 0 660 350" aria-hidden="true" focusable="false">
@@ -241,18 +245,20 @@
                 </svg>
               </div>
               <div class="editorial-map-footer">
-                <p>Around the island, from the harbor to the seawall.</p>
-                <button class="text-button editorial-map-link" type="button" data-action="explore-galveston">
+                <p id="outThereMapNote">Around the island, from the harbor to the seawall.</p>
+                <button class="text-button editorial-map-link" id="outThereExploreLink" type="button" data-action="explore-out-there-city" data-city="Galveston, TX">
                   Explore Galveston vibes →
                 </button>
               </div>
             </figcaption>
           </figure>
           <section class="out-there-blurb">
-            <span class="mini-label">Field note 001</span>
-            <h2>The Maceos History and Lore</h2>
-            <p>There is a particular kind of magic along the island at the edge of the day: the air cools, the lights come on, and familiar places start to feel newly discovered.</p>
-            <p>This is the spirit of Out There: a closer look at the people, places, and local possibilities that can turn an ordinary afternoon into somewhere worth going.</p>
+            <span class="mini-label" id="outThereFieldLabel">Field note 001</span>
+            <h2 id="outThereStoryTitle">The Maceos History and Lore</h2>
+            <div id="outThereStoryBody">
+              <p>There is a particular kind of magic along the island at the edge of the day: the air cools, the lights come on, and familiar places start to feel newly discovered.</p>
+              <p>This is the spirit of Out There: a closer look at the people, places, and local possibilities that can turn an ordinary afternoon into somewhere worth going.</p>
+            </div>
           </section>
           <section class="out-there-submit" aria-label="Submit photos and stories">
             <div>
@@ -541,6 +547,23 @@
                 <span>Your photo</span>
                 <input class="file-input" id="flyerPhotoInput" name="flyerPhoto" type="file" accept="image/*" />
               </label>
+              <fieldset class="flyer-photo-position" id="flyerPhotoPosition" disabled>
+                <legend>Photo position</legend>
+                <label for="flyerPhotoX">
+                  <span class="flyer-size-heading">
+                    <span>Left / right</span>
+                    <output id="flyerPhotoXValue" for="flyerPhotoX">Center</output>
+                  </span>
+                  <input class="range" id="flyerPhotoX" name="flyerPhotoX" type="range" min="0" max="100" step="1" value="50" />
+                </label>
+                <label for="flyerPhotoY">
+                  <span class="flyer-size-heading">
+                    <span>Up / down</span>
+                    <output id="flyerPhotoYValue" for="flyerPhotoY">Center</output>
+                  </span>
+                  <input class="range" id="flyerPhotoY" name="flyerPhotoY" type="range" min="0" max="100" step="1" value="50" />
+                </label>
+              </fieldset>
 
               <fieldset class="flyer-option-group">
                 <legend>Layout</legend>
@@ -554,12 +577,12 @@
               <fieldset class="flyer-option-group">
                 <legend>Accent</legend>
                 <div class="flyer-swatch-options" role="group" aria-label="Flyer accent color">
-                  <button class="flyer-swatch is-active" type="button" data-flyer-accent="#f8d23d" style="--flyer-swatch: #f8d23d" aria-label="Quest yellow accent" aria-pressed="true"></button>
-                  <button class="flyer-swatch" type="button" data-flyer-accent="#f45077" style="--flyer-swatch: #f45077" aria-label="Pink accent" aria-pressed="false"></button>
-                  <button class="flyer-swatch" type="button" data-flyer-accent="#fa622e" style="--flyer-swatch: #fa622e" aria-label="Red orange accent" aria-pressed="false"></button>
-                  <button class="flyer-swatch" type="button" data-flyer-accent="#fc8a43" style="--flyer-swatch: #fc8a43" aria-label="Orange accent" aria-pressed="false"></button>
-                  <button class="flyer-swatch" type="button" data-flyer-accent="#0f8fb1" style="--flyer-swatch: #0f8fb1" aria-label="Teal accent" aria-pressed="false"></button>
-                  <button class="flyer-swatch" type="button" data-flyer-accent="#f6a938" style="--flyer-swatch: #f6a938" aria-label="Gold accent" aria-pressed="false"></button>
+                  <button class="flyer-swatch is-active" type="button" data-flyer-accent="#494726" style="--flyer-swatch: #494726" aria-label="Deep olive accent" aria-pressed="true"></button>
+                  <button class="flyer-swatch" type="button" data-flyer-accent="#5a2e48" style="--flyer-swatch: #5a2e48" aria-label="Mulberry accent" aria-pressed="false"></button>
+                  <button class="flyer-swatch" type="button" data-flyer-accent="#652f2c" style="--flyer-swatch: #652f2c" aria-label="Oxblood accent" aria-pressed="false"></button>
+                  <button class="flyer-swatch" type="button" data-flyer-accent="#67402e" style="--flyer-swatch: #67402e" aria-label="Sienna accent" aria-pressed="false"></button>
+                  <button class="flyer-swatch" type="button" data-flyer-accent="#164d60" style="--flyer-swatch: #164d60" aria-label="Deep teal accent" aria-pressed="false"></button>
+                  <button class="flyer-swatch" type="button" data-flyer-accent="#534126" style="--flyer-swatch: #534126" aria-label="Bronze accent" aria-pressed="false"></button>
                 </div>
               </fieldset>
 
@@ -919,6 +942,17 @@
           <p class="moderation-summary" id="moderationSummary">Loading the queue...</p>
           <div class="moderation-list" id="moderationList"></div>
         </section>
+        <section class="editorial-admin-panel" id="editorialAdminPanel" hidden>
+          <div class="editorial-admin-heading">
+            <div class="section-heading compact-heading">
+              <span class="mini-label">Editorial desk</span>
+              <h3>Out There field notes</h3>
+            </div>
+            <button class="primary-button" type="button" data-action="new-field-note">New field note</button>
+          </div>
+          <p class="editorial-admin-summary" id="editorialAdminSummary">Loading field notes...</p>
+          <div class="editorial-admin-list" id="editorialAdminList"></div>
+        </section>
         <section class="account-panel">
           <div>
             <span class="mini-label">Account</span>
@@ -932,6 +966,72 @@
         <div class="modal-actions">
           <button class="secondary-button" type="button" data-action="sign-out">Sign out</button>
           <button class="primary-button" type="submit">Save profile</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal field-note-modal" id="fieldNoteModal">
+      <form class="modal-card field-note-editor" id="fieldNoteForm">
+        <button class="icon-button modal-close" type="button" data-action="close-field-note" aria-label="Close field note editor">×</button>
+        <span class="mini-label">Editorial desk</span>
+        <h2 id="fieldNoteEditorTitle">New field note</h2>
+        <input name="postId" type="hidden" />
+        <div class="field-note-form-grid">
+          <label class="field field-note-wide">
+            <span>Headline</span>
+            <input name="title" minlength="3" maxlength="160" required placeholder="A story worth following" />
+          </label>
+          <label class="field field-note-wide">
+            <span>Short introduction</span>
+            <textarea name="dek" maxlength="360" rows="3" placeholder="Set the scene in a sentence or two."></textarea>
+          </label>
+          <label class="field field-note-wide">
+            <span>Story</span>
+            <textarea name="body" maxlength="12000" rows="9" placeholder="Write the field note. Leave a blank line between paragraphs."></textarea>
+          </label>
+          <label class="field">
+            <span>City</span>
+            <input name="city" minlength="2" maxlength="120" placeholder="Galveston, TX" />
+          </label>
+          <label class="field">
+            <span>Map label</span>
+            <input name="mapLabel" minlength="2" maxlength="160" placeholder="Galveston Island, TX" />
+          </label>
+          <label class="field field-note-wide">
+            <span>Map caption</span>
+            <input name="mapNote" minlength="2" maxlength="360" placeholder="Around the island, from the harbor to the seawall." />
+          </label>
+          <label class="field">
+            <span>Latitude</span>
+            <input name="latitude" type="number" step="any" min="-90" max="90" placeholder="29.3013" />
+          </label>
+          <label class="field">
+            <span>Longitude</span>
+            <input name="longitude" type="number" step="any" min="-180" max="180" placeholder="-94.7977" />
+          </label>
+          <label class="field">
+            <span>Status</span>
+            <select name="status">
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+              <option value="archived">Archived</option>
+            </select>
+          </label>
+          <label class="field-note-featured">
+            <input name="featured" type="checkbox" />
+            <span><strong>Feature this note</strong><small>Show it first on Out There.</small></span>
+          </label>
+          <label class="field field-note-wide">
+            <span>Slideshow photos</span>
+            <input name="photos" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple />
+            <small>Up to 8 images. Large phone photos are optimized before upload.</small>
+          </label>
+        </div>
+        <div class="field-note-media-list" id="fieldNoteMediaList"></div>
+        <p class="form-message" id="fieldNoteMessage" role="status" aria-live="polite"></p>
+        <div class="modal-actions">
+          <button class="secondary-button" type="button" data-action="close-field-note">Cancel</button>
+          <button class="primary-button" id="fieldNoteSubmit" type="submit">Save field note</button>
         </div>
       </form>
     </dialog>
@@ -1027,9 +1127,9 @@
   <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.3/leaflet-maplibre-gl.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.min.js"></script>
   <script src="./supabase-client.js?v=20260722"></script>
-  <script src="./app-v8.js?v=20261003-example-listings-v1"></script>
+    <script src="./app-v8.js?v=20261013-editorial-cms-v2"></script>
   <script src="./vendor/qrcode.min.js?v=1.5.4"></script>
-  <script src="./flyer-studio.js?v=20260930-footer-gems-v1"></script>
+  <script src="./flyer-studio.js?v=20261013-deep-accents-v1"></script>
   <script src="./vibetinerary-studio.js?v=20260925-flyer-logo-v1"></script>
   <script src="./vibe-code-studio.js?v=20260925-flyer-logo-v1"></script>
 </body>
