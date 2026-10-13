@@ -938,8 +938,17 @@ function publicActivityPhoto(path) {
 }
 
 function publicEditorialPhoto(path) {
-  if (!path || !window.vvSupabase) return "";
+  if (!path) return "";
+  if (String(path).startsWith("site:")) {
+    const assetPath = String(path).slice(5).replace(/^\/+/, "");
+    return new URL(`./${assetPath}`, window.location.href).href;
+  }
+  if (!window.vvSupabase) return "";
   return window.vvSupabase.storage.from(EDITORIAL_MEDIA_BUCKET).getPublicUrl(path).data.publicUrl || "";
+}
+
+function isStaticEditorialPhoto(path) {
+  return String(path || "").startsWith("site:");
 }
 
 function normalizeDatabaseTime(value) {
@@ -1153,7 +1162,7 @@ async function loadPublishedFieldNotes() {
   if (!state.backendEnabled) return [];
   const { data, error } = await window.vvSupabase
     .from("out_there_posts")
-    .select("id, author_id, field_note_number, title, dek, body, city, map_label, map_note, latitude, longitude, cover_photo_path, status, featured, published_at, created_at, updated_at")
+    .select("id, author_id, field_note_number, title, dek, body, city, address, map_label, map_note, latitude, longitude, cover_photo_path, status, featured, published_at, created_at, updated_at")
     .eq("status", "published")
     .order("featured", { ascending: false })
     .order("published_at", { ascending: false, nullsFirst: false })
@@ -1172,7 +1181,7 @@ async function loadEditorialPosts() {
   }
   const { data, error } = await window.vvSupabase
     .from("out_there_posts")
-    .select("id, author_id, field_note_number, title, dek, body, city, map_label, map_note, latitude, longitude, cover_photo_path, status, featured, published_at, created_at, updated_at")
+    .select("id, author_id, field_note_number, title, dek, body, city, address, map_label, map_note, latitude, longitude, cover_photo_path, status, featured, published_at, created_at, updated_at")
     .order("updated_at", { ascending: false })
     .limit(FIELD_NOTE_LIMIT);
   if (error) throw error;
@@ -2703,10 +2712,9 @@ function openFieldNoteEditor(postId = "") {
   els.fieldNoteForm.elements.dek.value = post?.dek || "";
   els.fieldNoteForm.elements.body.value = post?.body || "";
   els.fieldNoteForm.elements.city.value = post?.city || "";
+  els.fieldNoteForm.elements.address.value = post?.address || "";
   els.fieldNoteForm.elements.mapLabel.value = post?.map_label || "";
   els.fieldNoteForm.elements.mapNote.value = post?.map_note || "";
-  els.fieldNoteForm.elements.latitude.value = Number.isFinite(post?.latitude) ? post.latitude : "";
-  els.fieldNoteForm.elements.longitude.value = Number.isFinite(post?.longitude) ? post.longitude : "";
   els.fieldNoteForm.elements.status.value = post?.status || "draft";
   els.fieldNoteForm.elements.featured.checked = Boolean(post?.featured);
   els.fieldNoteEditorTitle.textContent = post ? `Edit ${fieldNoteLabel(post.field_note_number)}` : "New field note";
@@ -4077,12 +4085,6 @@ async function uploadEditorialPhoto(postId, file) {
   return path;
 }
 
-function fieldNoteNumberValue(value) {
-  if (String(value || "").trim() === "") return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
 async function saveFieldNote(event) {
   event.preventDefault();
   const user = getCurrentUser();
@@ -4107,16 +4109,53 @@ async function saveFieldNote(event) {
     return;
   }
 
+  const city = form.elements.city.value.trim();
+  const address = form.elements.address.value.trim();
+  if (status === "published" && (!city || !address)) {
+    els.fieldNoteMessage.textContent = "Add a city and an address or named place before publishing.";
+    (city ? form.elements.address : form.elements.city).focus();
+    return;
+  }
+  if (address && !city) {
+    els.fieldNoteMessage.textContent = "Add the city so Vibe Quest can place that address correctly.";
+    form.elements.city.focus();
+    return;
+  }
+
+  let latitude = Number.isFinite(existing?.latitude) ? existing.latitude : null;
+  let longitude = Number.isFinite(existing?.longitude) ? existing.longitude : null;
+  const addressChanged = normalize(address) !== normalize(existing?.address || "")
+    || normalize(city) !== normalize(existing?.city || "");
+  if (!address) {
+    latitude = null;
+    longitude = null;
+  } else if (addressChanged || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    els.fieldNoteSubmit.disabled = true;
+    els.fieldNoteSubmit.textContent = "Finding location...";
+    els.fieldNoteMessage.textContent = "Matching the address to the map...";
+    const location = await geocodeListingLocation(address, city);
+    if (!location.ok) {
+      els.fieldNoteSubmit.disabled = false;
+      els.fieldNoteSubmit.textContent = existing ? "Save changes" : "Create field note";
+      els.fieldNoteMessage.textContent = location.message;
+      form.elements.address.focus();
+      return;
+    }
+    latitude = location.lat;
+    longitude = location.lng;
+  }
+
   const now = new Date().toISOString();
   const payload = {
     title,
     dek: form.elements.dek.value.trim() || null,
     body: body || null,
-    city: form.elements.city.value.trim() || null,
-    map_label: form.elements.mapLabel.value.trim() || null,
+    city: city || null,
+    address: address || null,
+    map_label: form.elements.mapLabel.value.trim() || address || city || null,
     map_note: form.elements.mapNote.value.trim() || null,
-    latitude: fieldNoteNumberValue(form.elements.latitude.value),
-    longitude: fieldNoteNumberValue(form.elements.longitude.value)
+    latitude,
+    longitude
   };
   const finalState = {
     status,
@@ -4178,9 +4217,14 @@ async function saveFieldNote(event) {
         .delete()
         .in("id", removedMedia.map((media) => media.id));
       if (removeRowsError) throw removeRowsError;
-      await window.vvSupabase.storage
-        .from(EDITORIAL_MEDIA_BUCKET)
-        .remove(removedMedia.map((media) => media.storage_path));
+      const storagePaths = removedMedia
+        .map((media) => media.storage_path)
+        .filter((path) => !isStaticEditorialPhoto(path));
+      if (storagePaths.length) {
+        await window.vvSupabase.storage
+          .from(EDITORIAL_MEDIA_BUCKET)
+          .remove(storagePaths);
+      }
     }
 
     const coverPath = keptMedia[0]?.storage_path || uploadedPaths[0] || null;
@@ -4231,7 +4275,9 @@ async function deleteFieldNote(postId) {
   state.editorialBusy = true;
   renderEditorialAdmin();
   try {
-    const mediaPaths = (post.media || []).map((media) => media.storage_path);
+    const mediaPaths = (post.media || [])
+      .map((media) => media.storage_path)
+      .filter((path) => !isStaticEditorialPhoto(path));
     const { error } = await window.vvSupabase.from("out_there_posts").delete().eq("id", post.id);
     if (error) throw error;
     if (mediaPaths.length) {
