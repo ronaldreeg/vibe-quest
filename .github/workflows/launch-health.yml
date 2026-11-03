@@ -39,6 +39,21 @@ jobs:
           test -s sitemap.xml
           test -s assets/brand/vibe-quest-sept23.svg
 
+      - name: Check local page assets
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const references = [...html.matchAll(/(?:src|href)=["'](\.\/[^"']+)["']/g)]
+            .map((match) => match[1].replace(/^\.\//, '').split(/[?#]/)[0]);
+          const missing = [...new Set(references)].filter((file) => !fs.existsSync(file));
+          if (missing.length) {
+            console.error(`Missing local page assets:\n${missing.join('\n')}`);
+            process.exit(1);
+          }
+          console.log(`Verified ${new Set(references).size} local page assets.`);
+          NODE
+
   production-smoke:
     if: >-
       github.event_name == 'schedule' ||
@@ -50,6 +65,9 @@ jobs:
         run: |
           curl --fail --silent --show-error --retry 3 --max-time 20 https://www.vibe-quest.net/ | grep -q "Choose your vibe"
           curl --fail --silent --show-error --retry 3 --max-time 20 https://www.vibe-quest.net/policies.html | grep -q "Community rules"
+          curl --fail --silent --show-error --retry 3 --max-time 20 https://www.vibe-quest.net/app-v8.js > /dev/null
+          curl --fail --silent --show-error --retry 3 --max-time 20 https://www.vibe-quest.net/styles.css > /dev/null
+          curl --fail --silent --show-error --retry 3 --max-time 20 https://www.vibe-quest.net/assets/out-there/field-note-001-martini.jpg > /dev/null
 
       - name: Check discovery backend
         env:

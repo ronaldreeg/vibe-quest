@@ -1079,6 +1079,22 @@ async function loadRemoteActivities({ bounds = null, merge = false } = {}) {
   return activities;
 }
 
+async function loadRemoteActivityById(id) {
+  if (!state.backendEnabled || !isUuid(id)) return null;
+  const { data: row, error } = await window.vvSupabase
+    .from("activities")
+    .select("*")
+    .eq("id", id)
+    .eq("status", "published")
+    .maybeSingle();
+  if (error) throw error;
+  if (!row) return null;
+  const [activity] = await hydrateRemoteActivities([row]);
+  if (!activity || !isRemoteActivityDiscoverable(activity)) return null;
+  mergeRemoteActivities([activity]);
+  return activity;
+}
+
 async function loadRemoteOwnedActivities() {
   const user = getCurrentUser();
   if (!state.backendEnabled || !user) {
@@ -3205,12 +3221,25 @@ async function shareActivity(id) {
   }
 }
 
-function openSharedActivityFromUrl({ notifyMissing = false } = {}) {
+async function openSharedActivityFromUrl({ notifyMissing = false } = {}) {
   const id = new URL(window.location.href).searchParams.get(SHARED_ACTIVITY_PARAM)?.trim();
   if (!id) return false;
-  const adventure = getAdventures().find((item) => item.id === id);
+  let adventure = getAdventures().find((item) => item.id === id);
+  let lookupFailed = false;
+  if (!adventure && state.backendEnabled && isUuid(id)) {
+    try {
+      adventure = await loadRemoteActivityById(id);
+    } catch (error) {
+      lookupFailed = true;
+      console.warn("Could not load the shared activity.", error);
+    }
+  }
   if (!adventure) {
-    if (notifyMissing) toast("That shared activity is no longer available.");
+    if (notifyMissing) {
+      toast(lookupFailed
+        ? "That shared activity could not be loaded. Check your connection and try again."
+        : "That shared activity is no longer available.");
+    }
     return false;
   }
   state.view = "discover";
@@ -4410,6 +4439,21 @@ async function saveRemoteActivity(adventure, existing, photoDataUrl) {
     }
     throw error;
   }
+  if (photoDataUrl && existing?.photoPath && existing.photoPath !== photoPath) {
+    const { error: oldMediaError } = await window.vvSupabase
+      .from("activity_media")
+      .delete()
+      .eq("activity_id", adventure.id)
+      .eq("storage_path", existing.photoPath);
+    if (oldMediaError) {
+      console.warn("Could not remove the replaced activity media record.", oldMediaError);
+    } else {
+      const { error: oldPhotoError } = await window.vvSupabase.storage
+        .from("activity-media")
+        .remove([existing.photoPath]);
+      if (oldPhotoError) console.warn("Could not remove the replaced activity photo.", oldPhotoError);
+    }
+  }
   await Promise.all([loadRemoteActivities(), loadRemoteOwnedActivities()]);
 }
 
@@ -4565,14 +4609,26 @@ function cancelDeletePost() {
 async function removeRemoteActivity(adventure) {
   const user = getCurrentUser();
   if (!user) throw new Error("auth-required");
+  const mediaPaths = new Set(adventure.photoPath ? [adventure.photoPath] : []);
+  const { data: mediaRows, error: mediaLookupError } = await window.vvSupabase
+    .from("activity_media")
+    .select("storage_path")
+    .eq("activity_id", adventure.id);
+  if (mediaLookupError) throw mediaLookupError;
+  (mediaRows || []).forEach((media) => {
+    if (media.storage_path) mediaPaths.add(media.storage_path);
+  });
   const { error } = await window.vvSupabase
     .from("activities")
     .delete()
     .eq("id", adventure.id)
     .eq("owner_id", user.id);
   if (error) throw error;
-  if (adventure.photoPath) {
-    await window.vvSupabase.storage.from("activity-media").remove([adventure.photoPath]);
+  if (mediaPaths.size) {
+    const { error: storageError } = await window.vvSupabase.storage
+      .from("activity-media")
+      .remove([...mediaPaths]);
+    if (storageError) console.warn("Could not remove every photo for the deleted activity.", storageError);
   }
   await Promise.all([loadRemoteActivities(), loadRemoteOwnedActivities(), loadRemoteSavedIds()]);
 }
@@ -5129,11 +5185,12 @@ if (state.backendEnabled) {
   state.session = null;
   bootstrapSupabase().then(async () => {
     updateHostFormMode();
-    const openedSharedActivity = openSharedActivityFromUrl({ notifyMissing: true });
+    const openedSharedActivity = await openSharedActivityFromUrl({ notifyMissing: true });
     if (!openedSharedActivity && !getCurrentUser()) await initializeLocation();
   });
 } else {
-  const openedSharedActivity = openSharedActivityFromUrl({ notifyMissing: true });
-  if (!openedSharedActivity) initializeLocation().catch(() => {});
+  openSharedActivityFromUrl({ notifyMissing: true }).then((openedSharedActivity) => {
+    if (!openedSharedActivity) initializeLocation().catch(() => {});
+  });
   repairHostedCoordinates().catch(() => {});
 }

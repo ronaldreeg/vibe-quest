@@ -1,6 +1,6 @@
 # Vibe Quest Launch Readiness
 
-Audit date: October 3, 2026
+Audit date: November 3, 2026
 
 ## Current status
 
@@ -13,6 +13,7 @@ Do not announce a broad public launch until the manual launch gates below are co
 - [x] Supabase Auth, Postgres, Storage, and row-level security back real accounts and listings.
 - [x] Real listings load by map bounds as visitors pan and zoom; a clearly labeled static example set fills out the early discovery experience without entering fake rows in Supabase.
 - [x] Users can create, edit, pause, republish, cancel, archive, delete, save, link to, and share listings.
+- [x] Shared links fetch their exact published listing instead of depending on the first discovery-page batch.
 - [x] Past one-time listings and stale recurring/anytime listings are hidden from public discovery.
 - [x] Listing time zones and last-confirmed dates are stored and validated.
 - [x] Private-meetup exact locations live in a protected table; public listings receive approximate points.
@@ -22,7 +23,9 @@ Do not announce a broad public launch until the manual launch gates below are co
 - [x] Community Rules, Privacy, Terms, Accessibility, and Contact pages are published with the app.
 - [x] Geocoding runs through a rate-limited, cached Edge Function instead of direct production browser requests.
 - [x] Client images are compressed before Storage upload and rendered lazily in listing grids.
-- [x] Hourly health checks cover public pages and the discovery backend.
+- [x] Replaced and deleted listing photos are removed from Storage instead of accumulating silently.
+- [x] Hourly health checks cover public pages, required local assets, key production assets, and the discovery backend.
+- [x] Third-party map and Supabase browser assets are version-pinned and protected with subresource-integrity hashes.
 - [x] Supabase Auth Site URL and production redirect URLs point to `https://www.vibe-quest.net/`.
 
 ## Manual launch gates
@@ -30,12 +33,13 @@ Do not announce a broad public launch until the manual launch gates below are co
 - [ ] Configure custom SMTP in Supabase and complete real signup, confirmation, recovery, and changed-password tests on both phone and desktop.
 - [ ] Decide whether to upgrade Supabase for leaked-password protection and downloadable managed backups. The current Free plan does not provide those launch protections.
 - [ ] Assign a named person to monitor reports and `hello@vibe-quest.net`, with the response expectations in `LAUNCH_RUNBOOK.md`.
-- [ ] Publish a small, current, verified launch set. Examples now demonstrate the product, but they should complement rather than replace verified community listings.
+- [ ] Publish a small, current, verified launch set. As of November 3, the three real activity rows are all past their dates, leaving zero real listings in public discovery; examples currently demonstrate the product on their own.
 - [ ] Take and securely retain a pre-launch database export, then perform the smoke test in `LAUNCH_RUNBOOK.md` against production.
+- [ ] Review and remove the two existing unreferenced files in the `activity-media` bucket after confirming they are not needed. The November reliability fix prevents normal replacements and deletions from creating more.
 
 ## Advisor status
 
-The October 3 database review found no missing foreign-key indexes or duplicate permissive policies.
+The November 3 database review found no missing foreign-key indexes, duplicate permissive policies, invalid activity coordinates, missing activity photos, or backend error events in the preceding 24 hours.
 
 - Security advisor: the three geocoding service tables intentionally have RLS with no client policies. They are default-deny and reachable only by the service-role Edge Function.
 - Security advisor: leaked-password protection remains disabled because it is a paid Supabase feature.
