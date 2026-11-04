@@ -2091,18 +2091,26 @@ textarea:focus {
   background: var(--panel-solid);
 }
 
+.out-there-feature::before,
 .out-there-feature::after {
   content: "";
   position: absolute;
   z-index: 1;
   right: 0;
-  bottom: 0;
   left: 0;
   height: 18px;
   background-image: url("./assets/brand/retro-accent.svg?v=20260921-v2");
   background-repeat: no-repeat;
   background-size: 100% 100%;
   pointer-events: none;
+}
+
+.out-there-feature::before {
+  top: 0;
+}
+
+.out-there-feature::after {
+  bottom: 0;
 }
 
 .out-there-slides {
