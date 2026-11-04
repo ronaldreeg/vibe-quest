@@ -696,6 +696,7 @@ const state = {
   pendingDeleteId: null,
   outThereSlideIndex: 0,
   outThereFallback: null,
+  activeFieldNoteId: null,
   publishedFieldNotes: [],
   editorialPosts: [],
   editorialBusy: false,
@@ -752,6 +753,8 @@ const els = {
   outThereStoryTitle: document.querySelector("#outThereStoryTitle"),
   outThereStoryBody: document.querySelector("#outThereStoryBody"),
   outThereSlideCount: document.querySelector("#outThereSlideCount"),
+  outThereFieldNoteLibrary: document.querySelector("#outThereFieldNoteLibrary"),
+  outThereFieldNoteGrid: document.querySelector("#outThereFieldNoteGrid"),
   hostView: document.querySelector("#hostView"),
   shareView: document.querySelector("#shareView"),
   profilePills: document.querySelectorAll(".profile-pill"),
@@ -1185,7 +1188,11 @@ async function loadPublishedFieldNotes() {
     .limit(FIELD_NOTE_LIMIT);
   if (error) throw error;
   state.publishedFieldNotes = await hydrateFieldNotes(data || []);
+  if (!state.publishedFieldNotes.some((post) => post.id === state.activeFieldNoteId)) {
+    state.activeFieldNoteId = state.publishedFieldNotes[0]?.id || null;
+  }
   renderOutThereFeature();
+  renderOutThereFieldNoteLibrary();
   return state.publishedFieldNotes;
 }
 
@@ -2356,11 +2363,13 @@ function restoreOutThereFallback() {
 }
 
 function renderOutThereFeature() {
-  const post = state.publishedFieldNotes[0];
+  const post = state.publishedFieldNotes.find((item) => item.id === state.activeFieldNoteId)
+    || state.publishedFieldNotes[0];
   if (!post) {
     restoreOutThereFallback();
     return;
   }
+  state.activeFieldNoteId = post.id;
 
   const media = post.media?.length
     ? post.media
@@ -2432,6 +2441,49 @@ function renderOutThereFeature() {
   document.querySelector("#outThereMap")?.setAttribute("aria-label", `Stylized map showing the field note location near ${mapLabel}`);
   state.outThereSlideIndex = 0;
   updateOutThereSlideshow(0);
+}
+
+function fieldNoteCardPhoto(post) {
+  const mediaPhoto = post.media?.[0];
+  if (mediaPhoto?.url) return mediaPhoto.url;
+  if (post.cover_photo_path) return publicEditorialPhoto(post.cover_photo_path);
+  return "";
+}
+
+function fieldNoteCardMarkup(post) {
+  const photoUrl = fieldNoteCardPhoto(post);
+  const location = post.city || post.map_label || "Out there";
+  const summary = String(post.dek || post.body || "A fresh field note from somewhere worth noticing.")
+    .split(/\n\s*\n/)[0]
+    .trim();
+  const active = post.id === state.activeFieldNoteId;
+  return `
+    <button
+      class="out-there-note-card${active ? " is-active" : ""}"
+      type="button"
+      data-action="open-field-note"
+      data-id="${escapeHtml(post.id)}"
+      aria-current="${active ? "true" : "false"}"
+    >
+      <span class="out-there-note-photo${photoUrl ? "" : " is-empty"}">
+        ${photoUrl ? `<img src="${escapeHtml(photoUrl)}" alt="" loading="lazy" decoding="async" />` : ""}
+      </span>
+      <span class="out-there-note-copy">
+        <span class="out-there-note-kicker">${escapeHtml(fieldNoteLabel(post.field_note_number))} / ${escapeHtml(location)}</span>
+        <strong>${escapeHtml(post.title)}</strong>
+        <span class="out-there-note-summary">${escapeHtml(summary)}</span>
+      </span>
+    </button>
+  `;
+}
+
+function renderOutThereFieldNoteLibrary() {
+  if (!els.outThereFieldNoteLibrary || !els.outThereFieldNoteGrid) return;
+  const posts = state.publishedFieldNotes;
+  els.outThereFieldNoteLibrary.hidden = posts.length < 2;
+  els.outThereFieldNoteGrid.innerHTML = posts.length > 1
+    ? posts.map(fieldNoteCardMarkup).join("")
+    : "";
 }
 
 function updateOutThereSlideshow(index = state.outThereSlideIndex) {
@@ -5036,6 +5088,14 @@ document.addEventListener("click", async (event) => {
   if (action === "out-there-prev") updateOutThereSlideshow(state.outThereSlideIndex - 1);
   if (action === "out-there-next") updateOutThereSlideshow(state.outThereSlideIndex + 1);
   if (action === "out-there-slide") updateOutThereSlideshow(target.dataset.slideIndex);
+  if (action === "open-field-note") {
+    const post = state.publishedFieldNotes.find((item) => item.id === target.dataset.id);
+    if (!post) return;
+    state.activeFieldNoteId = post.id;
+    renderOutThereFeature();
+    renderOutThereFieldNoteLibrary();
+    document.querySelector(".out-there-feature")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
   if (action === "edit-post") await editPost(target.dataset.id);
   if (action === "set-post-status") await setPostStatus(target.dataset.id, target.dataset.status);
   if (action === "confirm-post") await confirmPost(target.dataset.id);

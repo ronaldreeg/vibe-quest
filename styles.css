@@ -2074,6 +2074,7 @@ textarea:focus {
 .out-there-feature {
   position: relative;
   overflow: visible;
+  scroll-margin-top: 96px;
   min-height: clamp(460px, 68vh, 820px);
   margin: 0 0 72px;
   border: 0;
@@ -2316,6 +2317,106 @@ textarea:focus {
   color: var(--muted-strong);
   font-size: clamp(1rem, 1.6vw, 1.18rem);
   line-height: 1.65;
+}
+
+.out-there-library {
+  padding: 0 var(--out-there-content-inset) clamp(64px, 9vw, 120px);
+}
+
+.out-there-library-heading {
+  display: grid;
+  gap: 10px;
+  margin-bottom: clamp(24px, 4vw, 44px);
+}
+
+.out-there-library-heading h2 {
+  max-width: 14ch;
+  margin: 0;
+  font-size: clamp(2rem, 4.5vw, 4rem);
+  line-height: 1;
+}
+
+.out-there-note-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: clamp(24px, 3.5vw, 48px);
+}
+
+.out-there-note-card {
+  display: grid;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+
+.out-there-note-photo {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  background: var(--panel-solid);
+}
+
+.out-there-note-photo.is-empty {
+  background: var(--brand-teal);
+}
+
+.out-there-note-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 220ms ease;
+}
+
+.out-there-note-copy {
+  display: grid;
+  gap: 8px;
+  padding: 18px 0 16px;
+  border-bottom: 4px solid transparent;
+}
+
+.out-there-note-card.is-active .out-there-note-copy {
+  border-color: var(--brand-orange);
+}
+
+.out-there-note-kicker {
+  color: var(--brand-teal);
+  font-family: var(--font-interface);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.out-there-note-card strong {
+  font-family: var(--font-reading);
+  font-size: clamp(1.45rem, 2.5vw, 2.15rem);
+  font-weight: 400;
+  line-height: 1.06;
+}
+
+.out-there-note-summary {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--muted-strong);
+  font-family: var(--font-reading);
+  font-size: 0.98rem;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.out-there-note-card:hover .out-there-note-photo img,
+.out-there-note-card:focus-visible .out-there-note-photo img {
+  transform: scale(1.025);
+}
+
+.out-there-note-card:focus-visible {
+  outline: 2px solid var(--brand-yellow);
+  outline-offset: 6px;
 }
 
 .out-there-submit {
@@ -4140,6 +4241,14 @@ textarea:focus {
 
   .out-there-blurb h2 {
     font-size: clamp(2.2rem, 11vw, 3.4rem);
+  }
+
+  .out-there-library {
+    padding-bottom: 72px;
+  }
+
+  .out-there-note-grid {
+    grid-template-columns: 1fr;
   }
 
   .out-there-submit {
