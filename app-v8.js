@@ -746,6 +746,7 @@ const els = {
   outThereAdminTools: document.querySelector("#outThereAdminTools"),
   outThereSlides: document.querySelector("#outThereSlides"),
   outThereSlideDots: document.querySelector("#outThereSlideDots"),
+  outThereMap: document.querySelector("#outThereMap"),
   outThereMapTitle: document.querySelector("#outThereMapTitle"),
   outThereMapNote: document.querySelector("#outThereMapNote"),
   outThereExploreLink: document.querySelector("#outThereExploreLink"),
@@ -1855,6 +1856,8 @@ function adventureCard(adventure) {
 
 let map;
 let mapMarkers = [];
+let outThereMap;
+let outThereMapMarker;
 let mobileMapInteractionEnabled = false;
 const compactMapQuery = window.matchMedia("(max-width: 900px), (pointer: coarse)");
 const MAX_MAP_MARKERS = 150;
@@ -2161,6 +2164,19 @@ function styleVectorBasemap(vectorMap) {
   });
 }
 
+function prepareVectorBasemap(vectorMap) {
+  vectorMap.on("styleimagemissing", (event) => {
+    if (vectorMap.hasImage(event.id)) return;
+    if (event.id === "circle-11") {
+      vectorMap.addImage(event.id, { width: 1, height: 1, data: new Uint8Array([0, 0, 0, 0]) });
+    }
+    if (event.id === "wood-pattern") {
+      vectorMap.addImage(event.id, { width: 1, height: 1, data: new Uint8Array([24, 37, 31, 255]) });
+    }
+  });
+  vectorMap.once("load", () => styleVectorBasemap(vectorMap));
+}
+
 function addPrimaryBasemap() {
   if (typeof L.maplibreGL !== "function") {
     addRasterBasemap();
@@ -2175,20 +2191,111 @@ function addPrimaryBasemap() {
       interactive: false
     }).addTo(map);
     const vectorMap = vectorLayer.getMaplibreMap();
-    vectorMap.on("styleimagemissing", (event) => {
-      if (vectorMap.hasImage(event.id)) return;
-      if (event.id === "circle-11") {
-        vectorMap.addImage(event.id, { width: 1, height: 1, data: new Uint8Array([0, 0, 0, 0]) });
-      }
-      if (event.id === "wood-pattern") {
-        vectorMap.addImage(event.id, { width: 1, height: 1, data: new Uint8Array([24, 37, 31, 255]) });
-      }
-    });
-    vectorMap.once("load", () => styleVectorBasemap(vectorMap));
+    prepareVectorBasemap(vectorMap);
   } catch (error) {
     console.warn("Vector basemap unavailable; using the raster fallback.", error);
     addRasterBasemap();
   }
+}
+
+function addOutThereBasemap() {
+  if (!outThereMap || !els.outThereMap) return;
+  if (typeof L.maplibreGL !== "function") {
+    els.outThereMap.classList.add("uses-raster-basemap");
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(outThereMap);
+    return;
+  }
+
+  try {
+    els.outThereMap.classList.add("uses-vector-basemap");
+    const vectorLayer = L.maplibreGL({
+      style: VECTOR_MAP_STYLE_URL,
+      interactive: false,
+      attribution: "&copy; OpenStreetMap contributors &middot; OpenFreeMap"
+    }).addTo(outThereMap);
+    prepareVectorBasemap(vectorLayer.getMaplibreMap());
+  } catch (error) {
+    console.warn("Editorial vector map unavailable; using the raster fallback.", error);
+    els.outThereMap.classList.remove("uses-vector-basemap");
+    els.outThereMap.classList.add("uses-raster-basemap");
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(outThereMap);
+  }
+}
+
+function fieldNoteCoordinates(post) {
+  const latitude = Number(post?.latitude);
+  const longitude = Number(post?.longitude);
+  return Number.isFinite(latitude) && Number.isFinite(longitude)
+    ? [latitude, longitude]
+    : null;
+}
+
+function renderOutThereMapFallback(message = "Location unavailable") {
+  if (!els.outThereMap) return;
+  if (outThereMap) {
+    outThereMap.remove();
+    outThereMap = null;
+    outThereMapMarker = null;
+  }
+  els.outThereMap.classList.remove("uses-vector-basemap", "uses-raster-basemap", "leaflet-container");
+  delete els.outThereMap.dataset.lat;
+  delete els.outThereMap.dataset.lng;
+  els.outThereMap.innerHTML = `<span class="editorial-map-loading">${escapeHtml(message)}</span>`;
+}
+
+function updateOutThereLocationMap(post) {
+  if (!els.outThereMap) return;
+  const coordinates = fieldNoteCoordinates(post);
+  if (!coordinates || !window.L) {
+    renderOutThereMapFallback(coordinates ? "Map is loading..." : "Location unavailable");
+    return;
+  }
+
+  if (!outThereMap) {
+    els.outThereMap.replaceChildren();
+    outThereMap = L.map(els.outThereMap, {
+      zoomControl: false,
+      attributionControl: false,
+      dragging: false,
+      touchZoom: false,
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      boxZoom: false,
+      keyboard: false,
+      tap: false
+    }).setView(coordinates, 16);
+    addOutThereBasemap();
+    els.outThereMap.insertAdjacentHTML(
+      "beforeend",
+      '<span class="editorial-map-credit"><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">&copy; OSM</a> &middot; <a href="https://openfreemap.org" target="_blank" rel="noreferrer">OpenFreeMap</a></span>'
+    );
+  }
+
+  if (!outThereMapMarker) {
+    outThereMapMarker = L.marker(coordinates, {
+      interactive: false,
+      keyboard: false,
+      icon: L.divIcon({
+        className: "editorial-map-pin-shell",
+        html: '<span class="editorial-map-pin" aria-hidden="true"></span>',
+        iconSize: [22, 30],
+        iconAnchor: [11, 27]
+      })
+    }).addTo(outThereMap);
+  } else {
+    outThereMapMarker.setLatLng(coordinates);
+  }
+
+  els.outThereMap.dataset.lat = String(coordinates[0]);
+  els.outThereMap.dataset.lng = String(coordinates[1]);
+  outThereMap.setView(coordinates, 16, { animate: false });
+  window.requestAnimationFrame(() => outThereMap?.invalidateSize({ animate: false }));
 }
 
 function initMap() {
@@ -2355,6 +2462,7 @@ function restoreOutThereFallback() {
   if (els.outThereFieldLabel) els.outThereFieldLabel.textContent = fallback.fieldLabel;
   if (els.outThereStoryTitle) els.outThereStoryTitle.textContent = fallback.storyTitle;
   if (els.outThereStoryBody) els.outThereStoryBody.innerHTML = fallback.storyBody;
+  renderOutThereMapFallback("Location unavailable");
   document.querySelectorAll(".out-there-slide-button").forEach((button) => {
     button.hidden = false;
   });
@@ -2409,6 +2517,7 @@ function renderOutThereFeature() {
 
   const city = post.city || post.map_label || "";
   const mapLabel = post.map_label || city || "Somewhere worth noticing";
+  const coordinates = fieldNoteCoordinates(post);
   if (els.outThereMapTitle) els.outThereMapTitle.textContent = mapLabel;
   if (els.outThereMapNote) {
     els.outThereMapNote.textContent = post.map_note || post.dek || "A field note from out there.";
@@ -2417,9 +2526,9 @@ function renderOutThereFeature() {
     const shortCity = city.split(",")[0].trim() || "this area";
     els.outThereExploreLink.textContent = `Explore ${shortCity} vibes →`;
     els.outThereExploreLink.dataset.city = city;
-    if (Number.isFinite(post.latitude) && Number.isFinite(post.longitude)) {
-      els.outThereExploreLink.dataset.lat = String(post.latitude);
-      els.outThereExploreLink.dataset.lng = String(post.longitude);
+    if (coordinates) {
+      els.outThereExploreLink.dataset.lat = String(coordinates[0]);
+      els.outThereExploreLink.dataset.lng = String(coordinates[1]);
     } else {
       delete els.outThereExploreLink.dataset.lat;
       delete els.outThereExploreLink.dataset.lng;
@@ -2438,7 +2547,8 @@ function renderOutThereFeature() {
       ...paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br>")}</p>`)
     ].join("");
   }
-  document.querySelector("#outThereMap")?.setAttribute("aria-label", `Stylized map showing the field note location near ${mapLabel}`);
+  els.outThereMap?.setAttribute("aria-label", `Map showing the field note location near ${mapLabel}`);
+  updateOutThereLocationMap(post);
   state.outThereSlideIndex = 0;
   updateOutThereSlideshow(0);
 }
@@ -2549,6 +2659,7 @@ function renderViews() {
   if (isDiscover && map) setTimeout(() => map.invalidateSize(), 50);
   if (isOutThere) {
     updateOutThereSlideshow();
+    window.requestAnimationFrame(() => outThereMap?.invalidateSize({ animate: false }));
   }
   if (isShare) {
     window.vvFlyerStudio?.render();

@@ -24,7 +24,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Faculty+Glyphic&family=VT323&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous" />
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" integrity="sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK" crossorigin="anonymous" />
-    <link rel="stylesheet" href="./styles.css?v=20261104-field-note-library-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20261104-editorial-map-v1" />
   </head>
   <body>
     <div class="app-shell">
@@ -222,27 +222,8 @@
                 <span class="mini-label">Photo location</span>
                 <strong id="outThereMapTitle">Galveston Island, TX</strong>
               </div>
-              <div class="editorial-map" id="outThereMap" role="img" aria-label="Stylized map showing the field note location on Galveston Island">
-                <svg class="editorial-map-art" viewBox="0 0 660 350" aria-hidden="true" focusable="false">
-                  <rect class="editorial-map-water" width="660" height="350" />
-                  <path class="editorial-map-land" d="M-35 266C66 232 144 211 236 188c114-29 221-65 307-101l152-61v116l-125 47c-95 36-203 71-322 101-93 24-176 45-283 81Z" />
-                  <path class="editorial-map-channel" d="M90 242c122-35 246-68 376-116 63-23 121-49 184-78" />
-                  <path class="editorial-map-road editorial-map-road-major" d="M-12 304c150-42 279-74 411-119 97-33 173-64 268-105" />
-                  <path class="editorial-map-road" d="M22 278c151-43 267-70 390-112 91-31 162-61 240-95" />
-                  <path class="editorial-map-road" d="M133 232l33 96M221 208l32 95M310 181l31 94M399 151l30 93M489 116l30 92M575 81l31 91" />
-                  <g class="editorial-map-grid">
-                    <path d="M0 245c143-37 278-73 421-123 83-29 153-58 239-94" />
-                    <path d="M63 314c142-38 269-69 402-116 72-25 130-50 195-78" />
-                  </g>
-                  <text class="editorial-map-label" x="327" y="145">HISTORIC DOWNTOWN</text>
-                  <text class="editorial-map-label editorial-map-label-small" x="466" y="84">THE PORT</text>
-                  <text class="editorial-map-water-label" x="73" y="119">GALVESTON BAY</text>
-                  <text class="editorial-map-water-label editorial-map-label-small" x="420" y="292">SEAWALL</text>
-                  <g class="editorial-map-marker" transform="translate(393 166)">
-                    <rect x="-16" y="-16" width="32" height="32" />
-                    <path d="M0 16v23" />
-                  </g>
-                </svg>
+              <div class="editorial-map" id="outThereMap" role="img" aria-label="Map showing the field note location">
+                <span class="editorial-map-loading">Loading location...</span>
               </div>
               <div class="editorial-map-footer">
                 <p id="outThereMapNote">Around the island, from the harbor to the seawall.</p>
@@ -1131,7 +1112,7 @@
   <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.3/leaflet-maplibre-gl.js" integrity="sha384-LIxE/QjpJKC2A91yD40ZisdYtFbgAjl58jqpo9/MUZNgwhqsTfzwrTlqv6nDdzzB" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.min.js" integrity="sha384-jP+y6mxch/vbLrNpx4basfv6ciZQuHwdRHgZGa6Mhja0Xm4p87ok2OQavTrRIGxH" crossorigin="anonymous"></script>
   <script src="./supabase-client.js?v=20260722"></script>
-    <script src="./app-v8.js?v=20261104-field-note-library-v1"></script>
+    <script src="./app-v8.js?v=20261104-editorial-map-v1"></script>
   <script src="./vendor/qrcode.min.js?v=1.5.4"></script>
   <script src="./flyer-studio.js?v=20261013-deep-accents-v1"></script>
   <script src="./vibetinerary-studio.js?v=20260925-flyer-logo-v1"></script>
