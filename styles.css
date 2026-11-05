@@ -2239,6 +2239,35 @@ textarea:focus {
   color: var(--brand-yellow);
 }
 
+.editorial-map-controls {
+  position: absolute;
+  z-index: 1000;
+  top: 7px;
+  left: 7px;
+  display: flex;
+  gap: 3px;
+}
+
+.editorial-map-controls button {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--brand-yellow);
+  background: rgba(47, 48, 53, 0.92);
+  color: var(--brand-cream);
+  font-family: var(--font-interface);
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.editorial-map-controls button:hover,
+.editorial-map-controls button:focus-visible {
+  background: var(--brand-yellow);
+  color: var(--brand-charcoal);
+}
+
 .editorial-map-loading {
   position: absolute;
   inset: 0;
@@ -4215,6 +4244,18 @@ textarea:focus {
 
   .editorial-map {
     height: 90px;
+  }
+
+  .editorial-map-controls {
+    top: 5px;
+    left: 5px;
+    gap: 2px;
+  }
+
+  .editorial-map-controls button {
+    width: 32px;
+    height: 32px;
+    font-size: 1.05rem;
   }
 
   .editorial-map-titlebar,

@@ -2140,6 +2140,15 @@ const VECTOR_MAP_FILTERS = [
   ["highway_name_other", VECTOR_MAP_MAJOR_ROAD_FILTER]
 ];
 
+const EDITORIAL_MAP_ZOOM = 15;
+const EDITORIAL_ROAD_NAME_FILTER = [
+  "match",
+  ["geometry-type"],
+  ["LineString", "MultiLineString"],
+  true,
+  false
+];
+
 function addRasterBasemap() {
   els.realMap.classList.remove("uses-vector-basemap");
   els.realMap.classList.add("uses-raster-basemap");
@@ -2164,7 +2173,27 @@ function styleVectorBasemap(vectorMap) {
   });
 }
 
-function prepareVectorBasemap(vectorMap) {
+function styleEditorialVectorBasemap(vectorMap) {
+  if (vectorMap.getLayer("highway_minor")) {
+    vectorMap.setLayerZoomRange("highway_minor", 13, 24);
+    vectorMap.setPaintProperty("highway_minor", "line-color", "#78858a");
+    vectorMap.setPaintProperty("highway_minor", "line-opacity", 0.62);
+  }
+  if (vectorMap.getLayer("highway_name_other")) {
+    vectorMap.setLayerZoomRange("highway_name_other", 12, 24);
+    vectorMap.setFilter("highway_name_other", EDITORIAL_ROAD_NAME_FILTER);
+    vectorMap.setPaintProperty("highway_name_other", "text-color", "#f3e9c4");
+    vectorMap.setPaintProperty("highway_name_other", "text-opacity", 0.92);
+    vectorMap.setPaintProperty("highway_name_other", "text-halo-color", "#20252a");
+    vectorMap.setPaintProperty("highway_name_other", "text-halo-width", 2);
+  }
+  if (vectorMap.getLayer("highway_name_motorway")) {
+    vectorMap.setLayerZoomRange("highway_name_motorway", 10, 24);
+    vectorMap.setPaintProperty("highway_name_motorway", "text-opacity", 0.9);
+  }
+}
+
+function prepareVectorBasemap(vectorMap, { editorial = false } = {}) {
   vectorMap.on("styleimagemissing", (event) => {
     if (vectorMap.hasImage(event.id)) return;
     if (event.id === "circle-11") {
@@ -2174,7 +2203,10 @@ function prepareVectorBasemap(vectorMap) {
       vectorMap.addImage(event.id, { width: 1, height: 1, data: new Uint8Array([24, 37, 31, 255]) });
     }
   });
-  vectorMap.once("load", () => styleVectorBasemap(vectorMap));
+  vectorMap.once("load", () => {
+    styleVectorBasemap(vectorMap);
+    if (editorial) styleEditorialVectorBasemap(vectorMap);
+  });
 }
 
 function addPrimaryBasemap() {
@@ -2216,7 +2248,7 @@ function addOutThereBasemap() {
       interactive: false,
       attribution: "&copy; OpenStreetMap contributors &middot; OpenFreeMap"
     }).addTo(outThereMap);
-    prepareVectorBasemap(vectorLayer.getMaplibreMap());
+    prepareVectorBasemap(vectorLayer.getMaplibreMap(), { editorial: true });
   } catch (error) {
     console.warn("Editorial vector map unavailable; using the raster fallback.", error);
     els.outThereMap.classList.remove("uses-vector-basemap");
@@ -2269,12 +2301,24 @@ function updateOutThereLocationMap(post) {
       boxZoom: false,
       keyboard: false,
       tap: false
-    }).setView(coordinates, 16);
+    }).setView(coordinates, EDITORIAL_MAP_ZOOM);
     addOutThereBasemap();
     els.outThereMap.insertAdjacentHTML(
       "beforeend",
-      '<span class="editorial-map-credit"><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">&copy; OSM</a> &middot; <a href="https://openfreemap.org" target="_blank" rel="noreferrer">OpenFreeMap</a></span>'
+      `<span class="editorial-map-controls" aria-label="Photo location map zoom controls">
+        <button type="button" data-editorial-map-zoom="out" aria-label="Zoom out photo location map" title="Zoom out">&minus;</button>
+        <button type="button" data-editorial-map-zoom="in" aria-label="Zoom in photo location map" title="Zoom in">&plus;</button>
+      </span>
+      <span class="editorial-map-credit"><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">&copy; OSM</a> &middot; <a href="https://openfreemap.org" target="_blank" rel="noreferrer">OpenFreeMap</a></span>`
     );
+    els.outThereMap.querySelectorAll("[data-editorial-map-zoom]").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (button.dataset.editorialMapZoom === "out") outThereMap?.zoomOut(1);
+        else outThereMap?.zoomIn(1);
+      });
+    });
   }
 
   if (!outThereMapMarker) {
@@ -2294,7 +2338,7 @@ function updateOutThereLocationMap(post) {
 
   els.outThereMap.dataset.lat = String(coordinates[0]);
   els.outThereMap.dataset.lng = String(coordinates[1]);
-  outThereMap.setView(coordinates, 16, { animate: false });
+  outThereMap.setView(coordinates, EDITORIAL_MAP_ZOOM, { animate: false });
   window.requestAnimationFrame(() => outThereMap?.invalidateSize({ animate: false }));
 }
 
