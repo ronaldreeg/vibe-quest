@@ -5311,7 +5311,7 @@ window.addEventListener("offline", () => {
 window.addEventListener("online", () => {
   toast("Back online. Refreshing nearby listings...");
   if (state.backendEnabled) {
-    const bounds = currentMapBounds();
+    const bounds = visibleMapBounds();
     loadRemoteActivities({ bounds: bounds ? expandMapBounds(bounds) : null })
       .then(() => render())
       .catch(() => toast("Connected, but listings still need a moment."));

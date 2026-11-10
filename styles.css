@@ -2916,6 +2916,26 @@ textarea:focus {
   overflow-y: auto;
 }
 
+#profileModal .modal-close {
+  position: sticky;
+  top: 12px;
+  right: auto;
+  z-index: 10;
+  display: grid;
+  float: right;
+  width: 34px;
+  height: 34px;
+  margin: 0 0 -34px 16px;
+  background: var(--brand-charcoal);
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+#profileModal .modal-close:hover {
+  background: var(--brand-yellow);
+  color: var(--brand-charcoal);
+}
+
 .location-privacy-options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
