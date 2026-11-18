@@ -4,9 +4,25 @@
   const WIDTH = 1080;
   const HEIGHT = 1350;
   const MAX_POINTS = 5;
+  const TREASURE_MAP_LEFT = 28;
+  const TREASURE_MAP_TOP = 344;
+  const TREASURE_MAP_RIGHT = 1052;
+  const TREASURE_MAP_BOTTOM = 1038;
+  const TREASURE_LEGEND_TOP = 1052;
   const FONT_READING = '"Faculty Glyphic", Georgia, serif';
   const FONT_INTERFACE = '"VT323", monospace';
   const BRAND_MARK_URL = "./assets/brand/VQ-logo-flyer.svg?v=20260925-v1";
+  const QUEST_MARK_URL = "./assets/brand/vibe-marks-sept25.svg?v=20260925-v2";
+  const QUEST_MARKS = [
+    { x: 20.08, width: 245.06 },
+    { x: 298.47, width: 245.06 },
+    { x: 572.72, width: 245.06 },
+    { x: 849.29, width: 245.06 },
+    { x: 1107.9, width: 245.06 },
+    { x: 1368.82, width: 245.06 },
+    { x: 1630.88, width: 245.06 }
+  ];
+  const MAP_POINT_COLORS = ["#fa622e", "#f8d23d", "#0f8fb1", "#f45077", "#f3e9c4"];
   const COLORS = {
     charcoal: "#2f3035",
     charcoalDeep: "#22242a",
@@ -14,7 +30,8 @@
     orange: "#fa622e",
     yellow: "#f8d23d",
     pink: "#f45077",
-    teal: "#0f8fb1"
+    teal: "#0f8fb1",
+    tealDeep: "#174f63"
   };
   const DEFAULT_POINTS = [
     { name: "First light coffee", note: "Start slow with something local and strong." },
@@ -55,6 +72,8 @@
 
   const brandMark = new Image();
   brandMark.decoding = "async";
+  const questMarks = new Image();
+  questMarks.decoding = "async";
   const studio = {
     workshopMode: "flyer",
     layout: "list",
@@ -310,7 +329,7 @@
     drawSingleLine("CHOOSE A VIBE. BEGIN THE QUEST.", 64, HEIGHT - 78, 952, 26, 18, contrastColor(accent));
   }
 
-  function regularPolygonPoints(count, centerX = 540, centerY = 850, radius = 260) {
+  function regularPolygonPoints(count, centerX = 540, centerY = 690, radius = 232) {
     return Array.from({ length: count }, (_, index) => {
       const angle = -Math.PI / 2 + index * (Math.PI * 2 / count);
       return [
@@ -321,197 +340,351 @@
   }
 
   function mapPlacements(count) {
-    if (count === 1) return [{ point: [540, 820], label: [398, 650] }];
+    if (count === 1) return [{ point: [540, 690] }];
     if (count === 2) {
       return [
-        { point: [300, 700], label: [70, 530] },
-        { point: [780, 1000], label: [725, 830] }
+        { point: [324, 558] },
+        { point: [756, 822] }
       ];
     }
-
-    const labels = {
-      3: [[398, 440], [725, 835], [70, 835]],
-      4: [[398, 440], [725, 690], [398, 960], [70, 690]],
-      5: [[398, 440], [725, 600], [725, 890], [70, 890], [70, 600]]
-    };
     const safeCount = Math.max(3, Math.min(MAX_POINTS, count));
-    return regularPolygonPoints(safeCount).map((point, index) => ({
-      point,
-      label: labels[safeCount][index]
-    }));
+    return regularPolygonPoints(safeCount).map((point) => ({ point }));
   }
 
-  function drawMapTexture(mapTop, mapBottom, accent) {
+  function drawPixelSpark(x, y, size, color) {
+    const unit = Math.max(3, Math.round(size / 5));
+    context.fillStyle = color;
+    context.fillRect(x - unit / 2, y - size / 2, unit, size);
+    context.fillRect(x - size / 2, y - unit / 2, size, unit);
+    context.fillRect(x - unit * 1.5, y - unit * 1.5, unit, unit);
+    context.fillRect(x + unit * 0.5, y + unit * 0.5, unit, unit);
+  }
+
+  function drawQuestGem(index, centerX, centerY, size) {
+    const mark = QUEST_MARKS[index % QUEST_MARKS.length];
+    if (!questMarks.complete || questMarks.naturalWidth <= 0 || questMarks.naturalHeight <= 0) {
+      drawPixelSpark(centerX, centerY, size * 0.7, MAP_POINT_COLORS[index % MAP_POINT_COLORS.length]);
+      return;
+    }
+
+    const sourceScale = questMarks.naturalWidth / 1920;
+    context.save();
+    context.imageSmoothingEnabled = false;
+    context.drawImage(
+      questMarks,
+      mark.x * sourceScale,
+      0,
+      mark.width * sourceScale,
+      questMarks.naturalHeight,
+      centerX - size / 2,
+      centerY - size / 2,
+      size,
+      size
+    );
+    context.restore();
+  }
+
+  function drawPixelTree(x, y, size, color, variant = 0) {
+    const unit = Math.max(2, Math.round(size / 7));
+    context.fillStyle = color;
+    if (variant % 2 === 0) {
+      context.fillRect(x + unit * 2, y, unit * 3, unit);
+      context.fillRect(x + unit, y + unit, unit * 5, unit * 2);
+      context.fillRect(x, y + unit * 3, unit * 7, unit * 2);
+      context.fillRect(x + unit * 3, y + unit * 5, unit, unit * 2);
+      return;
+    }
+    context.fillRect(x + unit * 3, y, unit, unit);
+    context.fillRect(x + unit * 2, y + unit, unit * 3, unit * 2);
+    context.fillRect(x + unit, y + unit * 3, unit * 5, unit * 2);
+    context.fillRect(x + unit * 3, y + unit * 5, unit, unit * 2);
+  }
+
+  function drawPixelMountain(x, y, size, color, capColor) {
+    const unit = Math.max(3, Math.round(size / 9));
+    context.fillStyle = color;
+    for (let row = 0; row < 5; row += 1) {
+      context.fillRect(x - row * unit, y + row * unit, unit * (row * 2 + 1), unit);
+    }
+    context.fillStyle = capColor;
+    context.fillRect(x, y, unit, unit);
+    context.fillRect(x - unit, y + unit, unit * 2, unit);
+  }
+
+  function drawWaterMark(x, y, width, color) {
+    context.fillStyle = color;
+    context.fillRect(x, y, width, 4);
+    context.fillRect(x + 10, y + 10, Math.max(12, width - 20), 4);
+  }
+
+  function drawPixelCloud(x, y, size, color) {
+    const unit = Math.max(3, Math.round(size / 9));
+    context.fillStyle = color;
+    context.fillRect(x + unit * 2, y, unit * 3, unit);
+    context.fillRect(x + unit, y + unit, unit * 6, unit * 2);
+    context.fillRect(x, y + unit * 3, unit * 9, unit * 2);
+    context.fillRect(x + unit, y + unit * 5, unit * 7, unit);
+  }
+
+  function drawPixelBolt(x, y, size, color) {
+    const unit = Math.max(3, Math.round(size / 7));
+    context.fillStyle = color;
+    context.fillRect(x + unit * 2, y, unit * 3, unit * 2);
+    context.fillRect(x + unit, y + unit * 2, unit * 3, unit * 2);
+    context.fillRect(x, y + unit * 4, unit * 3, unit);
+    context.fillRect(x + unit, y + unit * 5, unit, unit * 2);
+  }
+
+  function drawPixelUfo(x, y, size, color, lightColor) {
+    const unit = Math.max(3, Math.round(size / 10));
+    context.fillStyle = lightColor;
+    context.fillRect(x + unit * 4, y, unit * 2, unit);
+    context.fillRect(x + unit * 3, y + unit, unit * 4, unit * 2);
+    context.fillStyle = color;
+    context.fillRect(x + unit * 2, y + unit * 3, unit * 6, unit);
+    context.fillRect(x, y + unit * 4, unit * 10, unit * 2);
+    context.fillRect(x + unit * 2, y + unit * 6, unit * 6, unit);
+    context.fillStyle = lightColor;
+    context.fillRect(x + unit * 2, y + unit * 8, unit, unit * 2);
+    context.fillRect(x + unit * 5, y + unit * 8, unit, unit * 2);
+    context.fillRect(x + unit * 8, y + unit * 8, unit, unit * 2);
+  }
+
+  function drawQuestGemHalo() {
+    const halo = [
+      [126, 380, 0, 28], [236, 364, 3, 36], [350, 378, 6, 24], [462, 356, 2, 34],
+      [578, 376, 5, 28], [696, 354, 1, 38], [816, 376, 4, 28], [938, 390, 0, 34],
+      [64, 492, 6, 30], [56, 616, 2, 38], [68, 742, 5, 26], [58, 866, 1, 34],
+      [1014, 492, 3, 32], [1020, 616, 6, 26], [1012, 742, 2, 38], [1018, 866, 5, 30],
+      [132, 1002, 1, 32], [252, 1010, 4, 24], [376, 1008, 0, 38], [502, 1012, 3, 28],
+      [628, 1008, 6, 34], [752, 1012, 2, 26], [874, 1004, 5, 38], [966, 982, 1, 28]
+    ];
+    halo.forEach(([x, y, mark, size]) => drawQuestGem(mark, x, y, size));
+  }
+
+  function traceTreasureIsland() {
+    context.moveTo(108, 510);
+    context.lineTo(108, 456);
+    context.lineTo(188, 456);
+    context.lineTo(188, 410);
+    context.lineTo(330, 410);
+    context.lineTo(330, 370);
+    context.lineTo(460, 370);
+    context.lineTo(460, 398);
+    context.lineTo(596, 398);
+    context.lineTo(596, 362);
+    context.lineTo(750, 362);
+    context.lineTo(750, 408);
+    context.lineTo(870, 408);
+    context.lineTo(870, 454);
+    context.lineTo(964, 454);
+    context.lineTo(964, 536);
+    context.lineTo(1024, 536);
+    context.lineTo(1024, 724);
+    context.lineTo(980, 724);
+    context.lineTo(980, 860);
+    context.lineTo(886, 860);
+    context.lineTo(886, 930);
+    context.lineTo(760, 930);
+    context.lineTo(760, 1008);
+    context.lineTo(600, 1008);
+    context.lineTo(600, 980);
+    context.lineTo(428, 980);
+    context.lineTo(428, 1018);
+    context.lineTo(274, 1018);
+    context.lineTo(274, 972);
+    context.lineTo(168, 972);
+    context.lineTo(168, 906);
+    context.lineTo(82, 906);
+    context.lineTo(82, 770);
+    context.lineTo(44, 770);
+    context.lineTo(44, 612);
+    context.lineTo(108, 612);
+    context.closePath();
+  }
+
+  function drawTerrainMap(accent) {
     context.save();
     context.beginPath();
-    context.rect(46, mapTop, 988, mapBottom - mapTop);
+    context.rect(
+      TREASURE_MAP_LEFT,
+      TREASURE_MAP_TOP - 52,
+      TREASURE_MAP_RIGHT - TREASURE_MAP_LEFT,
+      TREASURE_MAP_BOTTOM - TREASURE_MAP_TOP + 52
+    );
     context.clip();
 
-    const mapLeft = 46;
-    const mapRight = 1034;
-    const cellSize = 52;
-    context.strokeStyle = rgba(COLORS.cream, 0.075);
-    context.lineWidth = 1.5;
-    context.beginPath();
-    for (let x = mapLeft; x <= mapRight; x += cellSize) {
-      context.moveTo(x, mapTop);
-      context.lineTo(x, mapBottom);
-    }
-    for (let y = mapTop; y <= mapBottom; y += cellSize) {
-      context.moveTo(mapLeft, y);
-      context.lineTo(mapRight, y);
-    }
-    context.stroke();
+    drawQuestGemHalo();
 
-    context.strokeStyle = rgba(accent, 0.065);
-    context.lineWidth = 2;
-    context.beginPath();
-    for (let x = mapLeft; x <= mapRight; x += cellSize * 4) {
-      context.moveTo(x, mapTop);
-      context.lineTo(x, mapBottom);
-    }
-    for (let y = mapTop; y <= mapBottom; y += cellSize * 4) {
-      context.moveTo(mapLeft, y);
-      context.lineTo(mapRight, y);
-    }
-    context.stroke();
-    context.restore();
-  }
-
-  function drawRoute(placements, accent) {
-    if (placements.length < 2) return;
     context.save();
-    context.strokeStyle = accent;
-    context.lineWidth = 8;
-    context.setLineDash([18, 14]);
+    context.translate(540, 690);
+    context.scale(0.88, 0.88);
+    context.translate(-540, -690);
+
+    context.fillStyle = rgba(COLORS.tealDeep, 0.78);
     context.beginPath();
-    placements.forEach(({ point }, index) => {
-      if (index === 0) {
-        context.moveTo(point[0], point[1]);
-        return;
-      }
-      const previous = placements[index - 1].point;
-      const midX = (previous[0] + point[0]) / 2;
-      context.bezierCurveTo(midX, previous[1], midX, point[1], point[0], point[1]);
-    });
+    traceTreasureIsland();
+    context.fill();
+
+    context.save();
+    context.clip();
+    context.fillStyle = rgba(COLORS.charcoalDeep, 0.72);
+    const gridSize = 52;
+    for (let x = 44; x <= 1024; x += gridSize) {
+      context.fillRect(x - 2, 350, 4, 680);
+    }
+    for (let y = 362; y <= 1018; y += gridSize) {
+      context.fillRect(40, y - 2, 1000, 4);
+    }
+    context.restore();
+
+    context.strokeStyle = rgba(COLORS.teal, 0.82);
+    context.lineWidth = 5;
     context.stroke();
+    context.restore();
     context.restore();
   }
 
-  function drawMapLabel(point, placement, index, accent) {
-    const [labelX, labelY] = placement.label;
-    const labelWidth = 285;
-    const labelHeight = 126;
+  function drawDestination(_point, placement, index) {
     const [pointX, pointY] = placement.point;
-
-    context.strokeStyle = rgba(accent, 0.68);
-    context.lineWidth = 3;
-    context.beginPath();
-    context.moveTo(pointX, pointY);
-    context.lineTo(Math.max(labelX, Math.min(pointX, labelX + labelWidth)), Math.max(labelY, Math.min(pointY, labelY + labelHeight)));
-    context.stroke();
-
+    const color = MAP_POINT_COLORS[index % MAP_POINT_COLORS.length];
+    const tileSize = 74;
+    context.fillStyle = rgba(COLORS.charcoalDeep, 0.94);
+    context.fillRect(pointX - tileSize / 2 + 5, pointY - tileSize / 2 + 5, tileSize, tileSize);
     context.fillStyle = COLORS.charcoal;
-    context.fillRect(labelX, labelY, labelWidth, labelHeight);
-    context.strokeStyle = rgba(COLORS.cream, 0.3);
-    context.strokeRect(labelX, labelY, labelWidth, labelHeight);
-    context.fillStyle = accent;
-    context.fillRect(labelX, labelY, 42, 42);
-    drawSingleLine(String(index + 1), labelX + 21, labelY + 8, 38, 25, 20, contrastColor(accent), "center");
-    drawText(point.name, {
-      x: labelX + 54,
-      y: labelY + 9,
-      maxWidth: labelWidth - 64,
-      maxLines: 1,
-      startSize: 25,
-      minSize: 18,
-      lineHeight: 1,
-      weight: 700,
-      family: FONT_READING,
-      color: COLORS.cream
-    });
-    drawText(point.note, {
-      x: labelX + 18,
-      y: labelY + 57,
-      maxWidth: labelWidth - 36,
-      maxLines: 2,
-      startSize: 18,
-      minSize: 15,
-      lineHeight: 1.16,
-      weight: 500,
-      family: FONT_READING,
-      color: rgba(COLORS.cream, 0.72)
-    });
+    context.fillRect(pointX - tileSize / 2, pointY - tileSize / 2, tileSize, tileSize);
+    context.strokeStyle = rgba(color, 0.78);
+    context.lineWidth = 3;
+    context.strokeRect(pointX - tileSize / 2 + 1.5, pointY - tileSize / 2 + 1.5, tileSize - 3, tileSize - 3);
+    drawQuestGem(index, pointX, pointY, 48);
 
+    const badgeSize = 24;
+    context.fillStyle = color;
+    context.fillRect(pointX + 25, pointY - 43, badgeSize, badgeSize);
+    drawSingleLine(String(index + 1), pointX + 37, pointY - 40, 22, 18, 15, contrastColor(color), "center");
+  }
+
+  function drawTreasureLegend(copy, accent) {
+    context.fillStyle = COLORS.charcoal;
+    context.fillRect(0, TREASURE_LEGEND_TOP, WIDTH, HEIGHT - TREASURE_LEGEND_TOP);
     context.fillStyle = accent;
-    context.fillRect(pointX - 18, pointY - 18, 36, 36);
-    context.strokeStyle = COLORS.cream;
-    context.lineWidth = 5;
-    context.strokeRect(pointX - 18, pointY - 18, 36, 36);
+    context.fillRect(28, TREASURE_LEGEND_TOP, 1024, 5);
+
+    const leftCount = Math.ceil(copy.points.length / 2);
+    const columnGap = 42;
+    const columnWidth = (1024 - columnGap) / 2;
+    const rowHeight = 80;
+    const startY = TREASURE_LEGEND_TOP + 22;
+
+    copy.points.forEach((point, index) => {
+      const isRight = index >= leftCount;
+      const rowIndex = isRight ? index - leftCount : index;
+      const x = 28 + (isRight ? columnWidth + columnGap : 0);
+      const y = startY + rowIndex * rowHeight;
+      const color = MAP_POINT_COLORS[index % MAP_POINT_COLORS.length];
+
+      context.fillStyle = color;
+      context.fillRect(x, y + 2, 34, 34);
+      drawSingleLine(String(index + 1), x + 17, y + 7, 30, 22, 17, contrastColor(color), "center");
+      drawText(point.name, {
+        x: x + 48,
+        y,
+        maxWidth: columnWidth - 48,
+        maxLines: 1,
+        startSize: 24,
+        minSize: 18,
+        lineHeight: 1,
+        weight: 700,
+        family: FONT_READING,
+        color: COLORS.cream
+      });
+      drawText(point.note, {
+        x: x + 48,
+        y: y + 31,
+        maxWidth: columnWidth - 48,
+        maxLines: 2,
+        startSize: 16,
+        minSize: 13,
+        lineHeight: 1.08,
+        weight: 500,
+        family: FONT_READING,
+        color: rgba(COLORS.cream, 0.7)
+      });
+    });
   }
 
   function drawMapLayout(copy) {
     const accent = studio.accent;
     context.fillStyle = COLORS.charcoal;
     context.fillRect(0, 0, WIDTH, HEIGHT);
-    drawBrand(54, 26, 138);
-    drawSingleLine("VIBETINERARY / TREASURE MAP", 232, 68, 770, 28, 19, accent);
-    drawSingleLine("PLAYFUL ROUTE / NOT TO SCALE", 232, 108, 770, 21, 15, COLORS.cream);
+    drawBrand(54, 30, 72);
+    drawSingleLine("VIBETINERARY / TREASURE MAP", 142, 50, 868, 28, 19, accent);
 
+    // Keep a two-line title and opening note above the outer gem halo.
+    const hasTwoLineTitle = fittedLines(copy.title, 960, 2, 70, 48, 700, FONT_READING).lines.length > 1;
     const titleEnd = drawText(copy.title, {
       x: 58,
-      y: 190,
+      y: 154,
       maxWidth: 960,
       maxLines: 2,
-      startSize: 78,
-      minSize: 54,
-      lineHeight: 0.98,
+      startSize: hasTwoLineTitle ? 60 : 70,
+      minSize: 48,
+      lineHeight: 1.02,
       weight: 700,
       family: FONT_READING,
       color: COLORS.cream
     });
     drawText(copy.intro, {
       x: 62,
-      y: titleEnd + 20,
+      y: titleEnd + 14,
       maxWidth: 910,
       maxLines: 2,
-      startSize: 25,
-      minSize: 20,
+      startSize: hasTwoLineTitle ? 18 : 22,
+      minSize: 18,
       lineHeight: 1.18,
       weight: 500,
       family: FONT_READING,
       color: rgba(COLORS.cream, 0.78)
     });
 
-    const mapTop = 420;
-    const mapBottom = 1190;
-    context.fillStyle = COLORS.charcoalDeep;
-    context.fillRect(46, mapTop, 988, mapBottom - mapTop);
+    context.fillStyle = COLORS.charcoal;
+    context.fillRect(
+      TREASURE_MAP_LEFT,
+      TREASURE_MAP_TOP,
+      TREASURE_MAP_RIGHT - TREASURE_MAP_LEFT,
+      TREASURE_MAP_BOTTOM - TREASURE_MAP_TOP
+    );
     if (studio.photo) {
       context.save();
       context.beginPath();
-      context.rect(46, mapTop, 988, mapBottom - mapTop);
+      context.rect(
+        TREASURE_MAP_LEFT,
+        TREASURE_MAP_TOP,
+        TREASURE_MAP_RIGHT - TREASURE_MAP_LEFT,
+        TREASURE_MAP_BOTTOM - TREASURE_MAP_TOP
+      );
       context.clip();
-      drawPhotoCover(studio.photo, 46, mapTop, 988, mapBottom - mapTop);
-      context.fillStyle = rgba(COLORS.charcoalDeep, 0.66);
-      context.fillRect(46, mapTop, 988, mapBottom - mapTop);
-      context.fillStyle = rgba(accent, 0.06);
-      context.fillRect(46, mapTop, 988, mapBottom - mapTop);
+      drawPhotoCover(
+        studio.photo,
+        TREASURE_MAP_LEFT,
+        TREASURE_MAP_TOP,
+        TREASURE_MAP_RIGHT - TREASURE_MAP_LEFT,
+        TREASURE_MAP_BOTTOM - TREASURE_MAP_TOP
+      );
+      context.fillStyle = rgba(COLORS.charcoal, 0.8);
+      context.fillRect(
+        TREASURE_MAP_LEFT,
+        TREASURE_MAP_TOP,
+        TREASURE_MAP_RIGHT - TREASURE_MAP_LEFT,
+        TREASURE_MAP_BOTTOM - TREASURE_MAP_TOP
+      );
       context.restore();
     }
-    context.strokeStyle = accent;
-    context.lineWidth = 4;
-    context.strokeRect(46, mapTop, 988, mapBottom - mapTop);
-    drawMapTexture(mapTop, mapBottom, accent);
+    drawTerrainMap(accent);
 
     const placements = mapPlacements(copy.points.length);
-    drawRoute(placements, accent);
-    copy.points.forEach((point, index) => drawMapLabel(point, placements[index], index, accent));
-
-    context.fillStyle = accent;
-    context.fillRect(46, 1190, 988, 104);
-    drawSingleLine("FOLLOW THE SIGNS. WANDER WELL.", 78, 1225, 850, 25, 18, contrastColor(accent));
-    drawSingleLine(`${copy.points.length} / ${MAX_POINTS}`, 990, 1225, 90, 25, 18, contrastColor(accent), "right");
+    copy.points.forEach((point, index) => drawDestination(point, placements[index], index));
+    drawTreasureLegend(copy, accent);
   }
 
   function render() {
@@ -766,12 +939,20 @@
     render();
   });
 
-  window.vvVibetineraryStudio = { render, setWorkshopMode };
+  window.vvVibetineraryStudio = {
+    render,
+    setWorkshopMode,
+    getTreasureMapPoints(count) {
+      return mapPlacements(count).map(({ point }) => [...point]);
+    }
+  };
   window.addEventListener("beforeunload", () => {
     if (studio.photoUrl) URL.revokeObjectURL(studio.photoUrl);
   });
   brandMark.addEventListener("load", render);
   brandMark.src = BRAND_MARK_URL;
+  questMarks.addEventListener("load", render);
+  questMarks.src = QUEST_MARK_URL;
   renderPointEditors();
   updateControlState();
   render();
