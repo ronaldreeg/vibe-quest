@@ -2,7 +2,7 @@
 
 Vibe Quest is a map-first discovery platform for real-world pop-ups, classes, groups, markets, tours, local lore, and other things worth leaving the house for.
 
-Start with [`LAUNCH_READINESS.md`](./LAUNCH_READINESS.md). Operational steps live in [`LAUNCH_RUNBOOK.md`](./LAUNCH_RUNBOOK.md), and backend details live in [`SUPABASE_SETUP.md`](./SUPABASE_SETUP.md).
+Start with [`LAUNCH_READINESS.md`](./LAUNCH_READINESS.md). Operational steps live in [`LAUNCH_RUNBOOK.md`](./LAUNCH_RUNBOOK.md), backend details live in [`SUPABASE_SETUP.md`](./SUPABASE_SETUP.md), and map placement rules live in [`MAP_BEHAVIOR.md`](./MAP_BEHAVIOR.md).
 
 ## What is included
 

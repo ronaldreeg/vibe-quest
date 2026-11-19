@@ -54,6 +54,48 @@ jobs:
           console.log(`Verified ${new Set(references).size} local page assets.`);
           NODE
 
+  browser-checks:
+    if: >-
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install browser test dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run browser journeys
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ github.event_name == 'workflow_run' && 'https://www.vibe-quest.net' || '' }}
+        run: pnpm test:e2e
+
+      - name: Upload browser diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+
   production-smoke:
     if: >-
       github.event_name == 'schedule' ||
@@ -74,6 +116,21 @@ jobs:
           VQ_SUPABASE_URL: https://wyebrsyiauxgoabzigrg.supabase.co
           VQ_PUBLISHABLE_KEY: sb_publishable_6I5XU6xWNs66UnBsEjRViQ_muAuooWJ
         run: |
+          curl --fail --silent --show-error --retry 3 --max-time 20 \
+            "$VQ_SUPABASE_URL/auth/v1/health" \
+            -H "apikey: $VQ_PUBLISHABLE_KEY" | grep -q '"name":"GoTrue"'
+
+          auth_settings=$(curl --fail --silent --show-error --retry 3 --max-time 20 \
+            "$VQ_SUPABASE_URL/auth/v1/settings" \
+            -H "apikey: $VQ_PUBLISHABLE_KEY")
+          AUTH_SETTINGS="$auth_settings" node <<'NODE'
+          const settings = JSON.parse(process.env.AUTH_SETTINGS);
+          if (!settings.external?.email || settings.disable_signup || settings.mailer_autoconfirm) {
+            console.error("Supabase email signup or confirmation settings changed unexpectedly.");
+            process.exit(1);
+          }
+          NODE
+
           curl --fail --silent --show-error --retry 3 --max-time 20 \
             "$VQ_SUPABASE_URL/rest/v1/activities?select=id&status=eq.published&limit=1" \
             -H "apikey: $VQ_PUBLISHABLE_KEY" > /dev/null

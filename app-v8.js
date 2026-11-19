@@ -340,6 +340,14 @@ const CITY_CENTERS = {
   "houston, tx": [29.7604, -95.3698],
   austin: [30.2672, -97.7431],
   "austin, tx": [30.2672, -97.7431],
+  "san antonio": [29.4241, -98.4936],
+  "san antonio, tx": [29.4241, -98.4936],
+  dallas: [32.7767, -96.797],
+  "dallas, tx": [32.7767, -96.797],
+  "new orleans": [29.9511, -90.0715],
+  "new orleans, la": [29.9511, -90.0715],
+  junction: [30.4906, -99.7725],
+  "junction, tx": [30.4906, -99.7725],
   marfa: [30.3095, -104.0206],
   "marfa, tx": [30.3095, -104.0206]
 };
@@ -646,6 +654,126 @@ const DEFAULT_ADVENTURES = [
     ],
     x: 63,
     y: 75
+  },
+  {
+    id: "austin-sunprint-walk",
+    title: "Creekside Sunprint Walk",
+    city: "Austin, TX",
+    area: "South Austin",
+    category: "Classes",
+    type: "Classes",
+    vibes: ["Creative", "Curious", "Chill"],
+    price: "$18",
+    seats: 12,
+    distance: 212,
+    lat: 30.244,
+    lng: -97.761,
+    locationAccuracy: "approximate",
+    listingMode: "recurring",
+    recurringDay: 6,
+    recurringTime: "10:00",
+    photo: "https://images.unsplash.com/photo-1753972295699-d5e017672956?auto=format&fit=crop&w=1200&q=80",
+    host: "Sunprint Social",
+    description: "Gather fallen leaves on a gentle walk, make blue sun prints, and take home a little field guide.",
+    links: [],
+    x: 25,
+    y: 64
+  },
+  {
+    id: "san-antonio-courtyard-clay",
+    title: "Courtyard Clay Night",
+    city: "San Antonio, TX",
+    area: "Southtown",
+    category: "Classes",
+    type: "Classes",
+    vibes: ["Crafty", "Creative", "Chill"],
+    price: "$32",
+    seats: 12,
+    distance: 250,
+    lat: 29.41,
+    lng: -98.49,
+    locationAccuracy: "approximate",
+    listingMode: "recurring",
+    recurringDay: 4,
+    recurringTime: "18:30",
+    photo: "https://images.unsplash.com/photo-1778698992792-3b86bf961a51?auto=format&fit=crop&w=1200&q=80",
+    host: "Clay & Company",
+    description: "Shape a small clay keepsake, swap stories, and spend an easy evening under the courtyard lights.",
+    links: [],
+    x: 20,
+    y: 70
+  },
+  {
+    id: "dallas-pocket-zine-jam",
+    title: "Pocket Zine Jam",
+    city: "Dallas, TX",
+    area: "Deep Ellum",
+    category: "Arts & Music",
+    type: "Arts & Music",
+    vibes: ["Creative", "Curious", "Underground"],
+    price: "Free",
+    seats: 16,
+    distance: 295,
+    lat: 32.785,
+    lng: -96.783,
+    locationAccuracy: "approximate",
+    listingMode: "recurring",
+    recurringDay: 0,
+    recurringTime: "14:00",
+    photo: "https://images.unsplash.com/photo-1781445561924-416a43d56adb?auto=format&fit=crop&w=1200&q=80",
+    host: "Fold & Gather",
+    description: "Cut, collage, and trade mini zines with a laid-back group of local makers. Supplies and beginners welcome.",
+    links: [],
+    x: 38,
+    y: 30
+  },
+  {
+    id: "new-orleans-porch-rhythm",
+    title: "Porch Rhythm Circle",
+    city: "New Orleans, LA",
+    area: "Marigny",
+    category: "Groups",
+    type: "Groups",
+    vibes: ["Groovy", "Creative", "Local Lore"],
+    price: "Free",
+    seats: 20,
+    distance: 350,
+    lat: 29.963,
+    lng: -90.052,
+    locationAccuracy: "approximate",
+    listingMode: "recurring",
+    recurringDay: 5,
+    recurringTime: "19:00",
+    photo: "https://images.unsplash.com/photo-1750110722835-40a46666f14c?auto=format&fit=crop&w=1200&q=80",
+    host: "Lantern Rhythm Club",
+    description: "Bring a beat or just listen: an easy evening of rhythm, neighborly stories, and porch-side music.",
+    links: [],
+    x: 82,
+    y: 62
+  },
+  {
+    id: "junction-pick-and-learn",
+    title: "Pick & Learn Farm Day",
+    city: "Junction, TX",
+    area: "Kimble County countryside",
+    category: "Outdoors",
+    type: "Outdoors",
+    vibes: ["Country", "Wholesome", "Curious"],
+    price: "$24",
+    seats: 12,
+    distance: 360,
+    lat: 30.48,
+    lng: -99.8,
+    locationAccuracy: "approximate",
+    listingMode: "recurring",
+    recurringDay: 6,
+    recurringTime: "09:00",
+    photo: "https://images.unsplash.com/photo-1624668430039-0175a0fbf006?auto=format&fit=crop&w=1200&q=80",
+    host: "Little Prairie Field School",
+    description: "Head out to the countryside, meet a grower, learn what's in season, and pick a basket of vegetables to take home.",
+    links: [],
+    x: 13,
+    y: 51
   }
 ];
 
@@ -1861,6 +1989,8 @@ let outThereMapMarker;
 let mobileMapInteractionEnabled = false;
 const compactMapQuery = window.matchMedia("(max-width: 900px), (pointer: coarse)");
 const MAX_MAP_MARKERS = 150;
+const MAP_MARKER_COLLISION_DISTANCE = 28;
+const MAP_MARKER_SPACING = 32;
 let mapPinchDelta = 0;
 let mapPinchResetTimer;
 let mapViewportRenderTimer;
@@ -2363,15 +2493,118 @@ function initMap() {
   return true;
 }
 
-function markerIcon(adventure) {
+function mapMarkerOffsets(count) {
+  if (count <= 1) return [{ x: 0, y: 0 }];
+  if (count === 2) {
+    return [
+      { x: -MAP_MARKER_SPACING / 2, y: 0 },
+      { x: MAP_MARKER_SPACING / 2, y: 0 }
+    ];
+  }
+  if (count === 3) {
+    return [
+      { x: 0, y: -20 },
+      { x: -18, y: 11 },
+      { x: 18, y: 11 }
+    ];
+  }
+  if (count === 4) {
+    return [
+      { x: 0, y: -23 },
+      { x: 23, y: 0 },
+      { x: 0, y: 23 },
+      { x: -23, y: 0 }
+    ];
+  }
+
+  const columns = Math.ceil(Math.sqrt(count));
+  const rows = Math.ceil(count / columns);
+  const offsets = [];
+  for (let row = 0; row < rows; row += 1) {
+    const remaining = count - row * columns;
+    const itemsInRow = Math.min(columns, remaining);
+    const rowWidth = (itemsInRow - 1) * MAP_MARKER_SPACING;
+    const y = (row - (rows - 1) / 2) * MAP_MARKER_SPACING;
+    for (let column = 0; column < itemsInRow; column += 1) {
+      offsets.push({
+        x: column * MAP_MARKER_SPACING - rowWidth / 2,
+        y
+      });
+    }
+  }
+  return offsets;
+}
+
+function compareMapListings(first, second) {
+  const scheduleOrder = { today: 0, upcoming: 1, anytime: 2 };
+  const firstSchedule = scheduleOrder[getListingSchedule(first).bucket] ?? 3;
+  const secondSchedule = scheduleOrder[getListingSchedule(second).bucket] ?? 3;
+  if (firstSchedule !== secondSchedule) return firstSchedule - secondSchedule;
+
+  const titleOrder = String(first.title || "").localeCompare(String(second.title || ""));
+  if (titleOrder) return titleOrder;
+  return String(first.id || "").localeCompare(String(second.id || ""));
+}
+
+function layoutMapMarkerPoints(points) {
+  if (!map || !points.length) return [];
+  const zoom = map.getZoom();
+  const candidates = points
+    .map((adventure) => ({
+      adventure,
+      point: map.project([adventure.lat, adventure.lng], zoom)
+    }))
+    .sort((first, second) =>
+      first.point.x - second.point.x ||
+      first.point.y - second.point.y ||
+      compareMapListings(first.adventure, second.adventure)
+    );
+
+  const visited = new Set();
+  const groups = [];
+  candidates.forEach((candidate, index) => {
+    if (visited.has(index)) return;
+    visited.add(index);
+    const group = [candidate];
+    const queue = [index];
+
+    while (queue.length) {
+      const currentIndex = queue.shift();
+      candidates.forEach((nearby, nearbyIndex) => {
+        if (visited.has(nearbyIndex)) return;
+        if (candidates[currentIndex].point.distanceTo(nearby.point) > MAP_MARKER_COLLISION_DISTANCE) return;
+        visited.add(nearbyIndex);
+        group.push(nearby);
+        queue.push(nearbyIndex);
+      });
+    }
+    groups.push(group);
+  });
+
+  return groups.flatMap((group) => {
+    const center = L.point(
+      group.reduce((total, item) => total + item.point.x, 0) / group.length,
+      group.reduce((total, item) => total + item.point.y, 0) / group.length
+    );
+    const ordered = [...group].sort((first, second) => compareMapListings(first.adventure, second.adventure));
+    const offsets = mapMarkerOffsets(ordered.length);
+    return ordered.map((item, index) => ({
+      adventure: item.adventure,
+      displayLatLng: map.unproject(center.add(L.point(offsets[index].x, offsets[index].y)), zoom),
+      sharedSpotCount: ordered.length
+    }));
+  });
+}
+
+function markerIcon(adventure, sharedSpotCount = 1) {
   const color = MARKER_STYLE[getListingType(adventure)] || MARKER_STYLE["Pop-ups & Events"];
   const mark = QUEST_MARK_BY_KEY.get(getAdventureQuestMarkKey(adventure)) || QUEST_MARK_BY_KEY.get("puzzle");
   const iconMetrics = questMarkSpriteMetrics(mark, VIBE_ICON_SPRITE_HEIGHT, VIBE_ICON_MAX_WIDTH, VIBE_ICON_CROP_HEIGHT);
   const isToday = getListingSchedule(adventure).bucket === "today";
   return L.divIcon({
-    className: "vv-marker-shell",
+    className: `vv-marker-shell${sharedSpotCount > 1 ? " is-collision-spread" : ""}`,
     html: `
-      <span class="vv-marker ${isToday ? "is-today" : ""}" style="--pin-color:${color}" aria-hidden="true">
+      <span class="vv-marker ${isToday ? "is-today" : ""}" data-shared-spot-count="${sharedSpotCount}" style="--pin-color:${color}" aria-hidden="true">
         <span class="vv-marker-icon" style="--vibe-icon-x:${iconMetrics.offsetX.toFixed(2)}px;--vibe-icon-y:${iconMetrics.offsetY.toFixed(2)}px;--vibe-icon-w:${iconMetrics.width.toFixed(2)}px;--vibe-icon-bg-h:${iconMetrics.backgroundHeight.toFixed(2)}px"></span>
       </span>
     `,
@@ -2394,21 +2627,27 @@ function renderMap(markerAdventures, visibleAdventures = markerAdventures) {
   const visibleIds = new Set(visibleAdventures.map((adventure) => adventure.id));
   const points = [...visibleAdventures, ...markerAdventures.filter((adventure) => !visibleIds.has(adventure.id))]
     .filter((adventure) => Number.isFinite(adventure.lat) && Number.isFinite(adventure.lng));
-  points.slice(0, MAX_MAP_MARKERS).forEach((adventure) => {
+  const markerLayouts = layoutMapMarkerPoints(points.slice(0, MAX_MAP_MARKERS));
+  markerLayouts.forEach(({ adventure, displayLatLng, sharedSpotCount }) => {
     const primaryVibe = getListingVibes(adventure)[0] || "Curious";
-    const marker = L.marker([adventure.lat, adventure.lng], {
-      icon: markerIcon(adventure),
-      title: `${adventure.title} — ${primaryVibe}`,
-      alt: `${adventure.title}, ${primaryVibe}`,
+    const sharedSpotLabel = sharedSpotCount > 1 ? ` — ${sharedSpotCount} listings in this map spot` : "";
+    const marker = L.marker(displayLatLng, {
+      icon: markerIcon(adventure, sharedSpotCount),
+      title: `${adventure.title} — ${primaryVibe}${sharedSpotLabel}`,
+      alt: `${adventure.title}, ${primaryVibe}${sharedSpotLabel}`,
       riseOnHover: true
     })
       .addTo(map)
       .bindPopup(
         `<strong>${escapeHtml(adventure.title)}</strong><br>${escapeHtml(primaryVibe)} · ${escapeHtml(timingLabel(adventure))}<br>${escapeHtml(getListingType(adventure))} · ${escapeHtml(adventure.area)}${
           adventure.locationAccuracy === "approximate" ? "<br><em>Approximate area</em>" : ""
-        }${adventure.isExample ? "<br><em>Example listing</em>" : ""}`
+        }${adventure.isExample ? "<br><em>Example listing</em>" : ""}${
+          sharedSpotCount > 1 ? `<br><em>${sharedSpotCount} listings are grouped at this map spot</em>` : ""
+        }`
       )
-      .bindTooltip(`${escapeHtml(adventure.title)}<br><span>${escapeHtml(primaryVibe)} · ${escapeHtml(timingLabel(adventure))}</span>`, {
+      .bindTooltip(`${escapeHtml(adventure.title)}<br><span>${escapeHtml(primaryVibe)} · ${escapeHtml(timingLabel(adventure))}${
+        sharedSpotCount > 1 ? ` · ${sharedSpotCount} here` : ""
+      }</span>`, {
         className: "vv-map-tooltip",
         direction: "top",
         offset: [0, -12],
@@ -2416,6 +2655,7 @@ function renderMap(markerAdventures, visibleAdventures = markerAdventures) {
       });
     marker.on("click", () => openDetail(adventure.id));
     marker.vvAdventureId = adventure.id;
+    marker.vvSourceLatLng = [adventure.lat, adventure.lng];
     mapMarkers.push(marker);
   });
 
@@ -2465,7 +2705,7 @@ function showAdventureOnMap(id) {
 
   setTimeout(() => {
     if (!map) return;
-    map.setView([adventure.lat, adventure.lng], 16, { animate: true });
+    map.setView([adventure.lat, adventure.lng], adventure.locationAccuracy === "approximate" ? 12 : 16, { animate: true });
     const marker = mapMarkers.find((item) => item.vvAdventureId === id);
     if (marker) marker.openPopup();
   }, 120);

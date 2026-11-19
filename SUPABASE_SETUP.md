@@ -19,9 +19,20 @@ Configured in **Authentication > URL Configuration**:
 
 Add `http://127.0.0.1:4173/` only when a local email-flow test requires it. Remove temporary preview URLs after testing.
 
-Email confirmation is enabled. Before a public launch, configure custom SMTP under **Authentication > Emails > SMTP Settings** using the credentials from the chosen mail provider. A mailbox such as `hello@vibe-quest.net` is not itself an SMTP integration; Supabase needs the server host, port, username, password, sender address, and sender name.
+Email confirmation is enabled. On November 18, 2026, **Authentication > Emails > SMTP Settings** showed custom SMTP enabled with these settings:
 
-After SMTP is configured, test signup confirmation and password recovery from a fresh address on phone and desktop. Disable link tracking in the SMTP provider because rewritten links can break Supabase confirmation URLs.
+- Sender: `Vibe Quest <hello@vibe-quest.net>`
+- Provider host: `mail.privateemail.com`
+- Port: `587` (STARTTLS)
+- Username: `hello@vibe-quest.net`
+
+The stored password is hidden and has not been replaced. On November 19, 2026, signup and recovery test messages were delivered to a Gmail inbox. Private Email requires SMTP to be enabled under **Connect third-party apps** and an application password for the mail client.
+
+Branded signup confirmation and password-reset HTML lives in [`supabase/templates/`](supabase/templates/README.md). Its images are hosted in the public `editorial-media/email/` Storage folder. Both templates and subjects were saved in **Authentication > Emails > Templates** on November 19, 2026. Source-file edits do not update the hosted templates automatically.
+
+The November 18 public DNS check found SPF, MX, and a DKIM key at `privateemail._domainkey.vibe-quest.net`, but no DMARC TXT record at `_dmarc.vibe-quest.net`. Add a DMARC record with the domain's DNS provider before completing the delivery check. A monitoring-only starting policy is `v=DMARC1; p=none`; review authentication results before tightening enforcement.
+
+The user completed the test account password reset on November 19, 2026. Verify sign-in using the new password and complete signup confirmation and password recovery tests on a phone. Gmail showed the delivered signup message was mailed and signed by `vibe-quest.net`; verify SPF, DKIM, and DMARC results in received message headers after DMARC is configured. Disable link tracking if the SMTP provider offers it because rewritten links can break Supabase confirmation URLs.
 
 ## Authorization model
 

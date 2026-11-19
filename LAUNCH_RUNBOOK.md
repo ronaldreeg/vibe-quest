@@ -15,12 +15,26 @@ One person may own all four during the pilot, but the responsibilities must not 
 
 ## Pre-launch gates
 
-1. Configure custom SMTP and test signup confirmation plus password recovery on phone and desktop.
+1. Verify custom SMTP delivery and the installed branded email templates, enable leaked-password protection when available, and test signup confirmation plus password recovery on phone and desktop.
 2. Export the production database and store the encrypted export outside GitHub.
 3. Publish and verify a focused set of current launch listings so the public map does not open empty.
 4. Review open reports and resolve or dismiss every launch-blocking item.
 5. Confirm the latest GitHub Actions runs for **Deploy Vibe Quest** and **Launch health** are green.
 6. Complete the production smoke test below.
+
+## Automated checks
+
+Run the browser suite before every release:
+
+```sh
+pnpm install --frozen-lockfile
+pnpm test:e2e
+PLAYWRIGHT_BASE_URL=https://www.vibe-quest.net pnpm test:e2e
+```
+
+The suite checks the public discovery flow, listing details, New Quest guest flow, Workshop modes, Out There, mobile overflow, and the public Supabase Auth configuration. GitHub Actions repeats the local journeys on pushes, the production journeys after deployment, and lightweight production health checks hourly.
+
+These checks cannot prove that a particular SMTP provider delivered an email. Keep the real-inbox signup, confirmation, and password-recovery steps below as release gates.
 
 ## Production smoke test
 
