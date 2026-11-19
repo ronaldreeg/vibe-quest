@@ -23,26 +23,14 @@ async function renderRealListing(page) {
   }, ACTIVITY_ID);
 }
 
-test("discovery links stay disabled until the service is configured", async ({ page }) => {
-  await renderRealListing(page);
-  const title = page.locator("#adventureGrid .adventure-title-link");
-  await expect(title).toHaveJSProperty("tagName", "BUTTON");
-  const shareUrl = await page.evaluate((id) => activityShareUrl(id), ACTIVITY_ID);
-  expect(new URL(shareUrl).searchParams.get("activity")).toBe(ACTIVITY_ID);
-  await title.click();
-  await expect(page.locator("#detailModal")).toHaveAttribute("open", "");
+test("the directory is linked from the static homepage", async ({ page, request }) => {
+  const response = await request.get("/");
+  expect(await response.text()).toContain(`<a href="${DISCOVERY_ORIGIN}/">Browse all quests</a>`);
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: "Browse all quests" })).toHaveAttribute("href", `${DISCOVERY_ORIGIN}/`);
 });
 
 test("enabled listing links open the modal normally and allow modified navigation", async ({ page }) => {
-  await page.route("**/app-v8.js?*", async (route) => {
-    const response = await route.fetch();
-    const original = await response.text();
-    expect(original).toContain('const DISCOVERY_ORIGIN = "";');
-    await route.fulfill({
-      response,
-      body: original.replace('const DISCOVERY_ORIGIN = "";', `const DISCOVERY_ORIGIN = "${DISCOVERY_ORIGIN}";`)
-    });
-  });
   await renderRealListing(page);
   const card = page.locator("#adventureGrid .adventure-card");
   const title = card.locator(".adventure-title-link");

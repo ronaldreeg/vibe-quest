@@ -357,8 +357,7 @@ const LOCATION_STORAGE_KEY = "vv_location_preference";
 const PUBLIC_SITE_URL = "https://www.vibe-quest.net/";
 const SHARED_ACTIVITY_PARAM = "activity";
 const INCLUDE_EXAMPLE_LISTINGS = true;
-// Set to https://discover.vibe-quest.net only after the discovery service is live.
-const DISCOVERY_ORIGIN = "";
+const DISCOVERY_ORIGIN = "https://discover.vibe-quest.net";
 
 const DEFAULT_ADVENTURES = [
   {
