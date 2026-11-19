@@ -1214,6 +1214,28 @@ textarea:focus {
   font-size: 1.08rem;
 }
 
+.adventure-title-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+
+.adventure-title-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.adventure-detail-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
 .card-body > p {
   display: -webkit-box;
   min-height: 4.5em;

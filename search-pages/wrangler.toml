@@ -1,0 +1,10 @@
+name = "vibe-quest-discover"
+pages_build_output_dir = "./public"
+compatibility_date = "2026-11-19"
+
+[vars]
+PUBLIC_ORIGIN = "https://discover.vibe-quest.net"
+APP_ORIGIN = "https://www.vibe-quest.net"
+SUPABASE_URL = "https://wyebrsyiauxgoabzigrg.supabase.co"
+# This is the same publishable key used by the public browser application.
+SUPABASE_ANON_KEY = "sb_publishable_6I5XU6xWNs66UnBsEjRViQ_muAuooWJ"

@@ -17,8 +17,9 @@ test("discovery filters and activity details work together", async ({ page }) =>
   await expect(page.locator("#adventureGrid .adventure-card").first()).toBeVisible();
 
   const firstCard = page.locator("#adventureGrid .adventure-card").first();
-  await firstCard.focus();
-  await firstCard.press("Enter");
+  const titleControl = firstCard.locator(".adventure-title-link");
+  await titleControl.focus();
+  await titleControl.press("Enter");
   await expect(page.locator("#detailModal")).toHaveAttribute("open", "");
   await expect(page.locator('#detailModal [data-action="share-activity"]')).toBeVisible();
   await expect(page.locator('#detailModal [data-action="copy-activity-link"]')).toBeVisible();

@@ -357,6 +357,8 @@ const LOCATION_STORAGE_KEY = "vv_location_preference";
 const PUBLIC_SITE_URL = "https://www.vibe-quest.net/";
 const SHARED_ACTIVITY_PARAM = "activity";
 const INCLUDE_EXAMPLE_LISTINGS = true;
+// Set to https://discover.vibe-quest.net only after the discovery service is live.
+const DISCOVERY_ORIGIN = "";
 
 const DEFAULT_ADVENTURES = [
   {
@@ -1952,8 +1954,10 @@ function adventureCard(adventure) {
   const saved = getSavedIds().includes(adventure.id);
   const type = getListingType(adventure);
   const vibes = getListingVibes(adventure).slice(0, 3);
+  const discoveryUrl = discoveryActivityUrl(adventure);
+  const detailAction = `data-action="open-detail" data-id="${escapeHtml(adventure.id)}"`;
   return `
-    <article class="adventure-card" style="${styleVars(adventure)}" data-action="open-detail" data-id="${escapeHtml(adventure.id)}" role="button" tabindex="0" aria-label="Open details for ${escapeHtml(adventure.title)}">
+    <article class="adventure-card" style="${styleVars(adventure)}" ${detailAction}>
       <div class="card-art">
         ${photoMarkup(adventure)}
         <div class="badge-row">
@@ -1964,7 +1968,7 @@ function adventureCard(adventure) {
         </div>
       </div>
       <div class="card-body">
-        <h3>${escapeHtml(adventure.title)}</h3>
+        <h3>${discoveryUrl ? `<a class="adventure-title-link" href="${escapeHtml(discoveryUrl)}" ${detailAction}>${escapeHtml(adventure.title)}</a>` : `<button class="adventure-title-link" type="button" ${detailAction}>${escapeHtml(adventure.title)}</button>`}</h3>
         <p>${escapeHtml(adventure.description)}</p>
         <div class="tag-row">
           ${vibes.map((vibe) => `<span class="mini-tag">${escapeHtml(vibe)}</span>`).join("")}
@@ -1974,7 +1978,7 @@ function adventureCard(adventure) {
           <span>Posted by ${escapeHtml(adventure.host)}</span>
         </div>
         <div class="card-actions">
-          <button class="secondary-button" data-action="open-detail" data-id="${adventure.id}">Details</button>
+          ${discoveryUrl ? `<a class="secondary-button adventure-detail-link" href="${escapeHtml(discoveryUrl)}" ${detailAction}>Details</a>` : `<button class="secondary-button" ${detailAction}>Details</button>`}
           <button class="save-button ${saved ? "is-saved" : ""}" data-action="toggle-save" data-id="${adventure.id}" aria-label="${saved ? "Unsave" : "Save"} ${escapeHtml(adventure.title)}">★</button>
         </div>
       </div>
@@ -3594,6 +3598,9 @@ function toast(message) {
 }
 
 function activityShareUrl(id) {
+  const adventure = getAdventures().find((item) => item.id === id);
+  const discoveryUrl = discoveryActivityUrl(adventure);
+  if (discoveryUrl) return discoveryUrl;
   const isLocalPreview = window.location.protocol === "file:"
     || ["localhost", "127.0.0.1"].includes(window.location.hostname);
   const url = new URL(isLocalPreview ? PUBLIC_SITE_URL : window.location.href);
@@ -3601,6 +3608,12 @@ function activityShareUrl(id) {
   url.hash = "";
   url.searchParams.set(SHARED_ACTIVITY_PARAM, id);
   return url.toString();
+}
+
+function discoveryActivityUrl(adventure) {
+  if (!DISCOVERY_ORIGIN || !state.backendEnabled || !adventure || adventure.isExample
+      || !isUuid(adventure.id) || !isListingLive(adventure)) return "";
+  return `${DISCOVERY_ORIGIN.replace(/\/+$/, "")}/activities/${encodeURIComponent(adventure.id)}`;
 }
 
 async function copyShareUrl(url) {
@@ -5472,7 +5485,13 @@ document.addEventListener("click", async (event) => {
   if (action === "close-field-note") await closeFieldNoteEditor({ reopenProfile: true });
   if (action === "remove-field-note-media") removeFieldNoteMediaSelection(target);
   if (action === "toggle-save") await toggleSave(target.dataset.id);
-  if (action === "open-detail") openDetail(target.dataset.id);
+  if (action === "open-detail") {
+    if (target instanceof HTMLAnchorElement) {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+    }
+    openDetail(target.dataset.id);
+  }
   if (action === "close-detail") els.detailModal.close();
   if (action === "show-on-map") showAdventureOnMap(target.dataset.id);
   if (action === "share-activity") await shareActivity(target.dataset.id);
@@ -5532,11 +5551,6 @@ document.addEventListener("keydown", (event) => {
     els.mobileNavToggle?.focus();
     return;
   }
-  if (event.key !== "Enter" && event.key !== " ") return;
-  const card = event.target.closest?.('.adventure-card[data-action="open-detail"]');
-  if (!card || event.target !== card) return;
-  event.preventDefault();
-  openDetail(card.dataset.id);
 });
 
 document.addEventListener("error", (event) => {
