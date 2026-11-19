@@ -33,7 +33,7 @@ Do not announce a broad public launch until the manual launch gates below are co
 
 ## Manual launch gates
 
-- [ ] Add DMARC and complete the phone and post-reset sign-in tests. The branded templates are saved in Supabase; on November 19, signup and password-reset test emails arrived, signup confirmation and sign-in worked, and the user completed the password reset for the test account.
+- [ ] Complete the phone and post-reset sign-in tests. The branded templates are saved in Supabase; on November 19, signup and password-reset test emails arrived, signup confirmation and sign-in worked, and the user completed the password reset for the test account. A fresh recovery email passed SPF, DKIM, and DMARC in Gmail.
 - [ ] Enable leaked-password protection if the current Supabase plan supports it, and confirm the managed-backup plan before launch.
 - [ ] Assign a named person to monitor reports and `hello@vibe-quest.net`, with the response expectations in `LAUNCH_RUNBOOK.md`.
 - [x] Publish a small, current, verified launch set alongside the retained, clearly labeled examples. On November 19, three upcoming events were added with links to their organizers; review them for changes before launch and refresh the set as dates pass.

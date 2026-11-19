@@ -30,9 +30,9 @@ The stored password is hidden and has not been replaced. On November 19, 2026, s
 
 Branded signup confirmation and password-reset HTML lives in [`supabase/templates/`](supabase/templates/README.md). Its images are hosted in the public `editorial-media/email/` Storage folder. Both templates and subjects were saved in **Authentication > Emails > Templates** on November 19, 2026. Source-file edits do not update the hosted templates automatically.
 
-The November 18 public DNS check found SPF, MX, and a DKIM key at `privateemail._domainkey.vibe-quest.net`, but no DMARC TXT record at `_dmarc.vibe-quest.net`. Add a DMARC record with the domain's DNS provider before completing the delivery check. A monitoring-only starting policy is `v=DMARC1; p=none`; review authentication results before tightening enforcement.
+SPF, MX, and a DKIM key at `privateemail._domainkey.vibe-quest.net` are published. On November 19, a TXT record `v=DMARC1; p=none` was added at `_dmarc.vibe-quest.net` and verified on authoritative and public DNS servers. This policy does not ask receivers to reject or quarantine failed mail. It contains no `rua` reporting address, so it does not request aggregate reports; add a suitable reporting destination before relying on reports to monitor delivery.
 
-The user completed the test account password reset on November 19, 2026. Verify sign-in using the new password and complete signup confirmation and password recovery tests on a phone. Gmail showed the delivered signup message was mailed and signed by `vibe-quest.net`; verify SPF, DKIM, and DMARC results in received message headers after DMARC is configured. Disable link tracking if the SMTP provider offers it because rewritten links can break Supabase confirmation URLs.
+The user completed the test account password reset on November 19, 2026. A new recovery email sent after DMARC was published passed SPF, DKIM, and DMARC in Gmail. Verify sign-in using the new password and complete signup confirmation and password recovery tests on a phone. Disable link tracking if the SMTP provider offers it because rewritten links can break Supabase confirmation URLs.
 
 ## Authorization model
 
