@@ -144,4 +144,4 @@ jobs:
             "$VQ_SUPABASE_URL/functions/v1/geocode" \
             -H "apikey: $VQ_PUBLISHABLE_KEY" \
             -H "content-type: application/json" \
-            --data '{"action":"search","query":"Austin, TX"}' > /dev/null
+            --data '{"action":"search","query":"Austin, TX","sensitive":false}' > /dev/null

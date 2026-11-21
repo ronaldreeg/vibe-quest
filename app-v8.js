@@ -3244,39 +3244,59 @@ function render() {
   renderProfileLists();
 }
 
-async function fetchGeocodeResults(location, limit = 5) {
+async function invokeGeocode(body) {
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const { data, error } = await window.vvSupabase.functions.invoke("geocode", { body });
+    if (!error) return data;
+    const response = error.context;
+    if (response?.status === 429 && attempt < 3) {
+      const details = await response.clone().json().catch(() => ({}));
+      if (Number.isFinite(details.retryAfterMs) && details.retryAfterMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, Math.min(1500, details.retryAfterMs + 100)));
+        continue;
+      }
+    }
+    throw new Error("Location search is temporarily unavailable. Please try again in a moment.");
+  }
+  throw new Error("Location search is temporarily unavailable. Please try again in a moment.");
+}
+
+async function fetchGeocodeResults(location, limit = 5, { sensitive = true } = {}) {
   const query = String(location || "").trim();
   if (!query) return [];
   const cacheKey = `${normalize(query)}:${limit}`;
-  if (geocodeCache.has(cacheKey)) return geocodeCache.get(cacheKey);
+  if (!sensitive && geocodeCache.has(cacheKey)) return geocodeCache.get(cacheKey);
 
   if (window.vvSupabase) {
     try {
-      const { data, error } = await window.vvSupabase.functions.invoke("geocode", {
-        body: { action: "search", query, limit }
-      });
-      if (!error && Array.isArray(data?.results)) {
-        geocodeCache.set(cacheKey, data.results);
+      const data = await invokeGeocode({ action: "search", query, limit, sensitive });
+      if (Array.isArray(data?.results)) {
+        if (!sensitive) geocodeCache.set(cacheKey, data.results);
         return data.results;
       }
+      throw new Error("Location search is temporarily unavailable. Please try again in a moment.");
     } catch {
-      // The local preview fallback below keeps design work usable if the function is offline.
+      const isLocalPreview = window.location.protocol === "file:"
+        || ["localhost", "127.0.0.1"].includes(window.location.hostname);
+      if (!isLocalPreview || sensitive) {
+        throw new Error("Location search is temporarily unavailable. Please try again in a moment.");
+      }
     }
   }
 
   const isLocalPreview = window.location.protocol === "file:"
     || ["localhost", "127.0.0.1"].includes(window.location.hostname);
-  if (!isLocalPreview) return [];
+  if (!isLocalPreview || sensitive) throw new Error("Location search is temporarily unavailable. Please try again in a moment.");
   try {
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=us&limit=${limit}&q=${encodeURIComponent(query)}`
     );
-    if (!response.ok) return [];
+    if (!response.ok) throw new Error("Location service unavailable");
     const results = await response.json();
     geocodeCache.set(cacheKey, Array.isArray(results) ? results : []);
     return geocodeCache.get(cacheKey);
   } catch {
-    return [];
+    throw new Error("Location search is temporarily unavailable. Please try again in a moment.");
   }
 }
 
@@ -3298,10 +3318,8 @@ function formatReverseGeocodeLabel(address = {}) {
 async function reverseGeocodeLocation(latitude, longitude) {
   if (window.vvSupabase) {
     try {
-      const { data, error } = await window.vvSupabase.functions.invoke("geocode", {
-        body: { action: "reverse", latitude, longitude }
-      });
-      if (!error && data?.result) {
+      const data = await invokeGeocode({ action: "reverse", latitude, longitude, sensitive: true });
+      if (data?.result) {
         return formatReverseGeocodeLabel(data.result.address || {});
       }
     } catch {
@@ -3418,8 +3436,12 @@ async function initializeLocation() {
 async function geocodeFreeformLocation(location) {
   const known = knownCenterForLocation(location);
   if (known) return known;
-  const [result] = await fetchGeocodeResults(location, 1);
-  if (result?.lat && result?.lon) return [Number(result.lat), Number(result.lon)];
+  try {
+    const [result] = await fetchGeocodeResults(location, 1, { sensitive: looksLikeStreetAddress(location) });
+    if (result?.lat && result?.lon) return [Number(result.lat), Number(result.lon)];
+  } catch {
+    return null;
+  }
   return null;
 }
 
@@ -3482,20 +3504,46 @@ function shortGeocodeLabel(result) {
     .trim();
 }
 
-async function geocodeListingLocation(location, city) {
+async function geocodeListingLocation(location, city, { sensitive = false } = {}) {
   const cleanLocation = String(location || "").trim();
   const cleanCity = String(city || "").trim();
   if (!cleanLocation || !cleanCity) {
     return { ok: false, message: "Add both a place or address and its city." };
   }
+  if (looksLikeStreetAddress(cleanCity)) {
+    return { ok: false, message: "Enter a city and state in the city field, and put the street address in the location field." };
+  }
 
-  const cityResults = await fetchGeocodeResults(cleanCity, 3);
-  const cityResult = cityResults.find((result) => BROAD_GEOCODE_TYPES.has(geocodeType(result))) || cityResults[0];
-  const cityBounds = geocodeBounds(cityResult);
+  let cityResults;
+  let candidates;
   const combinedQuery = normalize(cleanLocation).includes(normalize(cleanCity))
     ? cleanLocation
     : `${cleanLocation}, ${cleanCity}`;
-  const candidates = await fetchGeocodeResults(combinedQuery, 5);
+  try {
+    cityResults = await fetchGeocodeResults(cleanCity, 3, { sensitive: false });
+  } catch {
+    return { ok: false, message: "We could not find that city right now. Enter it as city, state (for example, Austin, TX), or try again later." };
+  }
+  if (sensitive) {
+    const cityMatch = cityResults.find((result) => ["city", "town", "village", "municipality"].includes(geocodeType(result))
+      && Number.isFinite(Number(result.lat)) && Number.isFinite(Number(result.lon)));
+    if (!cityMatch) return { ok: false, message: "We could not verify that city for a private meetup. Enter a city and state, then try again." };
+    // The exact address is retained as private text; it never goes to a geocoder.
+    return {
+      ok: true, lat: Number(cityMatch.lat), lng: Number(cityMatch.lon), accuracy: "approximate",
+      requiresConfirmation: false, label: `${cleanCity} area`,
+      message: `Your public pin will show the ${cleanCity} area. Your exact address stays private; check it for accuracy.`
+    };
+  }
+  try {
+    candidates = await fetchGeocodeResults(combinedQuery, 5, { sensitive });
+  } catch {
+    return { ok: false, message: !sensitive && !looksLikeStreetAddress(cleanLocation)
+      ? "Location search is temporarily unavailable for named places. Try the full street address, or try again later."
+      : "Location search is temporarily unavailable. Please try again in a moment." };
+  }
+  const cityResult = cityResults.find((result) => BROAD_GEOCODE_TYPES.has(geocodeType(result))) || cityResults[0];
+  const cityBounds = geocodeBounds(cityResult);
   const ranked = candidates
     .map((result) => ({ result, score: candidateScore(result, cleanLocation, cleanCity, cityBounds) }))
     .filter((candidate) => Number.isFinite(candidate.score))
@@ -4511,7 +4559,7 @@ function updateLocationPrivacyUi() {
   const help = document.querySelector("#locationHelp");
   if (!help) return;
   help.textContent = isPrivate
-    ? "The exact address is stored privately for you and Vibe Quest admins. Everyone else sees an offset pin and your city area; use a signup or contact link to share arrival details."
+    ? "Your address is private to you and Vibe Quest admins. The public pin shows a general point within the city, which may be far away. Keep the address out of public descriptions, photos, and links."
     : "Use a named venue, park, landmark, or full address. Broader areas will be shown as approximate.";
 }
 
@@ -4806,12 +4854,22 @@ async function uploadRemoteActivityPhoto(activityId, dataUrl) {
   return path;
 }
 
+// Storage can return success with no deleted objects when RLS hides them.
+// Keep their listing and media records unless every requested removal is confirmed.
+async function removeActivityPhotos(paths) {
+  if (!paths.length) return;
+  const { data, error } = await window.vvSupabase.storage.from("activity-media").remove(paths);
+  if (error) throw error;
+  if (!Array.isArray(data) || data.length !== paths.length) {
+    throw new Error("activity-photo-removal-unconfirmed");
+  }
+}
+
 async function saveRemoteActivity(adventure, existing, photoDataUrl) {
   const user = getCurrentUser();
   if (!user) throw new Error("auth-required");
-  const photoPath = photoDataUrl
-    ? await uploadRemoteActivityPhoto(adventure.id, photoDataUrl)
-    : existing?.photoPath || "";
+  let photoPath = existing?.photoPath || "";
+  let createdDraft = false;
   const record = {
     id: adventure.id,
     owner_id: user.id,
@@ -4835,15 +4893,33 @@ async function saveRemoteActivity(adventure, existing, photoDataUrl) {
     recurring_time: adventure.recurringTime || null,
     time_zone: adventure.timeZone || "America/Chicago",
     last_confirmed_at: existing?.lastConfirmedAt || new Date().toISOString(),
-    status: existing?.status || "published",
+    // An unpublished draft grants the owner permission to upload before it
+    // appears publicly. Publish only once all associated content is ready.
+    status: existing?.status || "draft",
     cover_photo_path: photoPath || null
   };
-  let activityResult;
   try {
-    activityResult = existing
+    const attachPhoto = async () => {
+      if (!photoDataUrl) return;
+      photoPath = await uploadRemoteActivityPhoto(adventure.id, photoDataUrl);
+      const { error: mediaError } = await window.vvSupabase.from("activity_media").insert({
+        activity_id: adventure.id,
+        uploaded_by: user.id,
+        storage_path: photoPath,
+        alt_text: `${adventure.title} at ${adventure.area}`,
+        moderation_status: "approved"
+      });
+      if (mediaError) throw mediaError;
+    };
+    // For an edit, ensure the new photo is available before changing any
+    // listing fields or links. New listings first need an owned draft row.
+    if (existing) await attachPhoto();
+    const activityResult = existing
       ? await window.vvSupabase.from("activities").update(record).eq("id", existing.id).eq("owner_id", user.id).select("*").single()
       : await window.vvSupabase.from("activities").insert(record).select("*").single();
     if (activityResult.error) throw activityResult.error;
+    createdDraft = !existing;
+    if (createdDraft) await attachPhoto();
 
     if (adventure.locationVisibility === "private" && adventure.privateLocation) {
       const { error: privateLocationError } = await window.vvSupabase
@@ -4882,35 +4958,59 @@ async function saveRemoteActivity(adventure, existing, photoDataUrl) {
       );
       if (linkError) throw linkError;
     }
-    if (photoDataUrl && photoPath) {
-      const { error: mediaError } = await window.vvSupabase.from("activity_media").insert({
-        activity_id: adventure.id,
-        uploaded_by: user.id,
-        storage_path: photoPath,
-        alt_text: `${adventure.title} at ${adventure.area}`,
-        moderation_status: "approved"
-      });
-      if (mediaError) throw mediaError;
+    if (createdDraft || photoDataUrl) {
+      const { error: publishError } = await window.vvSupabase.from("activities")
+        .update({ cover_photo_path: photoPath || null, ...(createdDraft ? { status: "published" } : {}) })
+        .eq("id", adventure.id).eq("owner_id", user.id).select("id").single();
+      if (publishError) throw publishError;
     }
   } catch (error) {
+    let cleanupFailed = false;
     if (photoPath && photoPath !== existing?.photoPath) {
-      await window.vvSupabase.storage.from("activity-media").remove([photoPath]).catch(() => {});
+      try {
+        await removeActivityPhotos([photoPath]);
+        const { error: mediaError } = await window.vvSupabase.from("activity_media").delete()
+          .eq("activity_id", adventure.id).eq("storage_path", photoPath);
+        if (mediaError) throw mediaError;
+      } catch (cleanupError) {
+        cleanupFailed = true;
+        console.warn("Could not clean up an unfinished activity photo.", cleanupError);
+      }
+    }
+    // Keep the draft if its file could not be removed: the storage policy
+    // requires the listing to exist for the owner to clean up its media.
+    if (createdDraft && !cleanupFailed) {
+      try {
+        const { error: draftError } = await window.vvSupabase.from("activities").delete()
+          .eq("id", adventure.id).eq("owner_id", user.id);
+        if (draftError) throw draftError;
+      } catch (cleanupError) {
+        cleanupFailed = true;
+        console.warn("Could not clean up an unfinished activity draft.", cleanupError);
+      }
+    }
+    if (cleanupFailed && createdDraft) {
+      // Preserve the file path even when media registration failed, so a
+      // later attempt to delete the draft can still locate the upload.
+      if (photoPath) {
+        const { error: rememberPhotoError } = await window.vvSupabase.from("activities")
+          .update({ cover_photo_path: photoPath }).eq("id", adventure.id).eq("owner_id", user.id);
+        if (rememberPhotoError) console.warn("Could not record the unfinished photo path.", rememberPhotoError);
+      }
+      await loadRemoteOwnedActivities().catch(() => {});
+      throw new Error("activity-draft-cleanup-failed", { cause: error });
     }
     throw error;
   }
   if (photoDataUrl && existing?.photoPath && existing.photoPath !== photoPath) {
-    const { error: oldMediaError } = await window.vvSupabase
-      .from("activity_media")
-      .delete()
-      .eq("activity_id", adventure.id)
-      .eq("storage_path", existing.photoPath);
-    if (oldMediaError) {
-      console.warn("Could not remove the replaced activity media record.", oldMediaError);
-    } else {
-      const { error: oldPhotoError } = await window.vvSupabase.storage
-        .from("activity-media")
-        .remove([existing.photoPath]);
-      if (oldPhotoError) console.warn("Could not remove the replaced activity photo.", oldPhotoError);
+    // Retain the media record if storage deletion fails so it can be retried.
+    try {
+      await removeActivityPhotos([existing.photoPath]);
+      const { error: oldMediaError } = await window.vvSupabase.from("activity_media").delete()
+        .eq("activity_id", adventure.id).eq("storage_path", existing.photoPath);
+      if (oldMediaError) console.warn("Could not remove the replaced activity media record.", oldMediaError);
+    } catch (oldPhotoError) {
+      console.warn("Could not remove the replaced activity photo.", oldPhotoError);
     }
   }
   await Promise.all([loadRemoteActivities(), loadRemoteOwnedActivities()]);
@@ -5077,18 +5177,17 @@ async function removeRemoteActivity(adventure) {
   (mediaRows || []).forEach((media) => {
     if (media.storage_path) mediaPaths.add(media.storage_path);
   });
+  // Storage permissions are tied to the activity, so remove files while its
+  // row still exists. Keep the post if storage fails so deletion is retryable.
+  if (mediaPaths.size) {
+    await removeActivityPhotos([...mediaPaths]);
+  }
   const { error } = await window.vvSupabase
     .from("activities")
     .delete()
     .eq("id", adventure.id)
     .eq("owner_id", user.id);
   if (error) throw error;
-  if (mediaPaths.size) {
-    const { error: storageError } = await window.vvSupabase.storage
-      .from("activity-media")
-      .remove([...mediaPaths]);
-    if (storageError) console.warn("Could not remove every photo for the deleted activity.", storageError);
-  }
   await Promise.all([loadRemoteActivities(), loadRemoteOwnedActivities(), loadRemoteSavedIds()]);
 }
 
@@ -5179,7 +5278,7 @@ async function publishAdventure(event) {
   els.hostSubmitButton.disabled = true;
   try {
     setLocationFeedback("Checking this location against the map...", "checking");
-    const geocode = await geocodeListingLocation(location, city);
+    const geocode = await geocodeListingLocation(location, city, { sensitive: locationVisibility === "private" });
     if (!geocode.ok) {
       updateHostFormMode();
       setLocationFeedback(geocode.message, "error");
@@ -5242,8 +5341,8 @@ async function publishAdventure(event) {
       privateLocation: locationVisibility === "private" ? {
         locationName: location,
         locationQuery: `${location}, ${city}`,
-        lat: exactCenter[0],
-        lng: exactCenter[1]
+        lat: null,
+        lng: null
       } : null,
       photo: uploadedPhoto || existing?.photo || "",
       links,
@@ -5259,9 +5358,17 @@ async function publishAdventure(event) {
     if (state.backendEnabled) {
       try {
         await saveRemoteActivity(adventure, existing, uploadedPhoto);
-      } catch {
-        setLocationFeedback("We could not save this activity to the shared map yet. Please try again.", "error");
-        toast("Your activity could not be published yet.");
+      } catch (error) {
+        if (existing) {
+          await Promise.all([loadRemoteActivities(), loadRemoteOwnedActivities()]).catch(() => {});
+        }
+        const message = error?.message === "activity-draft-cleanup-failed"
+          ? "Your post was not published. An unfinished draft remains under My Posts; please delete it before trying again."
+          : existing
+            ? "We could not finish saving. Some changes may have been saved; check your post before trying again."
+            : "We could not save this activity to the shared map yet. Please try again.";
+        setLocationFeedback(message, "error");
+        toast(message);
         return;
       }
       const wasEditing = Boolean(existing);

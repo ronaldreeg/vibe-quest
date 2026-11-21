@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.50.0";
+import censusPlaces from "./census-places-2025.json" with { type: "json" };
 
 const ALLOWED_ORIGINS = new Set([
   "https://vibe-quest.net",
@@ -37,6 +38,35 @@ function normalizeQuery(value: unknown) {
 function finiteNumber(value: unknown) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+// US Census 2025 Gazetteer internal points. This is an exact city lookup,
+// never a guessed address or venue match. Ambiguous names require a state.
+const STATE_ABBREVIATIONS: Record<string, string> = {
+  alabama: "AL", alaska: "AK", arizona: "AZ", arkansas: "AR", california: "CA", colorado: "CO", connecticut: "CT",
+  delaware: "DE", "district of columbia": "DC", florida: "FL", georgia: "GA", hawaii: "HI", idaho: "ID", illinois: "IL",
+  indiana: "IN", iowa: "IA", kansas: "KS", kentucky: "KY", louisiana: "LA", maine: "ME", maryland: "MD",
+  massachusetts: "MA", michigan: "MI", minnesota: "MN", mississippi: "MS", missouri: "MO", montana: "MT", nebraska: "NE",
+  nevada: "NV", "new hampshire": "NH", "new jersey": "NJ", "new mexico": "NM", "new york": "NY",
+  "north carolina": "NC", "north dakota": "ND", ohio: "OH", oklahoma: "OK", oregon: "OR", pennsylvania: "PA",
+  "rhode island": "RI", "south carolina": "SC", "south dakota": "SD", tennessee: "TN", texas: "TX", utah: "UT",
+  vermont: "VT", virginia: "VA", washington: "WA", "west virginia": "WV", wisconsin: "WI", wyoming: "WY", "puerto rico": "PR",
+};
+
+function censusCity(query: string) {
+  const parts = query.split(",").map((part) => part.trim().toLocaleLowerCase("en-US"));
+  if (parts.length > 2 || !parts[0]) return null;
+  const state = parts[1] ? (STATE_ABBREVIATIONS[parts[1]] || parts[1].toUpperCase()) : "";
+  if (state && !/^[A-Z]{2}$/.test(state)) return null;
+  const matches = censusPlaces.filter(([name, region]) => String(name).toLocaleLowerCase("en-US") === parts[0]
+    && (!state || region === state));
+  if (matches.length !== 1) return null;
+  const [name, region, lat, lon] = matches[0];
+  return {
+    lat: String(lat), lon: String(lon), name, display_name: `${name}, ${region}, United States`,
+    type: "city", addresstype: "city", importance: 1,
+    address: { city: name, state_code: `US-${region}`, country: "United States", country_code: "us" },
+  };
 }
 
 function photonFeatureToPlace(feature: Record<string, any>) {
@@ -160,14 +190,19 @@ Deno.serve(async (request: Request) => {
 
   let cacheKey = "";
   let upstreamUrl = "";
+  let fallbackUrl = "";
   let responseKey = "";
   let provider = "photon";
+  // Private addresses must not be stored in the shared query cache or sent to
+  // an additional provider. Existing Census/Photon lookups still apply.
+  const sensitive = body?.sensitive !== false;
 
   if (action === "search") {
     const query = normalizeQuery(body?.query);
     const limit = Math.min(8, Math.max(1, Math.round(finiteNumber(body?.limit) || 5)));
     if (query.length < 2) return json(request, { error: "Enter a longer location" }, 400);
-    cacheKey = `v2:search:${query.toLocaleLowerCase("en-US")}:${limit}`;
+    cacheKey = `v3:search:${query.toLocaleLowerCase("en-US")}:${limit}`;
+    fallbackUrl = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=us&limit=${limit}&q=${encodeURIComponent(query)}`;
     if (/^\s*\d{1,7}\s+\S+/.test(query)) {
       provider = "census";
       upstreamUrl = `https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?benchmark=Public_AR_Current&format=json&address=${encodeURIComponent(query)}`;
@@ -192,7 +227,7 @@ Deno.serve(async (request: Request) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const { data: cached } = await admin
+  const { data: cached } = sensitive ? { data: null } : await admin
     .from("geocode_cache")
     .select("response")
     .eq("cache_key", cacheKey)
@@ -203,22 +238,41 @@ Deno.serve(async (request: Request) => {
     return json(request, { [responseKey]: cached.response, cached: true });
   }
 
+  if (action === "search" && !sensitive) {
+    const place = censusCity(normalizeQuery(body?.query));
+    if (place) {
+      const response = [place];
+      const { error } = await admin.from("geocode_cache").upsert({
+        cache_key: cacheKey, action, response, created_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 7 * 86400000).toISOString(),
+      });
+      if (error) {
+        console.error("geocode cache write failed", error);
+        return json(request, { error: "Location search is temporarily unavailable" }, 503);
+      }
+      return json(request, { results: response, cached: false });
+    }
+  }
+
   const forwardedFor = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   const userAgent = request.headers.get("user-agent") || "unknown";
   const dailySalt = new Date().toISOString().slice(0, 10);
   const clientHash = await sha256(`${dailySalt}|${forwardedFor}|${userAgent}`);
-  const { data: reservation, error: reservationError } = await admin.rpc("reserve_geocode_request", {
-    p_client_hash: clientHash,
-  });
+  async function reserveRequest() {
+    const { data, error } = await admin.rpc("reserve_geocode_request", { p_client_hash: clientHash });
+    if (error) {
+      console.error("geocode reservation failed", error);
+      return json(request, { error: "Location search is temporarily unavailable" }, 503);
+    }
+    if (data === -1) return json(request, { error: "Too many location searches. Try again shortly." }, 429);
+    if (Number(data) > 0) {
+      return json(request, { error: "Location search is busy. Try again in a moment.", retryAfterMs: data }, 429);
+    }
+    return null;
+  }
 
-  if (reservationError) {
-    console.error("geocode reservation failed", reservationError);
-    return json(request, { error: "Location search is temporarily unavailable" }, 503);
-  }
-  if (reservation === -1) return json(request, { error: "Too many location searches. Try again shortly." }, 429);
-  if (Number(reservation) > 0) {
-    return json(request, { error: "Location search is busy. Try again in a moment.", retryAfterMs: reservation }, 429);
-  }
+  const reservationError = await reserveRequest();
+  if (reservationError) return reservationError;
 
   try {
     const upstream = await fetch(upstreamUrl, {
@@ -228,27 +282,50 @@ Deno.serve(async (request: Request) => {
         "Referer": "https://www.vibe-quest.net/",
         "User-Agent": "VibeQuest/1.0 (https://www.vibe-quest.net; hello@vibe-quest.net)",
       },
-    });
-    if (!upstream.ok) {
-      console.error("geocode upstream failed", upstream.status);
-      return json(request, { error: "Location service did not respond" }, 502);
+      signal: AbortSignal.timeout(8000),
+    }).catch(() => null);
+    let places: Record<string, any>[] = [];
+    if (upstream?.ok) {
+      const payload = await upstream.json();
+      places = provider === "census"
+        ? (Array.isArray(payload?.result?.addressMatches) ? payload.result.addressMatches.map(censusMatchToPlace).filter(Boolean) : [])
+        : (Array.isArray(payload?.features) ? payload.features.map(photonFeatureToPlace).filter(Boolean)
+          .filter((place: Record<string, any>) => place.address?.country_code === "us") : []);
+    } else {
+      console.error("geocode upstream failed", provider, upstream?.status || "network error");
     }
 
-    const payload = await upstream.json();
-    const places = provider === "census"
-      ? (Array.isArray(payload?.result?.addressMatches)
-        ? payload.result.addressMatches.map(censusMatchToPlace).filter(Boolean)
-        : [])
-      : (Array.isArray(payload?.features)
-        ? payload.features
-          .map(photonFeatureToPlace)
-          .filter(Boolean)
-          .filter((place: Record<string, any>) => place.address?.country_code === "us")
-        : []);
+    if (action === "search" && !sensitive && (!upstream?.ok || places.length === 0)) {
+      // A second reservation is required: globally no more than one request a
+      // second may reach the public Nominatim service, even under concurrency.
+      let fallbackReservationError = await reserveRequest();
+      for (let attempt = 0; fallbackReservationError?.status === 429 && attempt < 3; attempt++) {
+        const body = await fallbackReservationError.clone().json();
+        if (!Number.isFinite(body.retryAfterMs)) break;
+        await new Promise((resolve) => setTimeout(resolve, Math.min(1500, body.retryAfterMs + 100)));
+        fallbackReservationError = await reserveRequest();
+      }
+      if (fallbackReservationError) return fallbackReservationError;
+      const fallback = await fetch(fallbackUrl, { headers: {
+        "Accept": "application/json",
+        "Accept-Language": "en-US,en;q=0.8",
+        "Referer": "https://www.vibe-quest.net/",
+        "User-Agent": "VibeQuest/1.0 (https://www.vibe-quest.net; hello@vibe-quest.net)",
+      }, signal: AbortSignal.timeout(8000) });
+      if (!fallback.ok) {
+        console.error("geocode fallback failed", fallback.status);
+        return json(request, { error: "Location search is temporarily unavailable" }, 503);
+      }
+      const payload = await fallback.json();
+      if (!Array.isArray(payload)) return json(request, { error: "Location search is temporarily unavailable" }, 503);
+      places = payload;
+    } else if (!upstream?.ok) {
+      return json(request, { error: "Location search is temporarily unavailable" }, 503);
+    }
     const response = action === "search" ? places.slice(0, 8) : (places[0] || {});
     const expiresAt = new Date(Date.now() + (action === "search" ? 7 : 30) * 86400000).toISOString();
 
-    const { error: cacheError } = await admin.from("geocode_cache").upsert({
+    const { error: cacheError } = sensitive ? { error: null } : await admin.from("geocode_cache").upsert({
       cache_key: cacheKey,
       action,
       response,
