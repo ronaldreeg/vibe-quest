@@ -31,12 +31,12 @@ test('shows a clean drawing surface while keeping empty badge pixels transparent
   await page.locator('[data-icon-template="blank"]').click();
   const shell = page.locator('.icon-canvas-shell');
   await expect(shell).toHaveCSS('background-image', 'none');
-  await expect(shell).toHaveCSS('background-color', 'rgb(243, 233, 196)');
+  await expect(shell).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
   const canvas = page.locator('#iconCanvas');
   const blank = await canvas.evaluate(el => Array.from(el.getContext('2d').getImageData(32, 32, 1, 1).data));
   expect(blank).toEqual([0, 0, 0, 0]);
   await page.locator('[data-icon-shape="circle"]').click();
-  await page.locator('[data-icon-stamp-size="2x2"]').click();
+  await page.locator('#iconBrushSize').fill('2');
   const box = await canvas.boundingBox();
   await canvas.click({ position: { x: box.width * 4.5 / 16, y: box.height * 4.5 / 16 } });
   // A cell boundary through the circle should be as solid as the adjacent pixels.
@@ -124,7 +124,7 @@ test('retains a multi-cell circle when the grid is enlarged, and undo restores a
   await openStudio(page);
   await page.locator('[data-icon-template="blank"]').click();
   await page.locator('[data-icon-shape="circle"]').click();
-  await page.locator('[data-icon-stamp-size="2x2"]').click();
+  await page.locator('#iconBrushSize').fill('2');
   const canvas = page.locator('#iconCanvas');
   const box = await canvas.boundingBox();
   await canvas.click({ position: { x: box.width * 4.5 / 16, y: box.height * 4.5 / 16 } });
@@ -144,10 +144,28 @@ test('retains a multi-cell circle when the grid is enlarged, and undo restores a
   expect(await Promise.all(samples.map(([x,y]) => badgePixel(page, x, y)))).toEqual(original);
 });
 
+test('brush size slider makes larger stamps and stays within the current grid', async ({ page }) => {
+  await openStudio(page);
+  await page.locator('[data-icon-template="blank"]').click();
+  const slider = page.getByLabel('Brush size');
+  await slider.fill('4');
+  await expect(slider).toHaveAttribute('aria-valuetext', '4 by 4 cells');
+  await expect(page.locator('#iconBrushSizeValue')).toHaveText('4 × 4 cells');
+  const canvas = page.locator('#iconCanvas');
+  const box = await canvas.boundingBox();
+  await canvas.click({ position: { x: box.width * 2.5 / 16, y: box.height * 2.5 / 16 } });
+  expect((await badgePixel(page, 175, 175))[3]).toBe(255);
+  expect((await badgePixel(page, 200, 200))[3]).toBe(0);
+  await page.locator('#iconBrushStretch').check();
+  await expect(slider).toHaveAttribute('aria-valuetext', '4 by 8 cells');
+  await page.locator('[data-icon-size="8"]').click();
+  await expect(slider).toHaveAttribute('max', '4');
+});
+
 test('rotates a rectangular stamp to cover the correct cells', async ({ page }) => {
   await openStudio(page);
   await page.locator('[data-icon-template="blank"]').click();
-  await page.locator('[data-icon-stamp-size="1x2"]').click();
+  await page.locator('#iconBrushStretch').check();
   await page.locator('[data-icon-action="rotate"]').click();
   const canvas = page.locator('#iconCanvas');
   const box = await canvas.boundingBox();
@@ -162,7 +180,7 @@ test('fill recolors connected shape pieces without changing their geometry', asy
   await openStudio(page);
   await page.locator('[data-icon-template="blank"]').click();
   await page.locator('[data-icon-shape="circle"]').click();
-  await page.locator('[data-icon-stamp-size="2x2"]').click();
+  await page.locator('#iconBrushSize').fill('2');
   const canvas = page.locator('#iconCanvas');
   const box = await canvas.boundingBox();
   await canvas.click({ position: { x: box.width * 4.5 / 16, y: box.height * 4.5 / 16 } });

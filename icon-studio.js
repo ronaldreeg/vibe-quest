@@ -13,6 +13,9 @@
   const cropY = document.querySelector('#iconCropY');
   const pixelate = document.querySelector('#iconPixelate');
   const custom = document.querySelector('#iconCustomColor');
+  const brushSize = document.querySelector('#iconBrushSize');
+  const brushSizeValue = document.querySelector('#iconBrushSizeValue');
+  const brushStretch = document.querySelector('#iconBrushStretch');
   const C = { o: '#fa622e', y: '#f8d23d', c: '#f3e9c4', t: '#0f8fb1', d: '#2f3035', p: '#f45077' };
   const patterns = {
     spark: ['................','.......yy.......','.......yy.......','......yyyy......','......yyyy......','.....yyyyyy.....','..yyyyyyyyyyyy..','..yyyyyyyyyyyy..','.....yyyyyy.....','......yyyy......','......yyyy......','.......yy.......','.......yy.......','................','................','................'],
@@ -43,7 +46,14 @@
     panel.querySelectorAll('[data-icon-tool]').forEach(b => { const active = b.dataset.iconTool === state.tool; b.classList.toggle('is-active', active); b.setAttribute('aria-pressed', String(active)); });
     panel.querySelectorAll('[data-icon-shape]').forEach(b => { const active = b.dataset.iconShape === state.shape; b.classList.toggle('is-active', active); b.setAttribute('aria-pressed', String(active)); const svg = b.querySelector('svg'); if (svg) svg.style.transform = `rotate(${state.rotation}deg)`; });
     panel.querySelectorAll('[data-icon-size]').forEach(b => { const active = Number(b.dataset.iconSize) === state.size; b.classList.toggle('is-active', active); b.setAttribute('aria-pressed', String(active)); });
-    panel.querySelectorAll('[data-icon-stamp-size]').forEach(b => { const active = b.dataset.iconStampSize === state.stampSize; b.classList.toggle('is-active', active); b.setAttribute('aria-pressed', String(active)); });
+    const maxBrushSize = Math.min(8, Math.floor(state.size / (brushStretch.checked ? 2 : 1)));
+    brushSize.max = String(maxBrushSize);
+    const brushCells = Math.min(Number(brushSize.value), maxBrushSize);
+    brushSize.value = String(brushCells);
+    const brushRows = brushCells * (brushStretch.checked ? 2 : 1);
+    state.stampSize = `${brushCells}x${brushRows}`;
+    brushSizeValue.textContent = `${brushCells} × ${brushRows} ${brushRows === 1 ? 'cell' : 'cells'}`;
+    brushSize.setAttribute('aria-valuetext', `${brushCells} by ${brushRows} ${brushRows === 1 ? 'cell' : 'cells'}`);
     const label = document.querySelector('#iconGridSizeLabel'); if (label) label.textContent = `${state.size} × ${state.size} grid`;
     const rotation = panel.querySelector('[data-icon-action="rotate"]'); if (rotation) rotation.setAttribute('aria-label', `Rotate shape clockwise. Current rotation ${state.rotation} degrees.`);
   }
@@ -61,8 +71,14 @@
     state.pixels = Array.from({ length: size * size }, (_, i) => {
       const newX = i % size, newY = Math.floor(i / size), scale = old / size;
       const x = Math.floor(newX * scale), y = Math.floor(newY * scale);
-      const p = source[y * old + x];
-      return p && { ...p, x: newX - (x - p.x) / scale, y: newY - (y - p.y) / scale, cols: p.cols / scale, rows: p.rows / scale };
+      const layers = [];
+      for (let p = source[y * old + x]; p; p = p.under) layers.push(p);
+      let result = null;
+      for (let j = layers.length - 1; j >= 0; j--) {
+        const p = layers[j];
+        result = { ...p, under: result, x: newX - (x - p.x) / scale, y: newY - (y - p.y) / scale, cols: p.cols / scale, rows: p.rows / scale };
+      }
+      return result;
     });
     state.size = size; state.cursorX = Math.min(size - 1, Math.floor(state.cursorX * size / old)); state.cursorY = Math.min(size - 1, Math.floor(state.cursorY * size / old));
     updateControls(); render();
@@ -100,7 +116,11 @@
       } else o.drawImage(image, x, y, side, side, 0, 0, 512, 512);
     } else {
       const cell = 512 / state.size;
-      state.pixels.forEach((p, i) => { if (p) drawPiece(o, p, i % state.size, Math.floor(i / state.size), cell); });
+      state.pixels.forEach((p, i) => {
+        const layers = [];
+        for (; p; p = p.under) layers.push(p);
+        for (let j = layers.length - 1; j >= 0; j--) drawPiece(o, layers[j], i % state.size, Math.floor(i / state.size), cell);
+      });
     }
     return out;
   }
@@ -125,7 +145,16 @@
       let [cols, rows] = state.stampSize.split('x').map(Number);
       if (state.rotation % 180) [cols, rows] = [rows, cols];
       for (let dy = 0; dy < rows && y + dy < size; dy++) for (let dx = 0; dx < cols && x + dx < size; dx++) {
-        state.pixels[(y + dy) * size + x + dx] = state.tool === 'eraser' ? null : piece(state.color, state.shape, state.rotation, dx, dy, cols, rows);
+        const index = (y + dy) * size + x + dx;
+        const previous = state.pixels[index];
+        if (state.tool === 'eraser') { state.pixels[index] = null; continue; }
+        const sameShape = previous && previous.shape === state.shape && previous.rotation === state.rotation &&
+          previous.x === dx && previous.y === dy && previous.cols === cols && previous.rows === rows;
+        if (sameShape && previous.color === state.color) continue;
+        // A square covers the whole cell, and an identical shape replaces its earlier
+        // layer. Avoid retaining hidden layers during long brush strokes.
+        const under = state.shape === 'square' ? null : (sameShape ? previous.under : previous);
+        state.pixels[index] = { ...piece(state.color, state.shape, state.rotation, dx, dy, cols, rows), under };
       }
     }
     render();
@@ -151,12 +180,11 @@
     else if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (!state.image) snapshot(); edit(state.cursorX, state.cursorY); }
   });
   panel.addEventListener('click', async e => {
-    const target = e.target.closest('[data-icon-template], [data-icon-color], [data-icon-tool], [data-icon-shape], [data-icon-size], [data-icon-stamp-size], [data-icon-action]'); if (!target) return;
+    const target = e.target.closest('[data-icon-template], [data-icon-color], [data-icon-tool], [data-icon-shape], [data-icon-size], [data-icon-action]'); if (!target) return;
     if (target.dataset.iconTemplate) { template(target.dataset.iconTemplate); return; }
     if (target.dataset.iconColor) { state.color = target.dataset.iconColor; custom.value = state.color; }
     if (target.dataset.iconTool) state.tool = target.dataset.iconTool;
     if (target.dataset.iconShape && shapes.includes(target.dataset.iconShape)) { state.shape = target.dataset.iconShape; state.tool = 'pencil'; }
-    if (target.dataset.iconStampSize && ['1x1','2x2','1x2'].includes(target.dataset.iconStampSize)) state.stampSize = target.dataset.iconStampSize;
     if (target.dataset.iconSize) { resize(Number(target.dataset.iconSize)); return; }
     if (target.dataset.iconAction === 'rotate') { state.rotation = (state.rotation + 90) % 360; say(`Shape rotated to ${state.rotation} degrees.`); }
     if (target.dataset.iconAction === 'undo') {
@@ -170,6 +198,7 @@
     updateControls();
   });
   custom.addEventListener('input', () => { state.color = custom.value; updateControls(); });
+  [brushSize, brushStretch].forEach(el => el.addEventListener('input', updateControls));
   upload.addEventListener('change', () => {
     const file = upload.files?.[0]; if (!file) return;
     if (!['image/png','image/jpeg','image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) { say('Choose a PNG, JPG, or WebP image under 5 MB.'); upload.value = ''; return; }

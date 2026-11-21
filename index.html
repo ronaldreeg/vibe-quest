@@ -35,7 +35,7 @@
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" integrity="sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK" crossorigin="anonymous" />
     <link rel="stylesheet" href="./styles.css?v=20261119-discovery-links-v1" />
     <link rel="stylesheet" href="./badge-styles.css?v=20261121-v1" />
-    <link rel="stylesheet" href="./icon-studio.css?v=20261121-clean-canvas-v3" />
+    <link rel="stylesheet" href="./icon-studio.css?v=20261121-brush-v4" />
 </head>
   <body>
     <div class="app-shell">
@@ -917,11 +917,12 @@
                     <button class="icon-shape-button" type="button" data-icon-shape="curved" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16A16 16 0 0 0 4 4z"/></svg><span>Curve</span></button>
                   </div>
                   <div class="icon-brush-controls">
-                    <div><span class="icon-brush-label">Brush size</span><div class="icon-choice-row" role="group" aria-label="Brush size">
-                      <button class="secondary-button is-active" type="button" data-icon-stamp-size="1x1" aria-pressed="true">1 × 1</button>
-                      <button class="secondary-button" type="button" data-icon-stamp-size="2x2" aria-pressed="false">2 × 2</button>
-                      <button class="secondary-button" type="button" data-icon-stamp-size="1x2" aria-pressed="false">1 × 2</button>
-                    </div></div>
+                    <div class="icon-brush-size">
+                      <div class="icon-brush-size-heading"><label class="icon-brush-label" for="iconBrushSize">Brush size</label><output id="iconBrushSizeValue" for="iconBrushSize">1 × 1 cells</output></div>
+                      <input id="iconBrushSize" type="range" min="1" max="8" step="1" value="1" aria-valuetext="1 by 1 cells" />
+                      <div class="icon-brush-size-ends" aria-hidden="true"><span>Small</span><span>Large</span></div>
+                      <label class="icon-stretch"><input id="iconBrushStretch" type="checkbox" /> Tall shape</label>
+                    </div>
                     <button class="secondary-button icon-rotate" type="button" data-icon-action="rotate" aria-label="Rotate brush shape 90 degrees">↻ Rotate</button>
                   </div>
                 </fieldset>
@@ -1231,6 +1232,6 @@
   <script src="./flyer-studio.js?v=20261013-deep-accents-v1"></script>
   <script src="./vibetinerary-studio.js?v=20261121-icon-studio-v1"></script>
   <script src="./vibe-code-studio.js?v=20260925-flyer-logo-v1"></script>
-  <script src="./icon-studio.js?v=20261121-clean-canvas-v3"></script>
+  <script src="./icon-studio.js?v=20261121-brush-v4"></script>
 </body>
 </html>
