@@ -822,6 +822,10 @@ const state = {
   accountBusy: false,
   pendingReportId: null,
   editingAdventureId: null,
+  pendingBadgeBlob: null,
+  pendingBadgeDataUrl: "",
+  badgeRemoved: false,
+  badgeBusy: false,
   pendingDeleteId: null,
   outThereSlideIndex: 0,
   outThereFallback: null,
@@ -1115,6 +1119,8 @@ function mapRemoteActivity(row, linkRows, profileMap) {
     lng: Number(row.longitude),
     photo: publicActivityPhoto(row.cover_photo_path),
     photoPath: row.cover_photo_path || "",
+    badge: publicActivityPhoto(row.badge_storage_path),
+    badgePath: row.badge_storage_path || "",
     host,
     description: row.description,
     links,
@@ -1815,6 +1821,11 @@ function photoMarkup(adventure, className = "card-photo") {
   return `<img class="${className}" src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" loading="${loading}" decoding="async" />`;
 }
 
+function questBadgeMarkup(adventure, className = "quest-custom-badge") {
+  const src = safeImageSrc(adventure.badge);
+  return src ? `<img class="${className}" src="${escapeHtml(src)}" alt="" loading="lazy" decoding="async" />` : "";
+}
+
 function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -1959,6 +1970,7 @@ function adventureCard(adventure) {
     <article class="adventure-card" style="${styleVars(adventure)}" ${detailAction}>
       <div class="card-art">
         ${photoMarkup(adventure)}
+        ${questBadgeMarkup(adventure)}
         <div class="badge-row">
           ${adventure.isExample ? `<span class="badge example-badge">Example</span>` : ""}
           <span class="badge timing-badge">${escapeHtml(timingLabel(adventure))}</span>
@@ -2643,7 +2655,7 @@ function renderMap(markerAdventures, visibleAdventures = markerAdventures) {
     })
       .addTo(map)
       .bindPopup(
-        `<strong>${escapeHtml(adventure.title)}</strong><br>${escapeHtml(primaryVibe)} · ${escapeHtml(timingLabel(adventure))}<br>${escapeHtml(getListingType(adventure))} · ${escapeHtml(adventure.area)}${
+        `${questBadgeMarkup(adventure, "quest-map-popup-badge")}<strong>${escapeHtml(adventure.title)}</strong><br>${escapeHtml(primaryVibe)} · ${escapeHtml(timingLabel(adventure))}<br>${escapeHtml(getListingType(adventure))} · ${escapeHtml(adventure.area)}${
           adventure.locationAccuracy === "approximate" ? "<br><em>Approximate area</em>" : ""
         }${adventure.isExample ? "<br><em>Example listing</em>" : ""}${
           sharedSpotCount > 1 ? `<br><em>${sharedSpotCount} listings are grouped at this map spot</em>` : ""
@@ -4113,7 +4125,7 @@ function openDetail(id) {
     `
     : "";
   els.detailContent.innerHTML = `
-    <div class="detail-hero" style="${styleVars(adventure)}">${photoMarkup(adventure, "detail-photo")}</div>
+    <div class="detail-hero" style="${styleVars(adventure)}">${photoMarkup(adventure, "detail-photo")}${questBadgeMarkup(adventure)}</div>
     ${adventure.isExample ? `
       <div class="example-listing-note">
         <strong>Example listing</strong>
@@ -4660,7 +4672,62 @@ function updateLocationPrivacyUi() {
     : "Use a named venue, park, landmark, or full address. Broader areas will be shown as approximate.";
 }
 
+let badgeSelectionVersion = 0;
+
+function renderQuestBadgeSelection() {
+  const preview = document.querySelector("#questBadgePreview");
+  const remove = document.querySelector("#questBadgeRemove");
+  if (!preview || !remove) return;
+  const existing = state.editingAdventureId ? getStoredAdventure(state.editingAdventureId) : null;
+  const src = state.pendingBadgeDataUrl || (!state.badgeRemoved ? safeImageSrc(existing?.badge) : "");
+  preview.innerHTML = src ? `<img src="${escapeHtml(src)}" alt="Selected quest badge" />` : "<span>No badge selected</span>";
+  remove.hidden = !src;
+}
+
+async function selectQuestBadge(input) {
+  const selection = ++badgeSelectionVersion;
+  state.badgeBusy = true;
+  try {
+    if (!(input instanceof Blob) || !input.size || !["image/png", "image/jpeg", "image/webp"].includes(input.type)) {
+      throw new Error("Choose a PNG, JPG, or WebP badge.");
+    }
+    if (input.size > MAX_UPLOAD_BYTES) throw new Error(`Choose a badge under ${MAX_UPLOAD_MEGABYTES} MB.`);
+    const objectUrl = URL.createObjectURL(input);
+    let image;
+    try { image = await loadImage(objectUrl); } finally { URL.revokeObjectURL(objectUrl); }
+    const width = image.naturalWidth || image.width;
+    const height = image.naturalHeight || image.height;
+    if (!width || !height) throw new Error("We could not read that image.");
+    const scale = Math.min(1, 512 / Math.max(width, height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(width * scale));
+    canvas.height = Math.max(1, Math.round(height * scale));
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("We could not prepare that badge.");
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const blob = await canvasToBlob(canvas, "image/png");
+    if (!blob || blob.type !== "image/png") throw new Error("We could not prepare that badge.");
+    const dataUrl = await fileToDataUrl(blob);
+    if (selection !== badgeSelectionVersion) return;
+    state.pendingBadgeBlob = blob;
+    state.pendingBadgeDataUrl = dataUrl;
+    state.badgeRemoved = false;
+    renderQuestBadgeSelection();
+    return true;
+  } catch (error) {
+    if (selection === badgeSelectionVersion) toast(error.message || "We could not read that badge.");
+    return false;
+  } finally {
+    if (selection === badgeSelectionVersion) state.badgeBusy = false;
+  }
+}
+
 function resetHostForm() {
+  badgeSelectionVersion++;
+  state.pendingBadgeBlob = null;
+  state.pendingBadgeDataUrl = "";
+  state.badgeRemoved = false;
+  state.badgeBusy = false;
   state.editingAdventureId = null;
   els.hostForm.reset();
   els.questMarkInput.dataset.manual = "false";
@@ -4680,6 +4747,7 @@ function resetHostForm() {
   updateScheduleFields();
   updateLocationPrivacyUi();
   renderQuestMarkPicker();
+  renderQuestBadgeSelection();
   delete els.hostForm.dataset.approximateLocationKey;
   setLocationFeedback();
   updateHostFormMode();
@@ -4951,6 +5019,14 @@ async function uploadRemoteActivityPhoto(activityId, dataUrl) {
   return path;
 }
 
+async function uploadRemoteQuestBadge(activityId, blob) {
+  const path = `${getCurrentUser().id}/${activityId}/badge-${crypto.randomUUID()}.png`;
+  const { error } = await window.vvSupabase.storage.from("activity-media")
+    .upload(path, blob, { cacheControl: "31536000", contentType: "image/png", upsert: false });
+  if (error) throw error;
+  return path;
+}
+
 // Storage can return success with no deleted objects when RLS hides them.
 // Keep their listing and media records unless every requested removal is confirmed.
 async function removeActivityPhotos(paths) {
@@ -4962,11 +5038,13 @@ async function removeActivityPhotos(paths) {
   }
 }
 
-async function saveRemoteActivity(adventure, existing, photoDataUrl) {
+async function saveRemoteActivity(adventure, existing, photoDataUrl, badgeBlob, removeBadge) {
   const user = getCurrentUser();
   if (!user) throw new Error("auth-required");
   let photoPath = existing?.photoPath || "";
+  let badgePath = existing?.badgePath || "";
   let createdDraft = false;
+  let badgeCommitAttempted = false;
   const record = {
     id: adventure.id,
     owner_id: user.id,
@@ -4993,7 +5071,8 @@ async function saveRemoteActivity(adventure, existing, photoDataUrl) {
     // An unpublished draft grants the owner permission to upload before it
     // appears publicly. Publish only once all associated content is ready.
     status: existing?.status || "draft",
-    cover_photo_path: photoPath || null
+    cover_photo_path: photoPath || null,
+    badge_storage_path: badgePath || null
   };
   try {
     const attachPhoto = async () => {
@@ -5008,15 +5087,25 @@ async function saveRemoteActivity(adventure, existing, photoDataUrl) {
       });
       if (mediaError) throw mediaError;
     };
+    const attachBadge = async () => {
+      if (badgeBlob) badgePath = await uploadRemoteQuestBadge(adventure.id, badgeBlob);
+      else if (removeBadge) badgePath = "";
+    };
     // For an edit, ensure the new photo is available before changing any
     // listing fields or links. New listings first need an owned draft row.
-    if (existing) await attachPhoto();
+    if (existing) {
+      await attachPhoto();
+      await attachBadge();
+    }
     const activityResult = existing
       ? await window.vvSupabase.from("activities").update(record).eq("id", existing.id).eq("owner_id", user.id).select("*").single()
       : await window.vvSupabase.from("activities").insert(record).select("*").single();
     if (activityResult.error) throw activityResult.error;
     createdDraft = !existing;
-    if (createdDraft) await attachPhoto();
+    if (createdDraft) {
+      await attachPhoto();
+      await attachBadge();
+    }
 
     if (adventure.locationVisibility === "private" && adventure.privateLocation) {
       const { error: privateLocationError } = await window.vvSupabase
@@ -5055,13 +5144,28 @@ async function saveRemoteActivity(adventure, existing, photoDataUrl) {
       );
       if (linkError) throw linkError;
     }
-    if (createdDraft || photoDataUrl) {
+    if (createdDraft || photoDataUrl || badgeBlob || removeBadge) {
+      badgeCommitAttempted = Boolean(badgeBlob);
       const { error: publishError } = await window.vvSupabase.from("activities")
-        .update({ cover_photo_path: photoPath || null, ...(createdDraft ? { status: "published" } : {}) })
+        .update({ cover_photo_path: photoPath || null, badge_storage_path: badgePath || null, ...(createdDraft ? { status: "published" } : {}) })
         .eq("id", adventure.id).eq("owner_id", user.id).select("id").single();
       if (publishError) throw publishError;
     }
   } catch (error) {
+    // A network failure can hide a successful commit. Never delete an upload
+    // that the listing may already reference, or delete a published draft.
+    if (badgeCommitAttempted && badgePath) {
+      let preserveUpload = true;
+      try {
+        const { data, error: readError } = await window.vvSupabase.from("activities")
+          .select("badge_storage_path").eq("id", adventure.id).eq("owner_id", user.id).maybeSingle();
+        if (!readError && data) preserveUpload = data.badge_storage_path === badgePath;
+      } catch { /* A failed read leaves the outcome uncertain. */ }
+      if (preserveUpload) {
+        await Promise.all([loadRemoteActivities(), loadRemoteOwnedActivities()]).catch(() => {});
+        throw new Error("activity-save-unconfirmed", { cause: error });
+      }
+    }
     let cleanupFailed = false;
     if (photoPath && photoPath !== existing?.photoPath) {
       try {
@@ -5069,9 +5173,19 @@ async function saveRemoteActivity(adventure, existing, photoDataUrl) {
         const { error: mediaError } = await window.vvSupabase.from("activity_media").delete()
           .eq("activity_id", adventure.id).eq("storage_path", photoPath);
         if (mediaError) throw mediaError;
+        photoPath = "";
       } catch (cleanupError) {
         cleanupFailed = true;
         console.warn("Could not clean up an unfinished activity photo.", cleanupError);
+      }
+    }
+    if (badgeBlob && badgePath && badgePath !== existing?.badgePath) {
+      try {
+        await removeActivityPhotos([badgePath]);
+        badgePath = "";
+      } catch (cleanupError) {
+        cleanupFailed = true;
+        console.warn("Could not clean up an unfinished quest badge.", cleanupError);
       }
     }
     // Keep the draft if its file could not be removed: the storage policy
@@ -5089,9 +5203,9 @@ async function saveRemoteActivity(adventure, existing, photoDataUrl) {
     if (cleanupFailed && createdDraft) {
       // Preserve the file path even when media registration failed, so a
       // later attempt to delete the draft can still locate the upload.
-      if (photoPath) {
+      if (photoPath || badgePath) {
         const { error: rememberPhotoError } = await window.vvSupabase.from("activities")
-          .update({ cover_photo_path: photoPath }).eq("id", adventure.id).eq("owner_id", user.id);
+          .update({ cover_photo_path: photoPath || null, badge_storage_path: badgePath || null }).eq("id", adventure.id).eq("owner_id", user.id);
         if (rememberPhotoError) console.warn("Could not record the unfinished photo path.", rememberPhotoError);
       }
       await loadRemoteOwnedActivities().catch(() => {});
@@ -5109,6 +5223,10 @@ async function saveRemoteActivity(adventure, existing, photoDataUrl) {
     } catch (oldPhotoError) {
       console.warn("Could not remove the replaced activity photo.", oldPhotoError);
     }
+  }
+  if ((badgeBlob || removeBadge) && existing?.badgePath && existing.badgePath !== badgePath) {
+    try { await removeActivityPhotos([existing.badgePath]); }
+    catch (error) { console.warn("Could not remove the replaced quest badge.", error); }
   }
   await Promise.all([loadRemoteActivities(), loadRemoteOwnedActivities()]);
 }
@@ -5204,6 +5322,11 @@ async function editPost(id) {
   }
 
   state.editingAdventureId = id;
+  badgeSelectionVersion++;
+  state.pendingBadgeBlob = null;
+  state.pendingBadgeDataUrl = "";
+  state.badgeRemoved = false;
+  state.badgeBusy = false;
   const form = els.hostForm.elements;
   form.title.value = adventure.title || "";
   const legacyCombinedLocation = isPlaceholderArea(adventure.area) && !adventure.locationQuery;
@@ -5235,6 +5358,7 @@ async function editPost(id) {
   updateScheduleFields();
   updateLocationPrivacyUi();
   renderQuestMarkPicker();
+  renderQuestBadgeSelection();
 
   updateHostFormMode();
   els.detailModal.close();
@@ -5265,7 +5389,23 @@ function cancelDeletePost() {
 async function removeRemoteActivity(adventure) {
   const user = getCurrentUser();
   if (!user) throw new Error("auth-required");
-  const mediaPaths = new Set(adventure.photoPath ? [adventure.photoPath] : []);
+  const mediaPaths = new Set([adventure.photoPath, adventure.badgePath].filter(Boolean));
+  // A replaced or failed badge upload may have survived an earlier storage
+  // outage without a database pointer. Find all badges for this listing while
+  // its ownership policy still permits listing and deleting its objects.
+  const prefix = `${user.id}/${adventure.id}`;
+  const pageSize = 100;
+  for (let offset = 0; ; offset += pageSize) {
+    const { data: files, error: listError } = await window.vvSupabase.storage
+      .from("activity-media").list(prefix, { limit: pageSize, offset, sortBy: { column: "name", order: "asc" } });
+    if (listError || !Array.isArray(files)) throw listError || new Error("activity-badge-list-unavailable");
+    files.forEach((file) => {
+      if (/^badge-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.png$/.test(file.name || "")) {
+        mediaPaths.add(`${prefix}/${file.name}`);
+      }
+    });
+    if (files.length < pageSize) break;
+  }
   const { data: mediaRows, error: mediaLookupError } = await window.vvSupabase
     .from("activity_media")
     .select("storage_path")
@@ -5339,6 +5479,10 @@ async function confirmDeletePost() {
 async function publishAdventure(event) {
   event.preventDefault();
   if (!requireUser("Create a profile before sharing an activity.")) return;
+  if (state.badgeBusy) {
+    toast("Your badge is still being prepared. Try posting again in a moment.");
+    return;
+  }
   const user = getCurrentUser();
   const data = new FormData(els.hostForm);
   const submittedLinkInputs = hostLinkInputs(null, els.hostForm);
@@ -5442,6 +5586,7 @@ async function publishAdventure(event) {
         lng: null
       } : null,
       photo: uploadedPhoto || existing?.photo || "",
+      badge: state.pendingBadgeDataUrl || (state.badgeRemoved ? "" : existing?.badge || ""),
       links,
       linkUrl: links[0]?.url || "",
       host: user.name,
@@ -5454,12 +5599,14 @@ async function publishAdventure(event) {
     };
     if (state.backendEnabled) {
       try {
-        await saveRemoteActivity(adventure, existing, uploadedPhoto);
+        await saveRemoteActivity(adventure, existing, uploadedPhoto, state.pendingBadgeBlob, state.badgeRemoved);
       } catch (error) {
         if (existing) {
           await Promise.all([loadRemoteActivities(), loadRemoteOwnedActivities()]).catch(() => {});
         }
-        const message = error?.message === "activity-draft-cleanup-failed"
+        const message = error?.message === "activity-save-unconfirmed"
+          ? "We could not confirm whether your post was saved. Check My Posts before trying again."
+          : error?.message === "activity-draft-cleanup-failed"
           ? "Your post was not published. An unfinished draft remains under My Posts; please delete it before trying again."
           : existing
             ? "We could not finish saving. Some changes may have been saved; check your post before trying again."
@@ -5582,6 +5729,26 @@ document.addEventListener("click", async (event) => {
   }
 
   const action = target.dataset.action;
+  if (action === "open-badge-studio") {
+    if (!window.vvVibetineraryStudio?.setWorkshopMode) {
+      toast("The badge workshop is still loading. Try again in a moment.");
+      return;
+    }
+    setView("share");
+    window.vvVibetineraryStudio.setWorkshopMode("icon");
+    return;
+  }
+  if (action === "remove-quest-badge") {
+    badgeSelectionVersion++;
+    state.pendingBadgeBlob = null;
+    state.pendingBadgeDataUrl = "";
+    state.badgeRemoved = true;
+    state.badgeBusy = false;
+    const input = document.querySelector("#questBadgeFile");
+    if (input) input.value = "";
+    renderQuestBadgeSelection();
+    return;
+  }
   if (action === "select-quest-mark") {
     const key = target.dataset.questMark;
     if (QUEST_MARK_BY_KEY.has(key)) {
@@ -5787,6 +5954,19 @@ els.fieldNoteModal.addEventListener("cancel", (event) => {
   closeFieldNoteEditor({ reopenProfile: true });
 });
 els.hostForm.addEventListener("submit", publishAdventure);
+document.querySelector("#questBadgeFile")?.addEventListener("change", async (event) => {
+  const input = event.currentTarget;
+  const file = input.files?.[0];
+  if (file) await selectQuestBadge(file);
+  input.value = "";
+});
+window.addEventListener("vibe-icon-selected", async (event) => {
+  if (await selectQuestBadge(event.detail?.blob)) {
+    setView("host");
+    document.querySelector("#questBadgePreview")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    toast("Badge added to your quest. Finish the post when you're ready.");
+  }
+});
 els.hostForm.addEventListener("change", (event) => {
   const input = event.target;
   if (input instanceof HTMLInputElement && input.name === "listingMode") {

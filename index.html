@@ -34,7 +34,9 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous" />
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" integrity="sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK" crossorigin="anonymous" />
     <link rel="stylesheet" href="./styles.css?v=20261119-discovery-links-v1" />
-  </head>
+    <link rel="stylesheet" href="./badge-styles.css?v=20261121-v1" />
+    <link rel="stylesheet" href="./icon-studio.css?v=20261121-v1" />
+</head>
   <body>
     <div class="app-shell">
       <header class="topbar">
@@ -367,6 +369,18 @@
                 <button class="secondary-button quest-mark-browser-toggle" id="questMarkBrowserToggle" type="button" data-action="toggle-quest-mark-bank" aria-expanded="false" aria-controls="questMarkBank">Browse all marks</button>
                 <div class="quest-mark-bank" id="questMarkBank" role="group" aria-label="All quest gems" hidden></div>
               </fieldset>
+              <fieldset class="field quest-badge-field">
+                <legend>Quest badge <span>Optional. Separate from your map gem and photo.</span></legend>
+                <p>Add your own badge, or create one in the workshop.</p>
+                <div class="quest-badge-controls">
+                  <div class="quest-badge-preview" id="questBadgePreview" aria-live="polite"><span>No badge selected</span></div>
+                  <div class="quest-badge-actions">
+                    <label class="secondary-button quest-badge-upload">Upload badge<input id="questBadgeFile" type="file" accept="image/png,image/jpeg,image/webp" /></label>
+                    <button class="secondary-button" type="button" data-action="open-badge-studio">Create a badge</button>
+                    <button class="text-button" id="questBadgeRemove" type="button" data-action="remove-quest-badge" hidden>Remove badge</button>
+                  </div>
+                </div>
+              </fieldset>
               <label class="field">
                 <span>Type</span>
                 <select name="type" required>
@@ -501,6 +515,10 @@
             <button class="workshop-mode-button" type="button" data-workshop-mode="vibe-code" aria-pressed="false">
               <span>Vibe code generator</span>
               <small>A scannable signal</small>
+            </button>
+            <button class="workshop-mode-button" type="button" data-workshop-mode="icon" aria-pressed="false">
+              <span>Icon studio</span>
+              <small>Your quest badge</small>
             </button>
           </div>
 
@@ -845,6 +863,63 @@
               </section>
             </div>
           </div>
+          <div data-workshop-panel="icon" hidden>
+            <div class="flyer-studio icon-studio">
+              <div class="flyer-controls icon-controls">
+                <div class="flyer-controls-heading"><span class="mini-label">Make your mark</span><strong>16 × 16 pixels</strong></div>
+                <p>Create a little badge to accompany your quest photo. Start with a shape, draw your own, or upload an image.</p>
+                <fieldset class="flyer-option-group"><legend>Start with a shape</legend>
+                  <div class="icon-template-options" role="group" aria-label="Icon starter shapes">
+                    <button class="secondary-button" type="button" data-icon-template="spark">✦ Spark</button>
+                    <button class="secondary-button" type="button" data-icon-template="mushroom">Mushroom</button>
+                    <button class="secondary-button" type="button" data-icon-template="tent">Tent</button>
+                    <button class="secondary-button" type="button" data-icon-template="heart">Heart</button>
+                    <button class="secondary-button" type="button" data-icon-template="blank">Blank</button>
+                  </div>
+                </fieldset>
+                <fieldset class="flyer-option-group"><legend>Choose your colors</legend>
+                  <div class="icon-palette" role="group" aria-label="Pixel color">
+                    <button type="button" class="icon-swatch is-active" data-icon-color="#fa622e" style="--swatch:#fa622e" aria-label="Orange" aria-pressed="true"></button>
+                    <button type="button" class="icon-swatch" data-icon-color="#f8d23d" style="--swatch:#f8d23d" aria-label="Yellow" aria-pressed="false"></button>
+                    <button type="button" class="icon-swatch" data-icon-color="#0f8fb1" style="--swatch:#0f8fb1" aria-label="Teal" aria-pressed="false"></button>
+                    <button type="button" class="icon-swatch" data-icon-color="#f45077" style="--swatch:#f45077" aria-label="Pink" aria-pressed="false"></button>
+                    <button type="button" class="icon-swatch" data-icon-color="#f3e9c4" style="--swatch:#f3e9c4" aria-label="Cream" aria-pressed="false"></button>
+                    <button type="button" class="icon-swatch" data-icon-color="#2f3035" style="--swatch:#2f3035" aria-label="Charcoal" aria-pressed="false"></button>
+                    <button type="button" class="icon-swatch" data-icon-color="#642f45" style="--swatch:#642f45" aria-label="Wine" aria-pressed="false"></button>
+                    <button type="button" class="icon-swatch" data-icon-color="#4d5231" style="--swatch:#4d5231" aria-label="Olive" aria-pressed="false"></button>
+                    <label class="icon-custom-color">Custom <input type="color" id="iconCustomColor" value="#fa622e" aria-label="Choose a custom pixel color"></label>
+                  </div>
+                </fieldset>
+                <fieldset class="flyer-option-group"><legend>Tools</legend>
+                  <div class="icon-tool-options" role="group" aria-label="Drawing tools">
+                    <button class="secondary-button is-active" type="button" data-icon-tool="pencil" aria-pressed="true">Pencil</button>
+                    <button class="secondary-button" type="button" data-icon-tool="eraser" aria-pressed="false">Eraser</button>
+                    <button class="secondary-button" type="button" data-icon-tool="fill" aria-pressed="false">Fill</button>
+                    <button class="secondary-button" type="button" data-icon-action="undo">Undo</button>
+                  </div>
+                </fieldset>
+                <div class="icon-upload">
+                  <label class="field"><span>Or upload your own image</span><input id="iconUpload" type="file" accept="image/png,image/jpeg,image/webp" /><small>PNG, JPG or WebP, up to 5 MB. Your image stays on your device until you use it on a quest.</small></label>
+                  <div id="iconUploadControls" hidden>
+                    <label class="field"><span>Move crop horizontally</span><input id="iconCropX" type="range" min="0" max="100" value="50" /></label>
+                    <label class="field"><span>Move crop vertically</span><input id="iconCropY" type="range" min="0" max="100" value="50" /></label>
+                    <label class="icon-check"><input id="iconPixelate" type="checkbox" /> Pixelate image</label>
+                  </div>
+                </div>
+                <div class="flyer-actions icon-actions">
+                  <button class="secondary-button" type="button" data-icon-action="download">Download PNG</button>
+                  <button class="primary-button" type="button" data-icon-action="use">Use on a quest</button>
+                </div>
+                <p class="flyer-status" id="iconStatus" role="status" aria-live="polite">Your badge is separate from your quest photo.</p>
+              </div>
+              <section class="flyer-preview-panel icon-preview-panel" aria-labelledby="iconPreviewTitle">
+                <div class="flyer-preview-heading"><span class="mini-label" id="iconPreviewTitle">Your canvas</span><span>Draw a little magic</span></div>
+                <div class="icon-canvas-shell"><canvas id="iconCanvas" width="512" height="512" tabindex="0" aria-label="Pixel editor. Use arrow keys to move and space to draw." aria-describedby="iconCanvasHelp"></canvas></div>
+                <p id="iconCanvasHelp">Draw with a finger or mouse. On a keyboard, use arrow keys to move and Space to apply your tool.</p>
+                <div class="icon-small-preview"><span>Quest badge preview</span><canvas id="iconSmallPreview" width="64" height="64" aria-label="Badge at listing size"></canvas></div>
+              </section>
+            </div>
+          </div>
         </section>
       </main>
 
@@ -1124,10 +1199,11 @@
   <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.3/leaflet-maplibre-gl.js" integrity="sha384-LIxE/QjpJKC2A91yD40ZisdYtFbgAjl58jqpo9/MUZNgwhqsTfzwrTlqv6nDdzzB" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.min.js" integrity="sha384-jP+y6mxch/vbLrNpx4basfv6ciZQuHwdRHgZGa6Mhja0Xm4p87ok2OQavTrRIGxH" crossorigin="anonymous"></script>
   <script src="./supabase-client.js?v=20260722"></script>
-    <script src="./app-v8.js?v=20261121-location-matches"></script>
+    <script src="./app-v8.js?v=20261121-quest-badges-v1"></script>
   <script src="./vendor/qrcode.min.js?v=1.5.4"></script>
   <script src="./flyer-studio.js?v=20261013-deep-accents-v1"></script>
-  <script src="./vibetinerary-studio.js?v=20261116-outside-gems-v1"></script>
+  <script src="./vibetinerary-studio.js?v=20261121-icon-studio-v1"></script>
   <script src="./vibe-code-studio.js?v=20260925-flyer-logo-v1"></script>
+  <script src="./icon-studio.js?v=20261121-v1"></script>
 </body>
 </html>

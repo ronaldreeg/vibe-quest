@@ -44,6 +44,32 @@ test("public listing returns readable HTML and points to the map, using anonymou
   });
 });
 
+test("listing badges use only this owner's activity-media path and do not change social metadata", async () => {
+  const ownerId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const file = "badge-bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.png";
+  const badgePath = `${ownerId}/${id}/${file}`;
+  await withDatabase([{ ...activity, owner_id: ownerId, badge_storage_path: badgePath }], async (calls) => {
+    const html = await (await request(`/activities/${id}`)).text();
+    assert.match(html, new RegExp(`src="https://test\\.supabase\\.co/storage/v1/object/public/activity-media/${badgePath}"`));
+    assert.match(html, /name="twitter:card" content="summary"/);
+    assert.doesNotMatch(html, /property="og:image"/);
+    assert.match(new URL(calls[0].url).searchParams.get("select"), /badge_storage_path/);
+  });
+  for (const path of [
+    `https://evil.example/${badgePath}`,
+    `cccccccc-cccc-4ccc-8ccc-cccccccccccc/${id}/${file}`,
+    `${ownerId}/cccccccc-cccc-4ccc-8ccc-cccccccccccc/${file}`,
+    `${badgePath}/extra`,
+    `${ownerId}/${id}/badge-bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbbXpng`,
+  ]) {
+    await withDatabase([{ ...activity, owner_id: ownerId, badge_storage_path: path }], async () => {
+      const html = await (await request(`/activities/${id}`)).text();
+      assert.doesNotMatch(html, /storage\/v1\/object\/public\/activity-media/);
+      assert.doesNotMatch(html, /evil\.example/);
+    });
+  }
+});
+
 test("directory and sitemap contain current real listings, not expired or paused ones", async () => {
   const expired = { ...activity, id: "22345678-1234-4234-8234-123456789abc", start_date: "2020-01-01" };
   const paused = { ...activity, id: "32345678-1234-4234-8234-123456789abc", status: "paused" };

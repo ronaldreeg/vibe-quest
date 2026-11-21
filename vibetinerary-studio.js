@@ -49,6 +49,11 @@
       title: "Map a day worth taking.",
       intro: "Bundle a few good finds into one shareable route. Build a clear stop list or turn the day into a stylized, non-geographic treasure map."
     },
+    icon: {
+      eyebrow: "Vibe Icon Studio",
+      title: "Make your mark.",
+      intro: "Draw, customize, or upload a little badge for your quest. It lives alongside your listing photo."
+    },
     "vibe-code": {
       eyebrow: "Vibe Code Generator",
       title: "Turn a link into a signal.",
@@ -781,7 +786,7 @@
   }
 
   function setWorkshopMode(mode) {
-    studio.workshopMode = ["flyer", "vibetinerary", "vibe-code"].includes(mode) ? mode : "flyer";
+    studio.workshopMode = ["flyer", "vibetinerary", "vibe-code", "icon"].includes(mode) ? mode : "flyer";
     view.querySelectorAll("[data-workshop-panel]").forEach((panel) => {
       panel.hidden = panel.dataset.workshopPanel !== studio.workshopMode;
     });
@@ -795,6 +800,7 @@
     updateControlState();
     if (studio.workshopMode === "vibetinerary") render();
     else if (studio.workshopMode === "vibe-code") window.vvVibeCodeStudio?.render();
+    else if (studio.workshopMode === "icon") window.vvIconStudio?.render();
     else window.vvFlyerStudio?.render();
   }
 

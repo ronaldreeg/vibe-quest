@@ -1,6 +1,6 @@
 // Cloudflare Pages advanced-mode Worker. All database requests use the public
 // key and anonymous RLS; never use a user token or a Supabase service key here.
-const FIELDS = "id,title,description,city,location_name,location_visibility,location_accuracy,type,vibes,price_label,listing_mode,start_date,start_time,recurring_day,recurring_time,status,time_zone,last_confirmed_at,created_at,updated_at";
+const FIELDS = "id,owner_id,badge_storage_path,title,description,city,location_name,location_visibility,location_accuracy,type,vibes,price_label,listing_mode,start_date,start_time,recurring_day,recurring_time,status,time_zone,last_confirmed_at,created_at,updated_at";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PAGE_SIZE = 40;
 const SITEMAP_BATCH = 1000;
@@ -69,6 +69,12 @@ async function queryActivities(cfg, { id, offset = 0, limit = PAGE_SIZE } = {}) 
 
 function activityUrl(cfg, id) { return `${cfg.publicOrigin}/activities/${id}`; }
 function mapUrl(cfg, id) { return `${cfg.appOrigin}/?activity=${encodeURIComponent(id)}`; }
+function badgeUrl(row, cfg) {
+  const path = String(row.badge_storage_path || "");
+  const parts = path.split("/");
+  if (parts.length !== 3 || !UUID.test(String(row.owner_id || "")) || parts[0] !== row.owner_id || parts[1] !== row.id || !/^badge-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.png$/.test(parts[2])) return "";
+  return `${cfg.supabaseOrigin}/storage/v1/object/public/activity-media/${path}`;
+}
 function when(row) {
   const clock = (value) => {
     const match = /^(\d{2}):(\d{2})/.exec(value || "");
@@ -96,9 +102,10 @@ function listingPage(row, cfg) {
   const title = `${row.title} in ${row.city} | Vibe Quest`;
   const url = activityUrl(cfg, row.id);
   const location = row.location_visibility === "private" ? `${row.city} area · Exact meetup details are private` : row.location_accuracy === "approximate" ? `${row.location_name} · Approximate area` : row.location_name;
+  const badge = badgeUrl(row, cfg);
   // The current schema doesn't guarantee a verified street address or an
   // approved cover image. Do not assert rich-event eligibility or use a photo.
-  const content = `<p class="label">${escapeHtml(row.type || "Activity")} · ${escapeHtml(row.city)}</p><h1>${escapeHtml(row.title)}</h1><p>${escapeHtml(row.description)}</p><div class="card"><p><strong>When:</strong> ${escapeHtml(when(row))}</p><p><strong>Where:</strong> ${escapeHtml(location)}</p>${row.price_label ? `<p><strong>Price:</strong> ${escapeHtml(row.price_label)}</p>` : ""}${Array.isArray(row.vibes) && row.vibes.length ? `<p><strong>Vibes:</strong> ${escapeHtml(row.vibes.join(", "))}</p>` : ""}</div><p><a class="button" href="${escapeHtml(mapUrl(cfg, row.id))}">Open this activity on the map</a></p>`;
+  const content = `<p class="label">${escapeHtml(row.type || "Activity")} · ${escapeHtml(row.city)}</p>${badge ? `<img src="${escapeHtml(badge)}" alt="" width="56" height="56" style="float:right;object-fit:contain;margin:0 0 12px 16px">` : ""}<h1>${escapeHtml(row.title)}</h1><p>${escapeHtml(row.description)}</p><div class="card"><p><strong>When:</strong> ${escapeHtml(when(row))}</p><p><strong>Where:</strong> ${escapeHtml(location)}</p>${row.price_label ? `<p><strong>Price:</strong> ${escapeHtml(row.price_label)}</p>` : ""}${Array.isArray(row.vibes) && row.vibes.length ? `<p><strong>Vibes:</strong> ${escapeHtml(row.vibes.join(", "))}</p>` : ""}</div><p><a class="button" href="${escapeHtml(mapUrl(cfg, row.id))}">Open this activity on the map</a></p>`;
   return layout({ title, description: String(row.description || "").slice(0, 160), canonical: url, content });
 }
 
