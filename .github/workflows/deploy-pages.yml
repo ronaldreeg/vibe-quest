@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
@@ -28,9 +29,35 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Upload site
+        id: upload
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
+
+      - name: Wait for Pages artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$ARTIFACT_ID" =~ ^[0-9]+$ ]]; then
+            echo "Pages upload did not return an artifact ID."
+            exit 1
+          fi
+          for attempt in {1..15}; do
+            if gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts?name=github-pages&per_page=100" 2>/dev/null \
+              | jq -e --arg id "$ARTIFACT_ID" '[.artifacts[] | select(.name == "github-pages" and .expired == false)] | length == 1 and (.[0].id | tostring) == $id' >/dev/null; then
+              echo "Pages artifact is available."
+              # Allow the Pages deployment service to observe the same upload.
+              sleep 3
+              exit 0
+            fi
+            echo "Waiting for Pages artifact (attempt $attempt of 15)."
+            if (( attempt < 15 )); then sleep 2; fi
+          done
+          echo "Pages artifact was not available after the retry window."
+          exit 1
 
       - name: Deploy to Pages
         id: deployment
