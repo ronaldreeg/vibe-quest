@@ -13,3 +13,26 @@ place but are not necessarily its geographic or population center.
 Deploy both `index.ts` and the JSON file together. The city lookup requires an
 unambiguous name, preferably written as `city, state`. Street addresses use
 the Census geocoder; named venues depend on the external place providers.
+
+Named place searches and reverse geocoding may use LocationIQ when the Edge
+Function secret `LOCATIONIQ_API_KEY` is set. Configure an account with both
+forward and reverse geocoding enabled. Do not put this secret in the site or
+commit it to the repository. Public street addresses first use Census and fall
+back to LocationIQ when configured; private meetup addresses are never sent to
+an external geocoder by the current client. Sensitive user searches do not
+use the LocationIQ search endpoint or enter the shared cache; reverse lookup of
+user-provided coordinates is sent to LocationIQ solely to label their area.
+
+The free LocationIQ plan requires a prominent “Search by LocationIQ.com” link
+and permits caching request-response pairs for up to 48 hours. Provider results
+are intentionally not cached by the gateway, and the client honors the
+`cacheable: false` response. Rate reservations serialize upstream requests to
+one per second and limit them to 5,000 per rolling 24 hours; these limits are
+shared conservatively with other geocoding providers. Provider-side quotas
+still apply. See [LocationIQ pricing and terms](https://www.locationiq.com/pricing)
+and its [forward](https://docs.locationiq.com/docs/search-forward-geocoding)
+and [reverse](https://docs.locationiq.com/docs/reverse-geocoding) references.
+
+Deploy the daily-quota migration before deploying the updated function. The
+`v3:search` cache key for Census city results is required by the private
+meetup protection trigger and must not be changed without updating that trigger.

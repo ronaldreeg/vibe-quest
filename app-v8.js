@@ -2000,6 +2000,7 @@ let mapViewportRenderTimer;
 let suppressMapViewportSync = false;
 let latestLocationSearchRequest = 0;
 const geocodeCache = new Map();
+const GEOCODE_CACHE_TTL_MS = 48 * 60 * 60 * 1000;
 
 const BROAD_GEOCODE_TYPES = new Set([
   "administrative",
@@ -3265,13 +3266,18 @@ async function fetchGeocodeResults(location, limit = 5, { sensitive = true } = {
   const query = String(location || "").trim();
   if (!query) return [];
   const cacheKey = `${normalize(query)}:${limit}`;
-  if (!sensitive && geocodeCache.has(cacheKey)) return geocodeCache.get(cacheKey);
-
+  const cached = !sensitive && geocodeCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.results;
+  if (cached) geocodeCache.delete(cacheKey);
+  const expiresAt = Date.now() + GEOCODE_CACHE_TTL_MS;
   if (window.vvSupabase) {
     try {
       const data = await invokeGeocode({ action: "search", query, limit, sensitive });
       if (Array.isArray(data?.results)) {
-        if (!sensitive) geocodeCache.set(cacheKey, data.results);
+        // Only the gateway can verify that the city exists in its trusted
+        // Census dataset and has a corresponding private-meetup cache entry.
+        Object.defineProperty(data.results, "privateCitySupported", { value: data.privateCitySupported === true });
+        if (!sensitive && data.cacheable !== false) geocodeCache.set(cacheKey, { results: data.results, expiresAt });
         return data.results;
       }
       throw new Error("Location search is temporarily unavailable. Please try again in a moment.");
@@ -3293,8 +3299,9 @@ async function fetchGeocodeResults(location, limit = 5, { sensitive = true } = {
     );
     if (!response.ok) throw new Error("Location service unavailable");
     const results = await response.json();
-    geocodeCache.set(cacheKey, Array.isArray(results) ? results : []);
-    return geocodeCache.get(cacheKey);
+    const places = Array.isArray(results) ? results : [];
+    geocodeCache.set(cacheKey, { results: places, expiresAt });
+    return places;
   } catch {
     throw new Error("Location search is temporarily unavailable. Please try again in a moment.");
   }
@@ -3477,10 +3484,38 @@ function placeWords(value) {
     .filter((word) => word.length > 2);
 }
 
-function candidateScore(result, location, city, cityBounds) {
+// Normalize state names and postal abbreviations from Census and place providers.
+const GEOCODE_STATE_CODES = {
+  alabama: "AL", alaska: "AK", arizona: "AZ", arkansas: "AR", california: "CA", colorado: "CO", connecticut: "CT",
+  delaware: "DE", "district of columbia": "DC", florida: "FL", georgia: "GA", hawaii: "HI", idaho: "ID", illinois: "IL",
+  indiana: "IN", iowa: "IA", kansas: "KS", kentucky: "KY", louisiana: "LA", maine: "ME", maryland: "MD",
+  massachusetts: "MA", michigan: "MI", minnesota: "MN", mississippi: "MS", missouri: "MO", montana: "MT", nebraska: "NE",
+  nevada: "NV", "new hampshire": "NH", "new jersey": "NJ", "new mexico": "NM", "new york": "NY",
+  "north carolina": "NC", "north dakota": "ND", ohio: "OH", oklahoma: "OK", oregon: "OR", pennsylvania: "PA",
+  "rhode island": "RI", "south carolina": "SC", "south dakota": "SD", tennessee: "TN", texas: "TX", utah: "UT",
+  vermont: "VT", virginia: "VA", washington: "WA", "west virginia": "WV", wisconsin: "WI", wyoming: "WY", "puerto rico": "PR"
+};
+
+function geocodeStateCode(value) {
+  const cleaned = normalize(value).replace(/^us-/, "").replace(/\s+\d{5}(?:-\d{4})?$/, "");
+  const code = GEOCODE_STATE_CODES[cleaned] || cleaned.toUpperCase();
+  return Object.values(GEOCODE_STATE_CODES).includes(code) ? code : "";
+}
+
+function candidateStateCode(result) {
+  const address = result?.address || {};
+  const code = geocodeStateCode(address.state_code) || geocodeStateCode(address.state);
+  if (code) return code;
+  // Some providers omit structured state data but include it in display_name.
+  const parts = [...new Set(String(result?.display_name || "").split(",").map(geocodeStateCode).filter(Boolean))];
+  return parts.length === 1 ? parts[0] : "";
+}
+
+function candidateScore(result, location, city, cityBounds, expectedState) {
   const lat = Number(result?.lat);
   const lng = Number(result?.lon);
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || !pointNearBounds(lat, lng, cityBounds)) return -Infinity;
+  if (expectedState && candidateStateCode(result) !== expectedState) return -Infinity;
   const display = normalize(result.display_name);
   const type = geocodeType(result);
   const locationWords = placeWords(location);
@@ -3525,6 +3560,9 @@ async function geocodeListingLocation(location, city, { sensitive = false } = {}
     return { ok: false, message: "We could not find that city right now. Enter it as city, state (for example, Austin, TX), or try again later." };
   }
   if (sensitive) {
+    if (!cityResults.privateCitySupported) {
+      return { ok: false, message: "We could not verify that city for a private meetup. Enter a recognized city and state, then try again." };
+    }
     const cityMatch = cityResults.find((result) => ["city", "town", "village", "municipality"].includes(geocodeType(result))
       && Number.isFinite(Number(result.lat)) && Number.isFinite(Number(result.lon)));
     if (!cityMatch) return { ok: false, message: "We could not verify that city for a private meetup. Enter a city and state, then try again." };
@@ -3544,8 +3582,11 @@ async function geocodeListingLocation(location, city, { sensitive = false } = {}
   }
   const cityResult = cityResults.find((result) => BROAD_GEOCODE_TYPES.has(geocodeType(result))) || cityResults[0];
   const cityBounds = geocodeBounds(cityResult);
+  const expectedState = geocodeStateCode(String(cleanCity).split(",")[1])
+    || geocodeStateCode(cityResult?.address?.state_code)
+    || geocodeStateCode(cityResult?.address?.state);
   const ranked = candidates
-    .map((result) => ({ result, score: candidateScore(result, cleanLocation, cleanCity, cityBounds) }))
+    .map((result) => ({ result, score: candidateScore(result, cleanLocation, cleanCity, cityBounds, expectedState) }))
     .filter((candidate) => Number.isFinite(candidate.score))
     .sort((a, b) => b.score - a.score);
   const best = ranked[0]?.result;

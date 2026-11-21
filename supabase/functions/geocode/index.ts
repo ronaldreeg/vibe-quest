@@ -191,8 +191,12 @@ Deno.serve(async (request: Request) => {
   let cacheKey = "";
   let upstreamUrl = "";
   let fallbackUrl = "";
+  const locationIqKey = Deno.env.get("LOCATIONIQ_API_KEY") || "";
+  let locationIqUrl = "";
   let responseKey = "";
   let provider = "photon";
+  let responseFromLocationIq = false;
+  let censusCityMatch: ReturnType<typeof censusCity> = null;
   // Private addresses must not be stored in the shared query cache or sent to
   // an additional provider. Existing Census/Photon lookups still apply.
   const sensitive = body?.sensitive !== false;
@@ -201,13 +205,23 @@ Deno.serve(async (request: Request) => {
     const query = normalizeQuery(body?.query);
     const limit = Math.min(8, Math.max(1, Math.round(finiteNumber(body?.limit) || 5)));
     if (query.length < 2) return json(request, { error: "Enter a longer location" }, 400);
-    cacheKey = `v3:search:${query.toLocaleLowerCase("en-US")}:${limit}`;
+    // The database privacy trigger consumes the v3 city-only cache key.
+    // Separate LocationIQ entries from older, longer-lived provider results.
+    const city = censusCity(query);
+    censusCityMatch = city;
+    cacheKey = `${city ? "v3" : "v4"}:search:${query.toLocaleLowerCase("en-US")}:${limit}`;
+    if (sensitive && city) return json(request, { results: [city], cached: false });
+    if (locationIqKey && !sensitive) {
+      const params = new URLSearchParams({ key: locationIqKey, q: query, format: "json", addressdetails: "1", statecode: "1", countrycodes: "us", limit: String(limit) });
+      locationIqUrl = `https://us1.locationiq.com/v1/search?${params}`;
+    }
     fallbackUrl = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=us&limit=${limit}&q=${encodeURIComponent(query)}`;
     if (/^\s*\d{1,7}\s+\S+/.test(query)) {
       provider = "census";
       upstreamUrl = `https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?benchmark=Public_AR_Current&format=json&address=${encodeURIComponent(query)}`;
     } else {
-      upstreamUrl = `https://photon.komoot.io/api/?lang=en&limit=${limit}&q=${encodeURIComponent(query)}`;
+      upstreamUrl = locationIqUrl || `https://photon.komoot.io/api/?lang=en&limit=${limit}&q=${encodeURIComponent(query)}`;
+      provider = locationIqUrl ? "locationiq" : "photon";
     }
     responseKey = "results";
   } else {
@@ -219,7 +233,13 @@ Deno.serve(async (request: Request) => {
     const roundedLatitude = latitude.toFixed(5);
     const roundedLongitude = longitude.toFixed(5);
     cacheKey = `v2:reverse:${roundedLatitude}:${roundedLongitude}`;
-    upstreamUrl = `https://photon.komoot.io/reverse?lang=en&limit=1&lat=${roundedLatitude}&lon=${roundedLongitude}`;
+    if (locationIqKey) {
+      const params = new URLSearchParams({ key: locationIqKey, lat: roundedLatitude, lon: roundedLongitude, format: "json", addressdetails: "1", zoom: "10" });
+      upstreamUrl = `https://us1.locationiq.com/v1/reverse?${params}`;
+      provider = "locationiq";
+    } else {
+      upstreamUrl = `https://photon.komoot.io/reverse?lang=en&limit=1&lat=${roundedLatitude}&lon=${roundedLongitude}`;
+    }
     responseKey = "result";
   }
 
@@ -235,7 +255,7 @@ Deno.serve(async (request: Request) => {
     .maybeSingle();
 
   if (cached?.response !== undefined) {
-    return json(request, { [responseKey]: cached.response, cached: true });
+    return json(request, { [responseKey]: cached.response, cached: true, privateCitySupported: !!censusCityMatch });
   }
 
   if (action === "search" && !sensitive) {
@@ -250,7 +270,7 @@ Deno.serve(async (request: Request) => {
         console.error("geocode cache write failed", error);
         return json(request, { error: "Location search is temporarily unavailable" }, 503);
       }
-      return json(request, { results: response, cached: false });
+      return json(request, { results: response, cached: false, privateCitySupported: true });
     }
   }
 
@@ -287,15 +307,27 @@ Deno.serve(async (request: Request) => {
     let places: Record<string, any>[] = [];
     if (upstream?.ok) {
       const payload = await upstream.json();
+      if (provider === "locationiq") {
+        responseFromLocationIq = true;
+        if (action === "search" ? !Array.isArray(payload) : !payload || typeof payload !== "object" || Array.isArray(payload)) {
+          return json(request, { error: "Location search is temporarily unavailable" }, 503);
+        }
+      }
       places = provider === "census"
         ? (Array.isArray(payload?.result?.addressMatches) ? payload.result.addressMatches.map(censusMatchToPlace).filter(Boolean) : [])
+        : provider === "locationiq"
+        ? (action === "search" ? (Array.isArray(payload) ? payload : []) : [payload])
         : (Array.isArray(payload?.features) ? payload.features.map(photonFeatureToPlace).filter(Boolean)
           .filter((place: Record<string, any>) => place.address?.country_code === "us") : []);
+    } else if (provider === "locationiq" && upstream?.status === 404) {
+      responseFromLocationIq = true;
+      places = [];
     } else {
       console.error("geocode upstream failed", provider, upstream?.status || "network error");
     }
 
-    if (action === "search" && !sensitive && (!upstream?.ok || places.length === 0)) {
+    const isNoMatch = provider === "locationiq" && upstream?.status === 404;
+    if (action === "search" && !sensitive && provider !== "locationiq" && (!upstream?.ok || places.length === 0)) {
       // A second reservation is required: globally no more than one request a
       // second may reach the public Nominatim service, even under concurrency.
       let fallbackReservationError = await reserveRequest();
@@ -306,26 +338,32 @@ Deno.serve(async (request: Request) => {
         fallbackReservationError = await reserveRequest();
       }
       if (fallbackReservationError) return fallbackReservationError;
-      const fallback = await fetch(fallbackUrl, { headers: {
+      const fallback = await fetch(locationIqUrl || fallbackUrl, { headers: {
         "Accept": "application/json",
         "Accept-Language": "en-US,en;q=0.8",
         "Referer": "https://www.vibe-quest.net/",
         "User-Agent": "VibeQuest/1.0 (https://www.vibe-quest.net; hello@vibe-quest.net)",
       }, signal: AbortSignal.timeout(8000) });
-      if (!fallback.ok) {
-        console.error("geocode fallback failed", fallback.status);
-        return json(request, { error: "Location search is temporarily unavailable" }, 503);
+      if (locationIqUrl) responseFromLocationIq = true;
+      if (locationIqUrl && fallback.status === 404) {
+        places = [];
+      } else {
+        if (!fallback.ok) {
+          console.error("geocode fallback failed", fallback.status);
+          return json(request, { error: "Location search is temporarily unavailable" }, fallback.status === 429 ? 429 : 503);
+        }
+        const payload = await fallback.json();
+        if (!Array.isArray(payload)) return json(request, { error: "Location search is temporarily unavailable" }, 503);
+        places = payload;
       }
-      const payload = await fallback.json();
-      if (!Array.isArray(payload)) return json(request, { error: "Location search is temporarily unavailable" }, 503);
-      places = payload;
-    } else if (!upstream?.ok) {
-      return json(request, { error: "Location search is temporarily unavailable" }, 503);
+    } else if (!upstream?.ok && !isNoMatch) {
+      return json(request, { error: "Location search is temporarily unavailable" }, upstream?.status === 429 ? 429 : 503);
     }
-    const response = action === "search" ? places.slice(0, 8) : (places[0] || {});
-    const expiresAt = new Date(Date.now() + (action === "search" ? 7 : 30) * 86400000).toISOString();
+    const response = action === "search" ? places.slice(0, 8) : (places[0] || null);
+    // Free LocationIQ plans permit request/response caching for at most 48 hours.
+    const expiresAt = new Date(Date.now() + 48 * 3600000).toISOString();
 
-    const { error: cacheError } = sensitive ? { error: null } : await admin.from("geocode_cache").upsert({
+    const { error: cacheError } = sensitive || responseFromLocationIq ? { error: null } : await admin.from("geocode_cache").upsert({
       cache_key: cacheKey,
       action,
       response,
@@ -334,9 +372,10 @@ Deno.serve(async (request: Request) => {
     });
     if (cacheError) console.error("geocode cache write failed", cacheError);
 
-    return json(request, { [responseKey]: response, cached: false });
+    return json(request, { [responseKey]: response, cached: false, cacheable: !responseFromLocationIq });
   } catch (error) {
-    console.error("geocode request failed", error);
+    // Fetch exceptions may contain a URL and therefore an API token.
+    console.error("geocode request failed");
     return json(request, { error: "Location search is temporarily unavailable" }, 503);
   }
 });
