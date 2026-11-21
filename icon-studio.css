@@ -3,7 +3,19 @@
 .icon-controls > p { margin: 16px 0 0; }
 .icon-template-options, .icon-tool-options, .icon-palette { display: flex; flex-wrap: wrap; gap: 8px; }
 .icon-template-options .secondary-button, .icon-tool-options .secondary-button { padding: 8px 10px; min-height: 40px; }
-.icon-tool-options .is-active { border-color: var(--brand-orange); color: var(--brand-yellow); }
+.icon-tool-options .is-active, .icon-choice-row .is-active { border-color: var(--brand-orange); color: var(--brand-yellow); }
+.icon-choice-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.icon-choice-row .secondary-button { min-height: 40px; padding: 7px 10px; }
+.icon-choice-row small { display: block; color: var(--muted); font-size: .7rem; font-weight: 400; }
+.icon-option-hint { margin: 8px 0 10px; color: var(--muted); font-size: .83rem; line-height: 1.4; }
+.icon-shape-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.icon-shape-button { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 8px 9px; border: 1px solid var(--line); color: var(--muted-strong); background: transparent; cursor: pointer; font: inherit; font-size: .8rem; text-align: left; }
+.icon-shape-button svg { flex: 0 0 22px; width: 22px; height: 22px; fill: currentColor; }
+.icon-shape-button:hover, .icon-shape-button.is-active { border-color: var(--brand-orange); color: var(--brand-yellow); }
+.icon-shape-button:focus-visible { outline: 2px solid var(--brand-yellow); outline-offset: 2px; }
+.icon-brush-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-top: 14px; }
+.icon-brush-label { display: block; margin-bottom: 6px; color: var(--muted-strong); font-size: .8rem; }
+.icon-rotate { min-height: 40px; padding: 7px 12px; }
 .icon-swatch { width: 38px; height: 38px; padding: 0; border: 2px solid var(--line); background: var(--swatch); cursor: pointer; }
 .icon-swatch.is-active { outline: 2px solid var(--brand-yellow); outline-offset: 2px; }
 .icon-custom-color { display: flex; align-items: center; gap: 5px; color: var(--muted-strong); }
@@ -26,14 +38,16 @@
   .icon-controls, .icon-preview-panel { display: contents; }
   .icon-controls > .flyer-controls-heading { order: 0; }
   .icon-controls > p:not(.flyer-status) { order: 1; }
-  .icon-controls > fieldset:nth-of-type(1) { order: 2; }
+  .icon-controls > .icon-starters { order: 2; }
+  .icon-controls > .icon-grid-options { order: 3; }
   .icon-preview-panel > .flyer-preview-heading { order: 3; margin-top: 20px; }
   .icon-canvas-shell { order: 4; width: min(100%, 360px); margin-top: 12px; }
   .icon-preview-panel > p { order: 5; }
-  .icon-controls > fieldset:nth-of-type(2) { order: 6; }
-  .icon-controls > fieldset:nth-of-type(3) { order: 7; }
-  .icon-small-preview { order: 8; margin: 16px auto; }
-  .icon-upload { order: 9; }
-  .icon-actions { order: 10; }
-  .icon-controls > .flyer-status { order: 11; }
+  .icon-controls > .icon-colors { order: 6; }
+  .icon-controls > .icon-tools { order: 7; }
+  .icon-controls > .icon-shapes { order: 8; }
+  .icon-small-preview { order: 9; margin: 16px auto; }
+  .icon-upload { order: 10; }
+  .icon-actions { order: 11; }
+  .icon-controls > .flyer-status { order: 12; }
 }

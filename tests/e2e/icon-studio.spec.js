@@ -81,3 +81,92 @@ test('keeps canvas and tools together on a narrow screen', async ({ page }) => {
   expect(tools.y - (palette.y + palette.height)).toBeLessThan(100);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
+
+test('stamps partial geometric shapes and rotates them without changing the chosen shape', async ({ page }) => {
+  await openStudio(page);
+  await page.locator('[data-icon-template="blank"]').click();
+  await page.locator('[data-icon-shape="triangle"]').click();
+  // Stamp at the top-left grid cell, with solid below the diagonal.
+  await page.locator('#iconCanvas').click({ position: { x: 8, y: 8 } });
+  expect((await badgePixel(page, 6, 26))[3]).toBe(255);
+  expect((await badgePixel(page, 26, 6))[3]).toBe(0);
+  await page.locator('[data-icon-action="rotate"]').click();
+  await expect(page.locator('[data-icon-shape="triangle"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('[data-icon-action="rotate"]')).toHaveAttribute('aria-label', /90 degrees/);
+  await expect(page.locator('[data-icon-shape="triangle"] svg')).toHaveCSS('transform', 'matrix(0, 1, -1, 0, 0, 0)');
+  await page.locator('#iconCanvas').click({ position: { x: 40, y: 8 } });
+  expect((await badgePixel(page, 38, 6))[3]).toBe(255);
+  expect((await badgePixel(page, 58, 26))[3]).toBe(0);
+});
+
+test('retains a multi-cell circle when the grid is enlarged, and undo restores a reduced grid', async ({ page }) => {
+  await openStudio(page);
+  await page.locator('[data-icon-template="blank"]').click();
+  await page.locator('[data-icon-shape="circle"]').click();
+  await page.locator('[data-icon-stamp-size="2x2"]').click();
+  const canvas = page.locator('#iconCanvas');
+  const box = await canvas.boundingBox();
+  await canvas.click({ position: { x: box.width * 4.5 / 16, y: box.height * 4.5 / 16 } });
+  const samples = [[160,130], [130,130], [160,160], [188,188]];
+  const original = await Promise.all(samples.map(([x,y]) => badgePixel(page, x, y)));
+  expect(original[0][3]).toBe(255);
+  expect(original[1][3]).toBe(0);
+  await page.locator('[data-icon-size="32"]').click();
+  expect(await Promise.all(samples.map(([x,y]) => badgePixel(page, x, y)))).toEqual(original);
+  await page.locator('[data-icon-size="8"]').click();
+  await expect(page.locator('#iconStatus')).toContainText('Undo restores');
+  await page.locator('[data-icon-action="undo"]').click();
+  await expect(page.locator('[data-icon-size="32"]')).toHaveAttribute('aria-pressed', 'true');
+  expect(await Promise.all(samples.map(([x,y]) => badgePixel(page, x, y)))).toEqual(original);
+  await page.locator('[data-icon-action="undo"]').click();
+  await expect(page.locator('[data-icon-size="16"]')).toHaveAttribute('aria-pressed', 'true');
+  expect(await Promise.all(samples.map(([x,y]) => badgePixel(page, x, y)))).toEqual(original);
+});
+
+test('rotates a rectangular stamp to cover the correct cells', async ({ page }) => {
+  await openStudio(page);
+  await page.locator('[data-icon-template="blank"]').click();
+  await page.locator('[data-icon-stamp-size="1x2"]').click();
+  await page.locator('[data-icon-action="rotate"]').click();
+  const canvas = page.locator('#iconCanvas');
+  const box = await canvas.boundingBox();
+  await canvas.click({ position: { x: box.width * 2.5 / 16, y: box.height * 2.5 / 16 } });
+  expect((await badgePixel(page, 80, 80))[3]).toBe(255);
+  expect((await badgePixel(page, 112, 80))[3]).toBe(255);
+  expect((await badgePixel(page, 80, 112))[3]).toBe(0);
+});
+
+
+test('fill recolors connected shape pieces without changing their geometry', async ({ page }) => {
+  await openStudio(page);
+  await page.locator('[data-icon-template="blank"]').click();
+  await page.locator('[data-icon-shape="circle"]').click();
+  await page.locator('[data-icon-stamp-size="2x2"]').click();
+  const canvas = page.locator('#iconCanvas');
+  const box = await canvas.boundingBox();
+  await canvas.click({ position: { x: box.width * 4.5 / 16, y: box.height * 4.5 / 16 } });
+  await page.locator('[data-icon-tool="fill"]').click();
+  await page.locator('[data-icon-color="#0f8fb1"]').click();
+  await expect(page.locator('[data-icon-tool="fill"]')).toHaveAttribute('aria-pressed', 'true');
+  await canvas.click({ position: { x: box.width * 5 / 16, y: box.height * 5 / 16 } });
+  expect(await badgePixel(page, 160, 160)).toEqual([15, 143, 177, 255]);
+  expect((await badgePixel(page, 130, 130))[3]).toBe(0);
+  expect(await badgePixel(page, 160, 130)).toEqual([15, 143, 177, 255]);
+});
+
+
+test('quarter and concave curve stamps fill complementary areas', async ({ page }) => {
+  await openStudio(page);
+  await page.locator('[data-icon-template="blank"]').click();
+  const canvas = page.locator('#iconCanvas');
+  const box = await canvas.boundingBox();
+  await page.locator('[data-icon-shape="quarter"]').click();
+  await canvas.click({ position: { x: box.width * 2.5 / 16, y: box.height * 2.5 / 16 } });
+  await page.locator('[data-icon-shape="curved"]').click();
+  await canvas.click({ position: { x: box.width * 4.5 / 16, y: box.height * 2.5 / 16 } });
+  // Bottom left is inside the quarter disk; top right is inside its inverse.
+  expect((await badgePixel(page, 68, 92))[3]).toBe(255);
+  expect((await badgePixel(page, 92, 68))[3]).toBe(0);
+  expect((await badgePixel(page, 132, 92))[3]).toBe(0);
+  expect((await badgePixel(page, 156, 68))[3]).toBe(255);
+});

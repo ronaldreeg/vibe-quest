@@ -35,7 +35,7 @@
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" integrity="sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK" crossorigin="anonymous" />
     <link rel="stylesheet" href="./styles.css?v=20261119-discovery-links-v1" />
     <link rel="stylesheet" href="./badge-styles.css?v=20261121-v1" />
-    <link rel="stylesheet" href="./icon-studio.css?v=20261121-v1" />
+    <link rel="stylesheet" href="./icon-studio.css?v=20261121-shapes-v2" />
 </head>
   <body>
     <div class="app-shell">
@@ -866,9 +866,9 @@
           <div data-workshop-panel="icon" hidden>
             <div class="flyer-studio icon-studio">
               <div class="flyer-controls icon-controls">
-                <div class="flyer-controls-heading"><span class="mini-label">Make your mark</span><strong>16 × 16 pixels</strong></div>
-                <p>Create a little badge to accompany your quest photo. Start with a shape, draw your own, or upload an image.</p>
-                <fieldset class="flyer-option-group"><legend>Start with a shape</legend>
+                <div class="flyer-controls-heading"><span class="mini-label">Make your mark</span><strong id="iconGridSizeLabel">16 × 16 pixels</strong></div>
+                <p>Create a little badge to accompany your quest photo. Pick a starter, draw with shapes, or upload an image.</p>
+                <fieldset class="flyer-option-group icon-starters"><legend>Start with a design</legend>
                   <div class="icon-template-options" role="group" aria-label="Icon starter shapes">
                     <button class="secondary-button" type="button" data-icon-template="spark">✦ Spark</button>
                     <button class="secondary-button" type="button" data-icon-template="mushroom">Mushroom</button>
@@ -877,7 +877,15 @@
                     <button class="secondary-button" type="button" data-icon-template="blank">Blank</button>
                   </div>
                 </fieldset>
-                <fieldset class="flyer-option-group"><legend>Choose your colors</legend>
+                <fieldset class="flyer-option-group icon-grid-options"><legend>Canvas size</legend>
+                  <div class="icon-choice-row" role="group" aria-label="Canvas grid size">
+                    <button class="secondary-button" type="button" data-icon-size="8" aria-pressed="false">8 × 8 <small>chunky</small></button>
+                    <button class="secondary-button is-active" type="button" data-icon-size="16" aria-pressed="true">16 × 16 <small>classic</small></button>
+                    <button class="secondary-button" type="button" data-icon-size="32" aria-pressed="false">32 × 32 <small>detailed</small></button>
+                  </div>
+                  <p class="icon-option-hint">A smaller grid simplifies your artwork. Undo brings it back.</p>
+                </fieldset>
+                <fieldset class="flyer-option-group icon-colors"><legend>Choose your colors</legend>
                   <div class="icon-palette" role="group" aria-label="Pixel color">
                     <button type="button" class="icon-swatch is-active" data-icon-color="#fa622e" style="--swatch:#fa622e" aria-label="Orange" aria-pressed="true"></button>
                     <button type="button" class="icon-swatch" data-icon-color="#f8d23d" style="--swatch:#f8d23d" aria-label="Yellow" aria-pressed="false"></button>
@@ -890,12 +898,31 @@
                     <label class="icon-custom-color">Custom <input type="color" id="iconCustomColor" value="#fa622e" aria-label="Choose a custom pixel color"></label>
                   </div>
                 </fieldset>
-                <fieldset class="flyer-option-group"><legend>Tools</legend>
+                <fieldset class="flyer-option-group icon-tools"><legend>Tools</legend>
                   <div class="icon-tool-options" role="group" aria-label="Drawing tools">
                     <button class="secondary-button is-active" type="button" data-icon-tool="pencil" aria-pressed="true">Pencil</button>
                     <button class="secondary-button" type="button" data-icon-tool="eraser" aria-pressed="false">Eraser</button>
                     <button class="secondary-button" type="button" data-icon-tool="fill" aria-pressed="false">Fill</button>
                     <button class="secondary-button" type="button" data-icon-action="undo">Undo</button>
+                  </div>
+                </fieldset>
+                <fieldset class="flyer-option-group icon-shapes"><legend>Shape brush</legend>
+                  <p class="icon-option-hint">Stamp a shape onto your canvas. Rotate it to change the direction.</p>
+                  <div class="icon-shape-options" role="group" aria-label="Brush shape">
+                    <button class="icon-shape-button is-active" type="button" data-icon-shape="square" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/></svg><span>Square</span></button>
+                    <button class="icon-shape-button" type="button" data-icon-shape="triangle" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V4l16 16z"/></svg><span>Triangle</span></button>
+                    <button class="icon-shape-button" type="button" data-icon-shape="circle" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/></svg><span>Circle</span></button>
+                    <button class="icon-shape-button" type="button" data-icon-shape="semicircle" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16a8 8 0 0 1 16 0z"/></svg><span>Half circle</span></button>
+                    <button class="icon-shape-button" type="button" data-icon-shape="quarter" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V4a16 16 0 0 1 16 16z"/></svg><span>Quarter</span></button>
+                    <button class="icon-shape-button" type="button" data-icon-shape="curved" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16A16 16 0 0 0 4 4z"/></svg><span>Curve</span></button>
+                  </div>
+                  <div class="icon-brush-controls">
+                    <div><span class="icon-brush-label">Brush size</span><div class="icon-choice-row" role="group" aria-label="Brush size">
+                      <button class="secondary-button is-active" type="button" data-icon-stamp-size="1x1" aria-pressed="true">1 × 1</button>
+                      <button class="secondary-button" type="button" data-icon-stamp-size="2x2" aria-pressed="false">2 × 2</button>
+                      <button class="secondary-button" type="button" data-icon-stamp-size="1x2" aria-pressed="false">1 × 2</button>
+                    </div></div>
+                    <button class="secondary-button icon-rotate" type="button" data-icon-action="rotate" aria-label="Rotate brush shape 90 degrees">↻ Rotate</button>
                   </div>
                 </fieldset>
                 <div class="icon-upload">
@@ -1204,6 +1231,6 @@
   <script src="./flyer-studio.js?v=20261013-deep-accents-v1"></script>
   <script src="./vibetinerary-studio.js?v=20261121-icon-studio-v1"></script>
   <script src="./vibe-code-studio.js?v=20260925-flyer-logo-v1"></script>
-  <script src="./icon-studio.js?v=20261121-v1"></script>
+  <script src="./icon-studio.js?v=20261121-shapes-v2"></script>
 </body>
 </html>
