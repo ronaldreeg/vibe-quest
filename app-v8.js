@@ -3444,8 +3444,25 @@ async function geocodeFreeformLocation(location) {
   const known = knownCenterForLocation(location);
   if (known) return known;
   try {
-    const [result] = await fetchGeocodeResults(location, 1, { sensitive: looksLikeStreetAddress(location) });
-    if (result?.lat && result?.lon) return [Number(result.lat), Number(result.lon)];
+    const results = await fetchGeocodeResults(location, 5, { sensitive: looksLikeStreetAddress(location) });
+    const queryParts = String(location || "").split(",").map((part) => part.trim());
+    const requestedPlace = queryParts[0];
+    const expectedState = queryParts.length > 1 ? geocodeStateCode(queryParts[queryParts.length - 1]) : "";
+    const result = results.find((candidate) => {
+      if (expectedState && candidateStateCode(candidate) !== expectedState) return false;
+      if (!Number.isFinite(Number(candidate.lat)) || !Number.isFinite(Number(candidate.lon))) return false;
+      if (isStreetAddressQuery(requestedPlace)) {
+        const expectedCity = queryParts.length > 2 ? queryParts[queryParts.length - 2] : "";
+        const candidateCity = candidate.address?.city || candidate.address?.town || candidate.address?.village || "";
+        if (expectedCity && !samePlaceName(expectedCity, candidateCity)) return false;
+        return addressMatchesQuery(candidate, requestedPlace);
+      }
+      // The map search is for cities and towns. Do not silently center on a
+      // similarly named neighborhood, business, or city in another state.
+      if (!BROAD_GEOCODE_TYPES.has(geocodeType(candidate))) return false;
+      return samePlaceName(requestedPlace, candidate.name || String(candidate.display_name || "").split(",")[0]);
+    });
+    if (result) return [Number(result.lat), Number(result.lon)];
   } catch {
     return null;
   }
@@ -3511,6 +3528,44 @@ function candidateStateCode(result) {
   return parts.length === 1 ? parts[0] : "";
 }
 
+function normalizedPlaceName(value) {
+  return normalize(value).normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/&/g, " and ").replace(/['’]/g, "").replace(/[^a-z0-9]+/g, " ")
+    .split(/\s+/).filter((word) => word && word !== "the").join(" ");
+}
+
+function samePlaceName(a, b) {
+  const left = normalizedPlaceName(a);
+  return Boolean(left && left === normalizedPlaceName(b));
+}
+
+function isStreetAddressQuery(value) {
+  return /^\s*\d+\s+/.test(String(value || ""));
+}
+
+function addressMatchesQuery(result, location) {
+  const query = String(location || "").split(",")[0].trim();
+  const queryNumber = query.match(/^\s*(\d+)\s+/)?.[1];
+  if (!queryNumber) return false;
+  const address = result?.address || {};
+  const display = String(result?.display_name || "").split(",").slice(0, 2).join(" ");
+  const candidateNumber = String(address.house_number || display.match(/\b\d+\b/)?.[0] || "");
+  if (candidateNumber !== queryNumber) return false;
+  const normalizeRoad = (value) => normalizedPlaceName(value)
+    .replace(/\b(avenue|ave)\b/g, "ave").replace(/\b(street|st)\b/g, "st")
+    .replace(/\b(road|rd)\b/g, "rd").replace(/\b(boulevard|blvd)\b/g, "blvd")
+    .replace(/\b(drive|dr)\b/g, "dr").replace(/\b(lane|ln)\b/g, "ln");
+  const requestedRoad = normalizeRoad(query.replace(/^\s*\d+\s+/, ""));
+  const candidateRoad = normalizeRoad(address.road || display.replace(new RegExp(`\\b${queryNumber}\\b`), ""));
+  return Boolean(requestedRoad && candidateRoad === requestedRoad);
+}
+
+function venueMatchesQuery(result, location) {
+  const requestedName = String(location || "").split(",")[0];
+  const primaryName = result?.name || String(result?.display_name || "").split(",")[0];
+  return samePlaceName(requestedName, primaryName);
+}
+
 function candidateScore(result, location, city, cityBounds, expectedState) {
   const lat = Number(result?.lat);
   const lng = Number(result?.lon);
@@ -3518,6 +3573,7 @@ function candidateScore(result, location, city, cityBounds, expectedState) {
   if (expectedState && candidateStateCode(result) !== expectedState) return -Infinity;
   const display = normalize(result.display_name);
   const type = geocodeType(result);
+  if (isStreetAddressQuery(location) ? !addressMatchesQuery(result, location) : !venueMatchesQuery(result, location)) return -Infinity;
   const locationWords = placeWords(location);
   const cityName = placeWords(String(city).split(",")[0]).join(" ");
   if (!cityBounds && cityName && !display.includes(cityName)) return -Infinity;

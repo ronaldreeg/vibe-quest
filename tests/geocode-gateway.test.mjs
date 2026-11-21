@@ -222,3 +222,45 @@ test('listing geocoding rejects a same-named city in the wrong state', async () 
   candidates = [{ ...correct, address: { city: 'Austin' }, display_name: 'Town Hall, Austin, Texas 78701, United States' }];
   assert.equal((await context.geocodeListingLocation('Town Hall', 'Austin, TX')).ok, true);
 });
+
+test('listing geocoding rejects nearby misleading venues and prefers the exact venue name', async () => {
+  const app = await readFile(new URL('../app-v8.js', import.meta.url), 'utf8');
+  const helpers = app.slice(app.indexOf('function geocodeType('), app.indexOf('async function geocodeLocation('));
+  const city = { lat: '30.267', lon: '-97.743', addresstype: 'city', address: { state_code: 'US-TX' } };
+  const place = (name, lat) => ({ lat, lon: '-97.74', display_name: `${name}, Austin, Texas, United States`, type: 'attraction', address: { city: 'Austin', state: 'Texas' } });
+  let candidates = [place('Texas Capitol Vietnam Veterans Monument', '30.27')];
+  const context = {
+    normalize: (value) => String(value || '').trim().toLowerCase(),
+    looksLikeStreetAddress: (value) => /\d/.test(value),
+    fetchGeocodeResults: async (query) => query === 'Austin, TX' ? [city] : candidates,
+    BROAD_GEOCODE_TYPES: new Set(['city', 'town', 'village', 'municipality']),
+    ROAD_GEOCODE_TYPES: new Set(['road', 'street']),
+    APPROXIMATE_GEOCODE_TYPES: new Set(['city', 'town', 'village', 'municipality']),
+  };
+  vm.runInNewContext(helpers, context);
+  assert.equal((await context.geocodeListingLocation('Texas Capitol', 'Austin, TX')).ok, false);
+  candidates = [place('Alamo Gift Shop', '30.27'), place('Alamo', '30.28')];
+  const match = await context.geocodeListingLocation('The Alamo', 'Austin, TX');
+  assert.equal(match.ok, true);
+  assert.equal(match.lat, 30.28);
+  candidates = [{ ...place('1100 Congress Avenue', '30.275'), address: { city: 'Austin', state: 'Texas', house_number: '1100', road: 'Congress Avenue' } }];
+  assert.equal((await context.geocodeListingLocation('1100 Congress Ave', 'Austin, TX')).ok, true);
+  assert.equal((await context.geocodeListingLocation('1102 Congress Ave', 'Austin, TX')).ok, false);
+});
+
+test('freeform map search rejects wrong-state and unrelated results', async () => {
+  const app = await readFile(new URL('../app-v8.js', import.meta.url), 'utf8');
+  const helpers = app.slice(app.indexOf('async function geocodeFreeformLocation('), app.indexOf('async function geocodeLocation('));
+  let candidates = [{ lat: '43.67', lon: '-92.97', name: 'Austin', type: 'city', address: { state: 'Minnesota' } }];
+  const context = {
+    normalize: (value) => String(value || '').trim().toLowerCase(),
+    looksLikeStreetAddress: (value) => /\d/.test(value), knownCenterForLocation: () => null,
+    fetchGeocodeResults: async () => candidates,
+    BROAD_GEOCODE_TYPES: new Set(['city', 'town', 'village', 'municipality']),
+  };
+  vm.runInNewContext(helpers, context);
+  assert.equal(await context.geocodeFreeformLocation('Austin, TX'), null);
+  candidates = [{ lat: '30.26', lon: '-97.74', name: 'Austin', type: 'city', address: { state: 'Texas' } }];
+  assert.deepEqual(Array.from(await context.geocodeFreeformLocation('Austin, TX')), [30.26, -97.74]);
+  assert.equal(await context.geocodeFreeformLocation('Round Rock, TX'), null);
+});
