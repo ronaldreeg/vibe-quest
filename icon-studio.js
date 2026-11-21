@@ -28,7 +28,40 @@
   const shapes = ['square', 'triangle', 'circle', 'semicircle', 'quarter', 'curved'];
   function say(text) { status.textContent = text; }
   function piece(color, shape = 'square', rotation = 0, x = 0, y = 0, cols = 1, rows = 1) { return { color, shape, rotation, x, y, cols, rows }; }
+  // These starters use the same editable pieces as the shape brush. The eight-cell
+  // design grid scales evenly to each supported canvas size.
+  const shapeStarters = {
+    sunrise: [
+      ['y', 'circle', 0, 2, 1, 4, 4],
+      ['o', 'triangle', 270, 1, 4, 2, 2],
+      ['o', 'triangle', 0, 3, 4, 2, 2],
+      ['p', 'triangle', 270, 3, 4, 2, 2],
+      ['p', 'triangle', 0, 5, 4, 2, 2],
+      ['t', 'square', 0, 1, 6, 6, 1]
+    ],
+    flower: [
+      ['t', 'square', 0, 3, 4, 2, 3],
+      ['t', 'triangle', 270, 2, 5, 1, 1],
+      ['t', 'triangle', 0, 5, 5, 1, 1],
+      ['p', 'circle', 0, 3, 1, 2, 2],
+      ['p', 'circle', 0, 2, 2, 2, 2],
+      ['p', 'circle', 0, 4, 2, 2, 2],
+      ['p', 'circle', 0, 3, 3, 2, 2],
+      ['y', 'circle', 0, 3, 2, 2, 2]
+    ]
+  };
   function pixelsFromTemplate(name, size) {
+    if (shapeStarters[name]) {
+      const pixels = Array(size * size).fill(null), scale = size / 8;
+      shapeStarters[name].forEach(([color, shape, rotation, left, top, width, height]) => {
+        const x = left * scale, y = top * scale, cols = width * scale, rows = height * scale;
+        for (let dy = 0; dy < rows; dy++) for (let dx = 0; dx < cols; dx++) {
+          const index = (y + dy) * size + x + dx;
+          pixels[index] = { ...piece(C[color], shape, rotation, dx, dy, cols, rows), under: pixels[index] };
+        }
+      });
+      return pixels;
+    }
     const rows = patterns[name] || patterns.blank;
     return Array.from({ length: size * size }, (_, i) => {
       const x = Math.floor((i % size) * 16 / size), y = Math.floor(Math.floor(i / size) * 16 / size);
