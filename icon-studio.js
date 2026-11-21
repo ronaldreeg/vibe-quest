@@ -57,12 +57,14 @@
       ['y', 'square', 0, 6, 6, 1, 1]
     ],
     w: [
-      ['t', 'square', 0, 1, 2, 1, 3],
-      ['t', 'square', 0, 3, 3, 1, 2],
       ['t', 'semicircle', 180, 1, 4, 3, 4],
-      ['p', 'square', 0, 4, 3, 1, 2],
-      ['p', 'square', 0, 6, 2, 1, 3],
-      ['p', 'semicircle', 180, 4, 4, 3, 4]
+      ['t', 'semicircle', 180, 4, 4, 3, 4],
+      ['y', 'square', 0, 1, 2, 1, 3],
+      ['y', 'square', 0, 3, 3, 1, 2],
+      ['y', 'square', 0, 4, 3, 1, 2],
+      ['y', 'square', 0, 6, 2, 1, 3],
+      ['o', 'triangle', 270, 3, 2, 1, 1],
+      ['o', 'triangle', 0, 4, 2, 1, 1]
     ],
     cactus: [
       ['v', 'circle', 0, 3, 1, 2, 2],
@@ -180,6 +182,15 @@
         for (; p; p = p.under) layers.push(p);
         for (let j = layers.length - 1; j >= 0; j--) drawPiece(o, layers[j], i % state.size, Math.floor(i / state.size), cell);
       });
+      // A subtle transparent seam gives each grid piece the look of a separate
+      // stamp. Clear after composing layers so nothing underneath fills the gap.
+      // Uploaded photographs take the other branch and are never altered.
+      const gap = Math.max(1, Math.round(cell * .025));
+      for (let i = 1; i < state.size; i++) {
+        const edge = Math.round(i * cell - gap / 2);
+        o.clearRect(edge, 0, gap, 512);
+        o.clearRect(0, edge, 512, gap);
+      }
     }
     return out;
   }

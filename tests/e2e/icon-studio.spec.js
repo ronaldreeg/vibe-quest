@@ -39,10 +39,10 @@ test('shows a clean drawing surface while keeping empty badge pixels transparent
   await page.locator('#iconBrushSize').fill('2');
   const box = await canvas.boundingBox();
   await canvas.click({ position: { x: box.width * 4.5 / 16, y: box.height * 4.5 / 16 } });
-  // A cell boundary through the circle should be as solid as the adjacent pixels.
-  for (const x of [159, 160, 161]) {
-    expect(await badgePixel(page, x, 160)).toEqual([250, 98, 46, 255]);
-    expect(await canvas.evaluate((el, x) => Array.from(el.getContext('2d').getImageData(x, 160, 1, 1).data), x)).toEqual([250, 98, 46, 255]);
+  // Seams reveal the background, both in the editor and the exported badge.
+  for (const [x, alpha] of [[159, 255], [160, 0], [161, 255]]) {
+    expect((await badgePixel(page, x, 170))[3]).toBe(alpha);
+    expect((await canvas.evaluate((el, x) => Array.from(el.getContext('2d').getImageData(x, 170, 1, 1).data), x))[3]).toBe(alpha);
   }
   expect((await badgePixel(page, 130, 130))[3]).toBe(0);
 });
@@ -128,7 +128,7 @@ test('retains a multi-cell circle when the grid is enlarged, and undo restores a
   const canvas = page.locator('#iconCanvas');
   const box = await canvas.boundingBox();
   await canvas.click({ position: { x: box.width * 4.5 / 16, y: box.height * 4.5 / 16 } });
-  const samples = [[160,130], [130,130], [160,160], [188,188]];
+  const samples = [[163,130], [130,130], [163,163], [188,188]];
   const original = await Promise.all(samples.map(([x,y]) => badgePixel(page, x, y)));
   expect(original[0][3]).toBe(255);
   expect(original[1][3]).toBe(0);
@@ -188,9 +188,9 @@ test('fill recolors connected shape pieces without changing their geometry', asy
   await page.locator('[data-icon-color="#0f8fb1"]').click();
   await expect(page.locator('[data-icon-tool="fill"]')).toHaveAttribute('aria-pressed', 'true');
   await canvas.click({ position: { x: box.width * 5 / 16, y: box.height * 5 / 16 } });
-  expect(await badgePixel(page, 160, 160)).toEqual([15, 143, 177, 255]);
+  expect(await badgePixel(page, 163, 163)).toEqual([15, 143, 177, 255]);
   expect((await badgePixel(page, 130, 130))[3]).toBe(0);
-  expect(await badgePixel(page, 160, 130)).toEqual([15, 143, 177, 255]);
+  expect(await badgePixel(page, 163, 130)).toEqual([15, 143, 177, 255]);
 });
 
 
