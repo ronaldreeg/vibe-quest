@@ -26,6 +26,27 @@ async function badgePixel(page, x, y) {
   }, { x, y });
 }
 
+test('shows a clean drawing surface while keeping empty badge pixels transparent', async ({ page }) => {
+  await openStudio(page);
+  await page.locator('[data-icon-template="blank"]').click();
+  const shell = page.locator('.icon-canvas-shell');
+  await expect(shell).toHaveCSS('background-image', 'none');
+  await expect(shell).toHaveCSS('background-color', 'rgb(243, 233, 196)');
+  const canvas = page.locator('#iconCanvas');
+  const blank = await canvas.evaluate(el => Array.from(el.getContext('2d').getImageData(32, 32, 1, 1).data));
+  expect(blank).toEqual([0, 0, 0, 0]);
+  await page.locator('[data-icon-shape="circle"]').click();
+  await page.locator('[data-icon-stamp-size="2x2"]').click();
+  const box = await canvas.boundingBox();
+  await canvas.click({ position: { x: box.width * 4.5 / 16, y: box.height * 4.5 / 16 } });
+  // A cell boundary through the circle should be as solid as the adjacent pixels.
+  for (const x of [159, 160, 161]) {
+    expect(await badgePixel(page, x, 160)).toEqual([250, 98, 46, 255]);
+    expect(await canvas.evaluate((el, x) => Array.from(el.getContext('2d').getImageData(x, 160, 1, 1).data), x)).toEqual([250, 98, 46, 255]);
+  }
+  expect((await badgePixel(page, 130, 130))[3]).toBe(0);
+});
+
 test('draws on the pixel grid, changes color, fills and undoes the last edit', async ({ page }) => {
   await openStudio(page);
   await page.locator('[data-icon-template="blank"]').click();

@@ -24,7 +24,7 @@
 .icon-upload input[type=file] { max-width: 100%; }
 .icon-upload small { display: block; font-size: .85rem; }
 .icon-check { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
-.icon-canvas-shell { width: min(100%, 440px); margin: 24px auto 0; background-color: #f3e9c4; background-image: linear-gradient(45deg, #d6ccb0 25%, transparent 25%), linear-gradient(-45deg, #d6ccb0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #d6ccb0 75%), linear-gradient(-45deg, transparent 75%, #d6ccb0 75%); background-size: 32px 32px; background-position: 0 0, 0 16px, 16px -16px, -16px 0; }
+.icon-canvas-shell { width: min(100%, 440px); margin: 24px auto 0; background-color: #f3e9c4; }
 #iconCanvas { display: block; width: 100%; aspect-ratio: 1; image-rendering: pixelated; touch-action: none; cursor: crosshair; }
 #iconCanvas:focus-visible { outline: 3px solid var(--brand-yellow); outline-offset: 4px; }
 .icon-preview-panel > p { max-width: 440px; margin: 12px auto; font-size: .88rem; }

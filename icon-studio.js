@@ -108,8 +108,6 @@
     const art = compose(); ctx.clearRect(0, 0, 512, 512); ctx.drawImage(art, 0, 0);
     if (!state.image) {
       const cell = 512 / state.size;
-      ctx.strokeStyle = 'rgba(47,48,53,.18)'; ctx.lineWidth = 1;
-      for (let i = 0; i <= state.size; i++) { const n = i * cell + .5; ctx.beginPath(); ctx.moveTo(n, 0); ctx.lineTo(n, 512); ctx.moveTo(0, n); ctx.lineTo(512, n); ctx.stroke(); }
       if (state.keyboard) { ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.strokeRect(state.cursorX * cell + 2, state.cursorY * cell + 2, cell - 4, cell - 4); ctx.strokeStyle = '#22242a'; ctx.lineWidth = 1; ctx.strokeRect(state.cursorX * cell + 3, state.cursorY * cell + 3, cell - 6, cell - 6); }
     }
     previewCtx.clearRect(0, 0, 64, 64); previewCtx.imageSmoothingEnabled = !pixelate.checked && !!state.image; previewCtx.drawImage(art, 0, 0, 64, 64);
