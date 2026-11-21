@@ -41,3 +41,31 @@ test('shape starters are transparent, editable and undoable at every canvas size
   await page.locator('[data-icon-action="undo"]').click();
   expect(await pixel(page, 232, 104)).toEqual([244, 80, 119, 255]);
 });
+
+test('planet and cactus remain transparent and editable at every canvas size', async ({ page }) => {
+  await page.route('**/supabase-client.js**', route => route.fulfill({ status: 200, body: '' }));
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.locator('.site-footer [data-view="share"]').click();
+  await page.locator('[data-workshop-mode="icon"]').click();
+  for (const size of [8, 16, 32]) {
+    await page.locator(`[data-icon-size="${size}"]`).click();
+    await page.locator('[data-icon-template="planet"]').click();
+    expect(await pixel(page, 16, 16)).toEqual([0, 0, 0, 0]);
+    expect(await pixel(page, 256, 256)).toEqual([15, 143, 177, 255]);
+    expect(await pixel(page, 96, 256)).toEqual([243, 233, 196, 255]);
+    await page.locator('[data-icon-template="cactus"]').click();
+    expect(await pixel(page, 16, 16)).toEqual([0, 0, 0, 0]);
+    expect(await pixel(page, 224, 192)).toEqual([157, 169, 98, 255]);
+    expect(await pixel(page, 224, 416)).toEqual([244, 80, 119, 255]);
+    await page.locator('[data-icon-action="undo"]').click();
+    expect(await pixel(page, 256, 256)).toEqual([15, 143, 177, 255]);
+  }
+  await page.locator('[data-icon-template="cactus"]').click();
+  await page.locator('[data-icon-tool="eraser"]').click();
+  const canvas = page.locator('#iconCanvas');
+  const box = await canvas.boundingBox();
+  await canvas.click({ position: { x: box.width * 232 / 512, y: box.height * 200 / 512 } });
+  expect(await pixel(page, 232, 200)).toEqual([0, 0, 0, 0]);
+  await page.locator('[data-icon-action="undo"]').click();
+  expect(await pixel(page, 232, 200)).toEqual([157, 169, 98, 255]);
+});

@@ -16,7 +16,7 @@
   const brushSize = document.querySelector('#iconBrushSize');
   const brushSizeValue = document.querySelector('#iconBrushSizeValue');
   const brushStretch = document.querySelector('#iconBrushStretch');
-  const C = { o: '#fa622e', y: '#f8d23d', c: '#f3e9c4', t: '#0f8fb1', d: '#2f3035', p: '#f45077' };
+  const C = { o: '#fa622e', y: '#f8d23d', c: '#f3e9c4', t: '#0f8fb1', d: '#2f3035', p: '#f45077', v: '#9da962' };
   const patterns = {
     spark: ['................','.......yy.......','.......yy.......','......yyyy......','......yyyy......','.....yyyyyy.....','..yyyyyyyyyyyy..','..yyyyyyyyyyyy..','.....yyyyyy.....','......yyyy......','......yyyy......','.......yy.......','.......yy.......','................','................','................'],
     mushroom: ['................','.....oooooo.....','...oooooooooo...','..oooccoooccoo..','.ooooccoooccooo.','.oooooooooooooo.','.oooccooooocooo.','.oooccooooocooo.','..oooooooooooo..','....cccccccc....','.....cccccc.....','.....ccddcc.....','.....cccccc.....','....cccccccc....','................','................'],
@@ -48,6 +48,24 @@
       ['p', 'circle', 0, 4, 2, 2, 2],
       ['p', 'circle', 0, 3, 3, 2, 2],
       ['y', 'circle', 0, 3, 2, 2, 2]
+    ],
+    planet: [
+      ['c', 'circle', 0, 1, 3, 6, 2],
+      ['t', 'circle', 0, 2, 1, 4, 5],
+      ['p', 'circle', 0, 4, 2, 1, 1],
+      ['y', 'square', 0, 1, 1, 1, 1],
+      ['y', 'square', 0, 6, 6, 1, 1]
+    ],
+    cactus: [
+      ['v', 'circle', 0, 3, 1, 2, 2],
+      ['v', 'square', 0, 3, 2, 2, 4],
+      ['v', 'circle', 0, 1, 3, 2, 2],
+      ['v', 'square', 0, 2, 4, 2, 1],
+      ['v', 'circle', 0, 5, 2, 2, 2],
+      ['v', 'square', 0, 4, 3, 2, 1],
+      ['y', 'circle', 0, 3, 0, 2, 2],
+      ['p', 'square', 0, 2, 5, 4, 2],
+      ['c', 'square', 0, 2, 5, 4, 1]
     ]
   };
   function pixelsFromTemplate(name, size) {
