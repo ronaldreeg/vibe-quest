@@ -157,13 +157,25 @@
     else o.rect(0, 0, 1, 1);
     o.fill();
   }
+  const maskTints = new WeakMap();
   function drawPiece(o, p, x, y, cell) {
     o.save(); o.beginPath(); o.rect(x * cell, y * cell, cell, cell); o.clip();
+    if (p.shape === 'fill-mask') {
+      let tints = maskTints.get(p.mask);
+      if (!tints) { tints = new Map(); maskTints.set(p.mask, tints); }
+      if (!tints.has(p.color)) {
+        const tint = document.createElement('canvas'); tint.width = tint.height = 512;
+        const tc = tint.getContext('2d'); tc.drawImage(p.mask, 0, 0);
+        tc.globalCompositeOperation = 'source-in'; tc.fillStyle = p.color; tc.fillRect(0, 0, 512, 512);
+        tints.set(p.color, tint);
+      }
+      o.drawImage(tints.get(p.color), 0, 0); o.restore(); return;
+    }
     o.translate((x - p.x) * cell, (y - p.y) * cell); o.scale(p.cols * cell, p.rows * cell);
     o.translate(.5, .5); o.rotate(p.rotation * Math.PI / 180); o.translate(-.5, -.5);
     o.fillStyle = p.color; shapePath(o, p.shape); o.restore();
   }
-  function compose() {
+  function compose(withSeams = true) {
     const out = document.createElement('canvas'); out.width = 512; out.height = 512;
     const o = out.getContext('2d');
     if (state.image) {
@@ -186,7 +198,7 @@
       // stamp. Clear after composing layers so nothing underneath fills the gap.
       // Uploaded photographs take the other branch and are never altered.
       const gap = Math.max(1, Math.round(cell * .025));
-      for (let i = 1; i < state.size; i++) {
+      for (let i = 1; withSeams && i < state.size; i++) {
         const edge = Math.round(i * cell - gap / 2);
         o.clearRect(edge, 0, gap, 512);
         o.clearRect(0, edge, 512, gap);
@@ -203,12 +215,57 @@
     previewCtx.clearRect(0, 0, 64, 64); previewCtx.imageSmoothingEnabled = !pixelate.checked && !!state.image; previewCtx.drawImage(art, 0, 0, 64, 64);
   }
   function same(a, b) { return (a?.color || null) === (b?.color || null); }
-  function edit(x, y) {
+  // Bucket fill follows the actual transparent pixels, not the bounding boxes of
+  // curved pieces. Keep a mask underneath existing layers so corners can fill
+  // without painting over the shapes (or unrelated enclosed empty areas).
+  function fillTransparent(px, py, artwork) {
+    const side = 512, data = artwork.getContext('2d').getImageData(0, 0, side, side).data;
+    const start = py * side + px;
+    if (data[start * 4 + 3] === 255) return false;
+    const visited = new Uint8Array(side * side), queue = new Int32Array(side * side);
+    let head = 0, tail = 0;
+    const add = n => { if (!visited[n] && data[n * 4 + 3] < 255) { visited[n] = 1; queue[tail++] = n; } };
+    add(start);
+    while (head < tail) {
+      const n = queue[head++], x = n % side, y = Math.floor(n / side);
+      if (x) add(n - 1); if (x < side - 1) add(n + 1);
+      if (y) add(n - side); if (y < side - 1) add(n + side);
+    }
+    const mask = document.createElement('canvas'); mask.width = mask.height = side;
+    const maskCtx = mask.getContext('2d'), image = maskCtx.createImageData(side, side);
+    const rgb = [1, 3, 5].map(i => parseInt(state.color.slice(i, i + 2), 16));
+    const touched = new Set(), cell = side / state.size;
+    for (let i = 0; i < tail; i++) {
+      const n = queue[i], at = n * 4;
+      image.data[at] = rgb[0]; image.data[at + 1] = rgb[1]; image.data[at + 2] = rgb[2]; image.data[at + 3] = 255;
+      touched.add(Math.floor(n / side / cell) * state.size + Math.floor((n % side) / cell));
+    }
+    maskCtx.putImageData(image, 0, 0);
+    const beneath = (p, bottom) => p ? { ...p, under: beneath(p.under, bottom) } : bottom;
+    touched.forEach(i => { state.pixels[i] = beneath(state.pixels[i], { ...piece(state.color, 'fill-mask'), mask }); });
+    return true;
+  }
+  function visibleLayerAt(p, x, y, px, py) {
+    const sample = document.createElement('canvas'); sample.width = sample.height = 512;
+    const context = sample.getContext('2d'), cell = 512 / state.size;
+    for (; p; p = p.under) {
+      context.clearRect(0, 0, 512, 512); drawPiece(context, p, x, y, cell);
+      if (context.getImageData(px, py, 1, 1).data[3]) return p;
+    }
+    return null;
+  }
+  function edit(x, y, px = Math.floor((x + .5) * 512 / state.size), py = Math.floor((y + .5) * 512 / state.size)) {
     if (state.image) { say('Choose a starter or Blank to draw. Your uploaded image will be replaced.'); return; }
     const size = state.size, i = y * size + x;
     if (state.tool === 'fill') {
-      const old = state.pixels[i], next = piece(state.color);
+      const artwork = compose(false);
+      if (fillTransparent(px, py, artwork)) { render(); return; }
+      const old = visibleLayerAt(state.pixels[i], x, y, px, py), next = piece(state.color);
       if (same(old, next)) return;
+      if (old?.shape === 'fill-mask') {
+        const recolor = p => !p ? p : { ...p, color: p.mask === old.mask && p.color === old.color ? state.color : p.color, under: recolor(p.under) };
+        state.pixels = state.pixels.map(recolor); render(); return;
+      }
       const todo = [i], seen = new Set();
       while (todo.length) { const n = todo.pop(); if (seen.has(n) || !same(state.pixels[n], old)) continue; seen.add(n); state.pixels[n] = state.pixels[n] ? { ...state.pixels[n], color: state.color } : { ...next }; const xx = n % size, yy = Math.floor(n / size); if (xx) todo.push(n - 1); if (xx < size - 1) todo.push(n + 1); if (yy) todo.push(n - size); if (yy < size - 1) todo.push(n + size); }
     } else {
@@ -229,10 +286,10 @@
     }
     render();
   }
-  function coords(e) { const r = canvas.getBoundingClientRect(), size = state.size; return [Math.max(0, Math.min(size - 1, Math.floor((e.clientX-r.left)/r.width*size))), Math.max(0, Math.min(size - 1, Math.floor((e.clientY-r.top)/r.height*size)))]; }
+  function coords(e) { const r = canvas.getBoundingClientRect(), size = state.size; const px = Math.max(0, Math.min(511, Math.floor((e.clientX-r.left)/r.width*512))), py = Math.max(0, Math.min(511, Math.floor((e.clientY-r.top)/r.height*512))); return [Math.floor(px * size / 512), Math.floor(py * size / 512), px, py]; }
   function hasArt() { return !!state.image || state.pixels.some(Boolean); }
   function getBadgeBlob() { return new Promise((resolve, reject) => { if (!hasArt()) { reject(new Error('Add a little artwork first.')); return; } compose().toBlob(blob => blob ? resolve(blob) : reject(new Error('Could not make your badge. Please try again.')), 'image/png'); }); }
-  canvas.addEventListener('pointerdown', e => { e.preventDefault(); state.keyboard = false; state.pointer = true; canvas.setPointerCapture(e.pointerId); if (!state.image) snapshot(); const [x,y] = coords(e); state.lastPoint = [x,y]; edit(x,y); });
+  canvas.addEventListener('pointerdown', e => { e.preventDefault(); state.keyboard = false; state.pointer = true; canvas.setPointerCapture(e.pointerId); if (!state.image) snapshot(); const [x,y,px,py] = coords(e); state.lastPoint = [x,y]; edit(x,y,px,py); });
   canvas.addEventListener('pointermove', e => {
     if (!state.pointer || state.tool === 'fill') return;
     const [x,y] = coords(e), [fromX,fromY] = state.lastPoint || [x,y];

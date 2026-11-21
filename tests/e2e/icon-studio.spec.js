@@ -209,3 +209,57 @@ test('quarter and concave curve stamps fill complementary areas', async ({ page 
   expect((await badgePixel(page, 132, 92))[3]).toBe(0);
   expect((await badgePixel(page, 156, 68))[3]).toBe(255);
 });
+
+test('background fill reaches the transparent corners of curved starter pieces and remains undoable', async ({ page }) => {
+  await openStudio(page);
+  await page.locator('[data-icon-template="cactus"]').click();
+  await page.locator('[data-icon-tool="fill"]').click();
+  await page.locator('[data-icon-color="#f3e9c4"]').click();
+  const canvas = page.locator('#iconCanvas'), box = await canvas.boundingBox();
+  const clickPixel = (x, y) => canvas.click({ position: { x: box.width * x / 512, y: box.height * y / 512 } });
+  expect((await badgePixel(page, 195, 5))[3]).toBe(0);
+  // Click a transparent point inside the yellow circle's bounding cell.
+  await clickPixel(195, 5);
+  expect(await badgePixel(page, 195, 5)).toEqual([243, 233, 196, 255]);
+  expect(await badgePixel(page, 5, 5)).toEqual([243, 233, 196, 255]);
+  expect(await badgePixel(page, 250, 20)).toEqual([248, 210, 61, 255]);
+  expect((await badgePixel(page, 192, 10))[3]).toBe(0); // transparent grid seam
+  await page.locator('[data-icon-color="#0f8fb1"]').click();
+  await clickPixel(195, 5); // Recolor the same background under the circle.
+  expect(await badgePixel(page, 195, 5)).toEqual([15, 143, 177, 255]);
+  expect(await badgePixel(page, 5, 5)).toEqual([15, 143, 177, 255]);
+  expect(await badgePixel(page, 250, 20)).toEqual([248, 210, 61, 255]);
+  await page.locator('[data-icon-action="undo"]').click();
+  expect(await badgePixel(page, 195, 5)).toEqual([243, 233, 196, 255]);
+  await page.locator('[data-icon-size="32"]').click();
+  expect(await badgePixel(page, 195, 5)).toEqual([243, 233, 196, 255]);
+  await page.locator('[data-icon-action="undo"]').click();
+  await page.locator('[data-icon-action="undo"]').click();
+  expect((await badgePixel(page, 195, 5))[3]).toBe(0);
+  // Filling from a blank cell also reaches the curved corners.
+  await page.locator('[data-icon-color="#f3e9c4"]').click();
+  await clickPixel(5, 5);
+  expect(await badgePixel(page, 195, 5)).toEqual([243, 233, 196, 255]);
+});
+
+test('background fill preserves enclosed transparent regions and artwork under a curve', async ({ page }) => {
+  await openStudio(page);
+  await page.locator('[data-icon-template="blank"]').click();
+  await page.locator('[data-icon-color="#0f8fb1"]').click();
+  const canvas = page.locator('#iconCanvas'), box = await canvas.boundingBox();
+  const clickPixel = (x, y) => canvas.click({ position: { x: box.width * x / 512, y: box.height * y / 512 } });
+  await clickPixel(70, 70); // teal under the corner of a large circle
+  await page.locator('[data-icon-color="#fa622e"]').click();
+  await page.locator('[data-icon-shape="circle"]').click();
+  await page.locator('#iconBrushSize').fill('6');
+  await clickPixel(70, 70);
+  await page.locator('[data-icon-tool="eraser"]').click();
+  await page.locator('#iconBrushSize').fill('1');
+  await clickPixel(140, 140); // hole entirely enclosed by the circle
+  await page.locator('[data-icon-tool="fill"]').click();
+  await page.locator('[data-icon-color="#f3e9c4"]').click();
+  await clickPixel(5, 5);
+  expect(await badgePixel(page, 70, 70)).toEqual([15, 143, 177, 255]);
+  expect(await badgePixel(page, 120, 120)).toEqual([250, 98, 46, 255]);
+  expect((await badgePixel(page, 140, 140))[3]).toBe(0);
+});
