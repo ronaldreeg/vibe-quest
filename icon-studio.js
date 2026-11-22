@@ -6,6 +6,15 @@
   if (!panel || !canvas || !preview) return;
   const ctx = canvas.getContext('2d');
   const previewCtx = preview.getContext('2d');
+  // Keep the placement guide separate from the art, badge preview and PNG export.
+  const guide = document.createElement('canvas');
+  guide.width = guide.height = 512; guide.setAttribute('aria-hidden', 'true');
+  Object.assign(guide.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', pointerEvents: 'none' });
+  canvas.parentElement.style.position = 'relative';
+  canvas.parentElement.appendChild(guide);
+  const guideCtx = guide.getContext('2d');
+  const guideMask = document.createElement('canvas'); guideMask.width = guideMask.height = 512;
+  const guideWhite = document.createElement('canvas'); guideWhite.width = guideWhite.height = 512;
   const status = document.querySelector('#iconStatus');
   const upload = document.querySelector('#iconUpload');
   const uploadControls = document.querySelector('#iconUploadControls');
@@ -24,7 +33,7 @@
     heart: ['................','................','...pppp..pppp...','..pppppppppppp..','.pppppppppppppp.','.pppppppppppppp.','.pppppppppppppp.','..pppppppppppp..','...pppppppppp...','....pppppppp....','.....pppppp.....','......pppp......','.......pp.......','................','................','................'],
     blank: Array(16).fill('................')
   };
-  const state = { size: 16, pixels: [], color: C.o, shape: 'square', rotation: 0, stampSize: '1x1', tool: 'pencil', history: [], image: null, pointer: false, lastPoint: null, cursorX: 7, cursorY: 7, keyboard: false, uploadRequest: 0 };
+  const state = { size: 16, pixels: [], color: C.o, shape: 'square', rotation: 0, stampSize: '1x1', tool: 'pencil', history: [], image: null, pointer: false, lastPoint: null, cursorX: 7, cursorY: 7, keyboard: false, hover: null, uploadRequest: 0 };
   const shapes = ['square', 'triangle', 'circle', 'semicircle', 'quarter', 'curved'];
   function say(text) { status.textContent = text; }
   function piece(color, shape = 'square', rotation = 0, x = 0, y = 0, cols = 1, rows = 1) { return { color, shape, rotation, x, y, cols, rows }; }
@@ -126,6 +135,7 @@
     brushSize.setAttribute('aria-valuetext', `${brushCells} by ${brushRows} ${brushRows === 1 ? 'cell' : 'cells'}`);
     const label = document.querySelector('#iconGridSizeLabel'); if (label) label.textContent = `${state.size} × ${state.size} grid`;
     const rotation = panel.querySelector('[data-icon-action="rotate"]'); if (rotation) rotation.setAttribute('aria-label', `Rotate shape clockwise. Current rotation ${state.rotation} degrees.`);
+    drawGuide();
   }
   function template(name) {
     snapshot(); state.uploadRequest++;
@@ -217,6 +227,33 @@
     }
     return out;
   }
+  // The eraser clears every cell in the footprint, irrespective of the chosen
+  // shape. Fill is region-based, so a stamp outline would be misleading there.
+  function drawGuide() {
+    guideCtx.clearRect(0, 0, 512, 512);
+    if (!state.hover || state.image || state.pointer || state.tool === 'fill') return;
+    const [x, y] = state.hover, cell = 512 / state.size;
+    let [cols, rows] = state.stampSize.split('x').map(Number);
+    if (state.rotation % 180) [cols, rows] = [rows, cols];
+    const mask = guideMask.getContext('2d');
+    mask.clearRect(0, 0, 512, 512); mask.fillStyle = '#22242a';
+    mask.save();
+    mask.translate(x * cell, y * cell); mask.scale(cols * cell, rows * cell);
+    if (state.tool !== 'eraser') {
+      mask.translate(.5, .5); mask.rotate(state.rotation * Math.PI / 180); mask.translate(-.5, -.5);
+    }
+    shapePath(mask, state.tool === 'eraser' ? 'square' : state.shape);
+    mask.restore();
+    const white = guideWhite.getContext('2d');
+    white.clearRect(0, 0, 512, 512); white.drawImage(guideMask, 0, 0);
+    white.globalCompositeOperation = 'source-in'; white.fillStyle = '#fff'; white.fillRect(0, 0, 512, 512);
+    white.globalCompositeOperation = 'source-over';
+    // Two contrasting outlines stay visible on light and dark colors alike.
+    for (const [dx, dy] of [[-3,0],[3,0],[0,-3],[0,3],[-2,-2],[-2,2],[2,-2],[2,2]]) guideCtx.drawImage(guideMask, dx, dy);
+    for (const [dx, dy] of [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]]) guideCtx.drawImage(guideWhite, dx, dy);
+    guideCtx.globalCompositeOperation = 'destination-out'; guideCtx.drawImage(guideMask, 0, 0);
+    guideCtx.globalCompositeOperation = 'source-over';
+  }
   function render() {
     const art = compose(); ctx.clearRect(0, 0, 512, 512); ctx.drawImage(art, 0, 0);
     if (!state.image) {
@@ -224,6 +261,7 @@
       if (state.keyboard) { ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.strokeRect(state.cursorX * cell + 2, state.cursorY * cell + 2, cell - 4, cell - 4); ctx.strokeStyle = '#22242a'; ctx.lineWidth = 1; ctx.strokeRect(state.cursorX * cell + 3, state.cursorY * cell + 3, cell - 6, cell - 6); }
     }
     previewCtx.clearRect(0, 0, 64, 64); previewCtx.imageSmoothingEnabled = !pixelate.checked && !!state.image; previewCtx.drawImage(art, 0, 0, 64, 64);
+    drawGuide();
   }
   function same(a, b) { return (a?.color || null) === (b?.color || null); }
   // Bucket fill follows the actual transparent pixels, not the bounding boxes of
@@ -300,16 +338,29 @@
   function coords(e) { const r = canvas.getBoundingClientRect(), size = state.size; const px = Math.max(0, Math.min(511, Math.floor((e.clientX-r.left)/r.width*512))), py = Math.max(0, Math.min(511, Math.floor((e.clientY-r.top)/r.height*512))); return [Math.floor(px * size / 512), Math.floor(py * size / 512), px, py]; }
   function hasArt() { return !!state.image || state.pixels.some(Boolean); }
   function getBadgeBlob() { return new Promise((resolve, reject) => { if (!hasArt()) { reject(new Error('Add a little artwork first.')); return; } compose().toBlob(blob => blob ? resolve(blob) : reject(new Error('Could not make your badge. Please try again.')), 'image/png'); }); }
-  canvas.addEventListener('pointerdown', e => { e.preventDefault(); state.keyboard = false; state.pointer = true; canvas.setPointerCapture(e.pointerId); if (!state.image) snapshot(); const [x,y,px,py] = coords(e); state.lastPoint = [x,y]; edit(x,y,px,py); });
+  function hoverAt(e) {
+    if (e.pointerType === 'touch') return;
+    const r = canvas.getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX >= r.right || e.clientY < r.top || e.clientY >= r.bottom) {
+      state.hover = null; drawGuide(); return;
+    }
+    const [x, y] = coords(e);
+    if (state.hover?.[0] === x && state.hover?.[1] === y) return;
+    state.hover = [x, y]; drawGuide();
+  }
+  canvas.addEventListener('pointerenter', hoverAt);
+  canvas.addEventListener('pointerleave', () => { state.hover = null; drawGuide(); });
+  canvas.addEventListener('pointerdown', e => { e.preventDefault(); state.keyboard = false; state.pointer = true; state.hover = null; drawGuide(); canvas.setPointerCapture(e.pointerId); if (!state.image) snapshot(); const [x,y,px,py] = coords(e); state.lastPoint = [x,y]; edit(x,y,px,py); });
   canvas.addEventListener('pointermove', e => {
-    if (!state.pointer || state.tool === 'fill') return;
+    if (!state.pointer) { hoverAt(e); return; }
+    if (state.tool === 'fill') return;
     const [x,y] = coords(e), [fromX,fromY] = state.lastPoint || [x,y];
     const steps = Math.max(Math.abs(x-fromX), Math.abs(y-fromY));
     for (let i = 1; i <= steps; i++) edit(Math.round(fromX+(x-fromX)*i/steps), Math.round(fromY+(y-fromY)*i/steps));
     state.lastPoint = [x,y];
   });
-  canvas.addEventListener('pointerup', () => { state.pointer = false; });
-  canvas.addEventListener('pointercancel', () => { state.pointer = false; });
+  canvas.addEventListener('pointerup', e => { state.pointer = false; hoverAt(e); });
+  canvas.addEventListener('pointercancel', () => { state.pointer = false; state.hover = null; drawGuide(); });
   canvas.addEventListener('focus', () => { state.keyboard = true; render(); });
   canvas.addEventListener('blur', () => { state.keyboard = false; render(); });
   canvas.addEventListener('keydown', e => {

@@ -294,3 +294,82 @@ test('new letter starters stay transparent, recognizable and editable through gr
   await page.locator('[data-icon-action="undo"]').click();
   expect((await badgePixel(page, 140, 204))[3]).toBe(255);
 });
+
+test('shows a shape placement outline without changing the artwork or exported badge', async ({ page }) => {
+  await openStudio(page);
+  await page.locator('[data-icon-template="blank"]').click();
+  await page.locator('[data-icon-shape="circle"]').click();
+  await page.locator('#iconBrushSize').fill('2');
+  const canvas = page.locator('#iconCanvas');
+  await canvas.scrollIntoViewIfNeeded();
+  const box = await canvas.boundingBox();
+  const moveToPixel = (x, y) => page.mouse.move(box.x + box.width * x / 512, box.y + box.height * y / 512);
+  const guidePixel = (x, y) => page.locator('.icon-canvas-shell canvas[aria-hidden="true"]').evaluate((el, [x, y]) => Array.from(el.getContext('2d').getImageData(x, y, 1, 1).data), [x, y]);
+  await moveToPixel(140, 140); // The stamp starts at grid cell (4, 4).
+  expect((await guidePixel(160, 126))[3]).toBeGreaterThan(0); // circle's top edge
+  expect((await guidePixel(128, 128))[3]).toBe(0); // not a square bounding box
+  expect((await canvas.evaluate(el => el.getContext('2d').getImageData(160, 126, 1, 1).data[3]))).toBe(0);
+  await canvas.click({ position: { x: box.width * 140 / 512, y: box.height * 140 / 512 } });
+  expect((await badgePixel(page, 160, 126))[3]).toBe(0); // outline is never exported
+  expect((await badgePixel(page, 161, 145))[3]).toBe(255);
+  await page.mouse.move(box.x - 10, box.y - 10);
+  expect((await guidePixel(160, 126))[3]).toBe(0);
+});
+
+test('previews the rotated eraser footprint and hides the guide for fill and touch', async ({ page }) => {
+  await openStudio(page);
+  await page.locator('[data-icon-template="blank"]').click();
+  await page.locator('[data-icon-shape="circle"]').click();
+  await page.locator('#iconBrushSize').fill('2');
+  await page.locator('#iconBrushStretch').check();
+  await page.locator('[data-icon-action="rotate"]').click();
+  await page.locator('[data-icon-tool="eraser"]').click();
+  const canvas = page.locator('#iconCanvas');
+  await canvas.scrollIntoViewIfNeeded();
+  let box = await canvas.boundingBox();
+  const guide = page.locator('.icon-canvas-shell canvas[aria-hidden="true"]');
+  const alpha = (x, y) => guide.evaluate((el, [x, y]) => el.getContext('2d').getImageData(x, y, 1, 1).data[3], [x, y]);
+  const move = () => page.mouse.move(box.x + box.width * 140 / 512, box.y + box.height * 140 / 512);
+  await move();
+  expect(await alpha(190, 126)).toBeGreaterThan(0); // 4 cells wide after rotation
+  expect(await alpha(257, 160)).toBeGreaterThan(0);
+  expect(await alpha(160, 193)).toBeGreaterThan(0); // 2 cells tall
+  expect(await alpha(190, 160)).toBe(0); // hollow guide
+  await page.locator('[data-icon-tool="fill"]').click();
+  await canvas.scrollIntoViewIfNeeded();
+  box = await canvas.boundingBox();
+  await move();
+  expect(await alpha(190, 126)).toBe(0);
+  await page.locator('[data-icon-tool="pencil"]').click();
+  await canvas.scrollIntoViewIfNeeded();
+  box = await canvas.boundingBox();
+  await page.mouse.move(box.x - 10, box.y - 10);
+  await canvas.dispatchEvent('pointermove', { pointerType: 'touch', pointerId: 44, clientX: box.x + 20, clientY: box.y + 20 });
+  expect(await alpha(190, 126)).toBe(0);
+});
+
+
+test('aligns a rotated asymmetric stamp preview with its painted area, including at the edge', async ({ page }) => {
+  await openStudio(page);
+  await page.locator('[data-icon-template="blank"]').click();
+  await page.locator('[data-icon-shape="triangle"]').click();
+  await page.locator('#iconBrushSize').fill('2');
+  await page.locator('#iconBrushStretch').check();
+  await page.locator('[data-icon-action="rotate"]').click();
+  const canvas = page.locator('#iconCanvas');
+  await canvas.scrollIntoViewIfNeeded();
+  const box = await canvas.boundingBox();
+  const guide = page.locator('.icon-canvas-shell canvas[aria-hidden="true"]');
+  const alpha = (x, y) => guide.evaluate((el, [x, y]) => el.getContext('2d').getImageData(x, y, 1, 1).data[3], [x, y]);
+  const move = (x, y) => page.mouse.move(box.x + box.width * x / 512, box.y + box.height * y / 512);
+  await move(140, 140);
+  expect(await alpha(192, 160)).toBeGreaterThan(0); // diagonal of rotated triangle
+  expect(await alpha(253, 190)).toBe(0); // outside the triangle
+  await canvas.click({ position: { x: box.width * 140 / 512, y: box.height * 140 / 512 } });
+  expect((await badgePixel(page, 140, 140))[3]).toBe(255);
+  expect((await badgePixel(page, 245, 184))[3]).toBe(0);
+  await move(485, 485); // top-left anchor near bottom-right; only part will fit
+  expect(await alpha(500, 478)).toBeGreaterThan(0);
+  await canvas.click({ position: { x: box.width * 485 / 512, y: box.height * 485 / 512 } });
+  expect((await badgePixel(page, 500, 485))[3]).toBe(255);
+});
