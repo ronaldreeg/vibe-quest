@@ -35,7 +35,7 @@
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" integrity="sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK" crossorigin="anonymous" />
     <link rel="stylesheet" href="./styles.css?v=20261121-footer-leading-v2" />
     <link rel="stylesheet" href="./badge-styles.css?v=20261121-v1" />
-    <link rel="stylesheet" href="./icon-studio.css?v=20261121-brush-v4" />
+    <link rel="stylesheet" href="./icon-studio.css?v=20261122-workshop-controls-v5" />
 </head>
   <body>
     <div class="app-shell">
@@ -899,9 +899,6 @@
                     <button type="button" class="icon-swatch" data-icon-color="#f45077" style="--swatch:#f45077" aria-label="Pink" aria-pressed="false"></button>
                     <button type="button" class="icon-swatch" data-icon-color="#f3e9c4" style="--swatch:#f3e9c4" aria-label="Cream" aria-pressed="false"></button>
                     <button type="button" class="icon-swatch" data-icon-color="#2f3035" style="--swatch:#2f3035" aria-label="Charcoal" aria-pressed="false"></button>
-                    <button type="button" class="icon-swatch" data-icon-color="#642f45" style="--swatch:#642f45" aria-label="Wine" aria-pressed="false"></button>
-                    <button type="button" class="icon-swatch" data-icon-color="#4d5231" style="--swatch:#4d5231" aria-label="Olive" aria-pressed="false"></button>
-                    <button type="button" class="icon-swatch" data-icon-color="#9da962" style="--swatch:#9da962" aria-label="Light olive" aria-pressed="false"></button>
                     <label class="icon-custom-color">Custom <input type="color" id="iconCustomColor" value="#fa622e" aria-label="Choose a custom pixel color"></label>
                   </div>
                 </fieldset>
@@ -910,11 +907,14 @@
                     <button class="secondary-button is-active" type="button" data-icon-tool="pencil" aria-pressed="true">Pencil</button>
                     <button class="secondary-button" type="button" data-icon-tool="eraser" aria-pressed="false">Eraser</button>
                     <button class="secondary-button" type="button" data-icon-tool="fill" aria-pressed="false">Fill</button>
-                    <button class="secondary-button" type="button" data-icon-action="undo">Undo</button>
+                    <button class="secondary-button" type="button" data-icon-action="undo" title="Undo (⌘Z or Ctrl+Z)" aria-keyshortcuts="Meta+Z Control+Z">Undo</button>
                   </div>
                 </fieldset>
                 <fieldset class="flyer-option-group icon-shapes"><legend>Shape brush</legend>
-                  <p class="icon-option-hint">Stamp a shape onto your canvas. Rotate it to change the direction.</p>
+                  <div class="icon-shape-toolbar">
+                    <p class="icon-option-hint">Stamp a shape onto your canvas.</p>
+                    <button class="secondary-button icon-rotate" type="button" data-icon-action="rotate" aria-label="Rotate brush shape 90 degrees">↻ Rotate</button>
+                  </div>
                   <div class="icon-shape-options" role="group" aria-label="Brush shape">
                     <button class="icon-shape-button is-active" type="button" data-icon-shape="square" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/></svg><span>Square</span></button>
                     <button class="icon-shape-button" type="button" data-icon-shape="triangle" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V4l16 16z"/></svg><span>Triangle</span></button>
@@ -930,7 +930,6 @@
                       <div class="icon-brush-size-ends" aria-hidden="true"><span>Small</span><span>Large</span></div>
                       <label class="icon-stretch"><input id="iconBrushStretch" type="checkbox" /> Tall shape</label>
                     </div>
-                    <button class="secondary-button icon-rotate" type="button" data-icon-action="rotate" aria-label="Rotate brush shape 90 degrees">↻ Rotate</button>
                   </div>
                 </fieldset>
                 <div class="icon-upload">
@@ -1239,6 +1238,6 @@
   <script src="./flyer-studio.js?v=20261013-deep-accents-v1"></script>
   <script src="./vibetinerary-studio.js?v=20261121-icon-studio-v1"></script>
   <script src="./vibe-code-studio.js?v=20260925-flyer-logo-v1"></script>
-  <script src="./icon-studio.js?v=20261122-vibe-type-v14"></script>
+  <script src="./icon-studio.js?v=20261122-workshop-undo-v15"></script>
 </body>
 </html>

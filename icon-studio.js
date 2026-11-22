@@ -402,6 +402,23 @@
     if (moves[e.key]) { e.preventDefault(); state.keyboard = true; state.cursorX = Math.max(0, Math.min(state.size - 1, state.cursorX + moves[e.key][0])); state.cursorY = Math.max(0, Math.min(state.size - 1, state.cursorY + moves[e.key][1])); canvas.setAttribute('aria-label', `Pixel editor, column ${state.cursorX+1}, row ${state.cursorY+1}. Press space to apply ${state.tool}.`); render(); }
     else if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (!state.image) snapshot(); edit(state.cursorX, state.cursorY); }
   });
+  function undo() {
+    const previous = state.history.pop();
+    if (previous) { state.uploadRequest++; state.size = previous.size; state.pixels = previous.pixels; state.image = previous.image; cropX.value = previous.cropX; cropY.value = previous.cropY; pixelate.checked = previous.pixelate; uploadControls.hidden = !state.image; if (!state.image) upload.value = ''; state.cursorX = Math.min(state.cursorX, state.size - 1); state.cursorY = Math.min(state.cursorY, state.size - 1); render(); say('Last change undone.'); }
+    else say('Nothing to undo yet.');
+    updateControls();
+  }
+  document.addEventListener('keydown', e => {
+    // Leave typing undo and shortcuts outside the visible studio to the browser.
+    const target = e.target;
+    const textInput = target instanceof HTMLInputElement &&
+      !['range', 'checkbox', 'radio', 'color', 'button', 'submit', 'reset', 'file', 'image'].includes(target.type);
+    if (e.defaultPrevented || e.isComposing || e.repeat || e.altKey || e.shiftKey ||
+        !(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'z' || !panel.getClientRects().length ||
+        textInput || (target instanceof Element && (target.closest('textarea, select') || target.isContentEditable))) return;
+    e.preventDefault();
+    undo();
+  });
   panel.addEventListener('click', async e => {
     const target = e.target.closest('[data-icon-template], [data-icon-color], [data-icon-tool], [data-icon-shape], [data-icon-size], [data-icon-action]'); if (!target) return;
     if (target.dataset.iconTemplate) { template(target.dataset.iconTemplate); return; }
@@ -410,11 +427,7 @@
     if (target.dataset.iconShape && shapes.includes(target.dataset.iconShape)) { state.shape = target.dataset.iconShape; state.tool = 'pencil'; }
     if (target.dataset.iconSize) { resize(Number(target.dataset.iconSize)); return; }
     if (target.dataset.iconAction === 'rotate') { state.rotation = (state.rotation + 90) % 360; say(`Shape rotated to ${state.rotation} degrees.`); }
-    if (target.dataset.iconAction === 'undo') {
-      const previous = state.history.pop();
-      if (previous) { state.uploadRequest++; state.size = previous.size; state.pixels = previous.pixels; state.image = previous.image; cropX.value = previous.cropX; cropY.value = previous.cropY; pixelate.checked = previous.pixelate; uploadControls.hidden = !state.image; if (!state.image) upload.value = ''; state.cursorX = Math.min(state.cursorX, state.size - 1); state.cursorY = Math.min(state.cursorY, state.size - 1); render(); say('Last change undone.'); }
-      else say('Nothing to undo yet.');
-    }
+    if (target.dataset.iconAction === 'undo') { undo(); return; }
     if (target.dataset.iconAction === 'download' || target.dataset.iconAction === 'use') {
       try { const blob = await getBadgeBlob(); if (target.dataset.iconAction === 'use') { window.dispatchEvent(new CustomEvent('vibe-icon-selected', {detail: {blob}})); say('Opening the quest form with your badge.'); } else { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'vibe-quest-badge.png'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); say('Your badge is ready to download.'); } } catch (err) { say(err.message); }
     }
