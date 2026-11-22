@@ -57,28 +57,22 @@
       ['y', 'square', 0, 6, 6, 1, 1]
     ],
     w: [
-      ['t', 'semicircle', 180, 1, 4, 3, 4],
-      ['t', 'semicircle', 180, 4, 4, 3, 4],
-      ['y', 'square', 0, 1, 2, 1, 3],
-      ['y', 'square', 0, 3, 3, 1, 2],
-      ['y', 'square', 0, 4, 3, 1, 2],
-      ['y', 'square', 0, 6, 2, 1, 3],
-      ['o', 'triangle', 270, 3, 2, 1, 1],
-      ['o', 'triangle', 0, 4, 2, 1, 1]
-    ],
-    'w-tall': [
-      // Upright strokes, pointed feet and small flared terminals.
+      // Three upright strokes with concave flares and pointed lower joins.
       ['c', 'square', 0, 1, 1, 1, 4], ['c', 'square', 0, 3, 2, 1, 3],
       ['c', 'square', 0, 5, 1, 1, 4],
-      ['c', 'triangle', 180, 1, 5, 2, 2], ['c', 'triangle', 90, 3, 5, 1, 2],
-      ['c', 'triangle', 180, 3, 5, 1, 2], ['c', 'triangle', 90, 4, 5, 2, 2],
+      ['c', 'curved', 0, 0, 1, 1, 1], ['c', 'curved', 270, 2, 1, 1, 1],
+      ['c', 'curved', 0, 4, 1, 1, 1], ['c', 'curved', 270, 6, 1, 1, 1],
+      ['c', 'curved', 0, 1, 5, 2, 2], ['c', 'curved', 270, 3, 5, 1, 2],
+      ['c', 'curved', 0, 3, 5, 1, 2], ['c', 'curved', 270, 4, 5, 2, 2],
       ['c', 'sparkle', 0, 1, 0, 1, 1], ['c', 'sparkle', 0, 5, 0, 1, 1]
     ],
     q: [
+      // Concave flares echo the W while the open counter and tail keep it legible.
       ['c', 'square', 0, 2, 2, 1, 4], ['c', 'square', 0, 5, 2, 1, 4],
       ['c', 'square', 0, 3, 1, 2, 1], ['c', 'square', 0, 3, 6, 2, 1],
       ['c', 'quarter', 270, 2, 1, 1, 1], ['c', 'quarter', 0, 5, 1, 1, 1],
       ['c', 'quarter', 180, 2, 6, 1, 1], ['c', 'quarter', 90, 5, 6, 1, 1],
+      ['c', 'curved', 0, 1, 2, 1, 1], ['c', 'curved', 180, 6, 5, 1, 1],
       ['c', 'slash', 0, 5, 5, 2, 2], ['c', 'sparkle', 0, 2, 0, 1, 1]
     ],
     cactus: [

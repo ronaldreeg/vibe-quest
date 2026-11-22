@@ -267,7 +267,7 @@ test('background fill preserves enclosed transparent regions and artwork under a
 test('new letter starters stay transparent, recognizable and editable through grid changes', async ({ page }) => {
   await openStudio(page);
   for (const [name, ink, empty] of [
-    ['w-tall', [84, 100], [148, 100]],
+    ['w', [84, 140], [148, 204]],
     ['q', [140, 204], [236, 204]]
   ]) {
     await page.locator('[data-icon-size="16"]').click();
