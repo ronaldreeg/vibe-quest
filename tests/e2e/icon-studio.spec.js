@@ -264,10 +264,9 @@ test('background fill preserves enclosed transparent regions and artwork under a
   expect((await badgePixel(page, 140, 140))[3]).toBe(0);
 });
 
-test('new letter starters stay transparent, recognizable and editable through grid changes', async ({ page }) => {
+test('Q stays transparent, recognizable and editable through grid changes', async ({ page }) => {
   await openStudio(page);
   for (const [name, ink, empty] of [
-    ['w', [84, 140], [148, 204]],
     ['q', [140, 204], [236, 204]]
   ]) {
     await page.locator('[data-icon-size="16"]').click();
@@ -293,6 +292,30 @@ test('new letter starters stay transparent, recognizable and editable through gr
   expect((await badgePixel(page, 140, 204))[3]).toBe(0);
   await page.locator('[data-icon-action="undo"]').click();
   expect((await badgePixel(page, 140, 204))[3]).toBe(255);
+});
+
+test('Vibe replaces W and stays editable with transparent counters on every grid', async ({ page }) => {
+  await openStudio(page);
+  await expect(page.locator('[data-icon-template="w"]')).toHaveCount(0);
+  await page.locator('[data-icon-template="vibe"]').click();
+  for (const size of [16, 8, 32, 16]) {
+    await page.locator(`[data-icon-size="${size}"]`).click();
+    // Each letter has ink, while the counters in b/e and the surroundings are clear.
+    for (const [x, y] of [[30, 195], [145, 250], [200, 250], [340, 250]]) {
+      expect((await badgePixel(page, x, y))[3]).toBe(255);
+    }
+    for (const [x, y] of [[238, 250], [396, 222], [10, 10]]) {
+      expect((await badgePixel(page, x, y))[3]).toBe(0);
+    }
+  }
+  const canvas = page.locator('#iconCanvas');
+  const box = await canvas.boundingBox();
+  await page.locator('[data-icon-tool="eraser"]').click();
+  await canvas.click({ position: { x: box.width * 200 / 512, y: box.height * 250 / 512 } });
+  expect((await badgePixel(page, 200, 250))[3]).toBe(0);
+  expect((await badgePixel(page, 340, 250))[3]).toBe(255);
+  await page.locator('[data-icon-action="undo"]').click();
+  expect((await badgePixel(page, 200, 250))[3]).toBe(255);
 });
 
 test('shows a shape placement outline without changing the artwork or exported badge', async ({ page }) => {

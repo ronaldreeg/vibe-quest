@@ -65,18 +65,13 @@
       ['y', 'square', 0, 1, 1, 1, 1],
       ['y', 'square', 0, 6, 6, 1, 1]
     ],
-    w: [
-      // Three upright strokes with concave flares and pointed lower joins.
-      ['c', 'square', 0, 1, 1, 1, 4], ['c', 'square', 0, 3, 2, 1, 3],
-      ['c', 'square', 0, 5, 1, 1, 4],
-      ['c', 'curved', 0, 0, 1, 1, 1], ['c', 'curved', 270, 2, 1, 1, 1],
-      ['c', 'curved', 0, 4, 1, 1, 1], ['c', 'curved', 270, 6, 1, 1, 1],
-      ['c', 'curved', 0, 1, 5, 2, 2], ['c', 'curved', 270, 3, 5, 1, 2],
-      ['c', 'curved', 0, 3, 5, 1, 2], ['c', 'curved', 270, 4, 5, 2, 2],
-      ['c', 'sparkle', 0, 1, 0, 1, 1], ['c', 'sparkle', 0, 5, 0, 1, 1]
+    vibe: [
+      // A single scalable word, split into editable cells by the normal stamp
+      // renderer. Its fine letterforms survive even the eight-cell grid.
+      ['c', 'vibe-word', 0, 0, 1, 8, 6]
     ],
     q: [
-      // Concave flares echo the W while the open counter and tail keep it legible.
+      // Concave flares, an open counter and a tail keep this Q legible.
       ['c', 'square', 0, 2, 2, 1, 4], ['c', 'square', 0, 5, 2, 1, 4],
       ['c', 'square', 0, 3, 1, 2, 1], ['c', 'square', 0, 3, 6, 2, 1],
       ['c', 'quarter', 270, 2, 1, 1, 1], ['c', 'quarter', 0, 5, 1, 1, 1],
@@ -167,6 +162,7 @@
   // Draw one shape in normalized coordinates. Clipping below turns a multi-cell stamp
   // into independent grid cells so a later stamp or eraser can edit any part.
   function shapePath(o, shape) {
+    if (shape === 'vibe-word') { drawVibeWord(o); return; }
     o.beginPath();
     if (shape === 'circle') o.arc(.5, .5, .5, 0, Math.PI * 2);
     else if (shape === 'triangle') { o.moveTo(0, 0); o.lineTo(1, 1); o.lineTo(0, 1); o.closePath(); }
@@ -177,6 +173,46 @@
     else if (shape === 'curved') { o.moveTo(0, 0); o.lineTo(1, 0); o.lineTo(1, 1); o.arc(0, 1, 1, 0, -Math.PI / 2, true); o.closePath(); }
     else o.rect(0, 0, 1, 1);
     o.fill();
+  }
+  // Four hand-drawn modular blackletter forms. Their concave, pointed ends
+  // echo the curved stamp; counters stay genuinely transparent.
+  function drawVibeWord(o) {
+    o.save(); o.scale(1 / 1000, 1 / 700);
+    o.beginPath();
+    // v: inward-sloping strokes gather into a curved, pointed foot.
+    o.moveTo(26, 195); o.quadraticCurveTo(51, 192, 55, 160); o.quadraticCurveTo(59, 192, 82, 195);
+    o.lineTo(111, 382); o.quadraticCurveTo(116, 416, 125, 438); o.quadraticCurveTo(134, 416, 139, 382);
+    o.lineTo(168, 195); o.quadraticCurveTo(191, 192, 195, 160); o.quadraticCurveTo(199, 192, 224, 195);
+    o.lineTo(170, 445); o.quadraticCurveTo(158, 508, 125, 548); o.quadraticCurveTo(92, 508, 80, 445); o.closePath();
+    // i: a four-pointed star and stem with concave terminals.
+    o.moveTo(283, 85); o.quadraticCurveTo(287, 126, 323, 130); o.quadraticCurveTo(287, 134, 283, 175);
+    o.quadraticCurveTo(279, 134, 243, 130); o.quadraticCurveTo(279, 126, 283, 85); o.closePath();
+    o.moveTo(254, 213); o.quadraticCurveTo(278, 210, 283, 180); o.quadraticCurveTo(288, 210, 312, 213);
+    o.lineTo(312, 510); o.quadraticCurveTo(288, 513, 283, 548); o.quadraticCurveTo(278, 513, 254, 510); o.closePath();
+    o.fill();
+    // b: a tall stem and rounded counter.
+    o.save(); o.translate(75, 0); o.scale(.85, 1); o.beginPath();
+    o.moveTo(355, 105); o.quadraticCurveTo(379, 102, 384, 68); o.quadraticCurveTo(389, 102, 413, 105);
+    o.lineTo(413, 233); o.quadraticCurveTo(441, 203, 486, 203); o.lineTo(528, 203);
+    o.quadraticCurveTo(573, 203, 582, 169); o.quadraticCurveTo(588, 201, 596, 225);
+    o.lineTo(596, 467); o.quadraticCurveTo(596, 535, 528, 535);
+    o.lineTo(355, 535); o.closePath();
+    o.moveTo(413, 272); o.lineTo(413, 480); o.lineTo(496, 480); o.quadraticCurveTo(537, 480, 537, 439);
+    o.lineTo(537, 299); o.quadraticCurveTo(537, 258, 496, 258); o.lineTo(476, 258);
+    o.quadraticCurveTo(443, 258, 413, 272); o.closePath();
+    o.fill('evenodd'); o.restore();
+    // e: a curved counter, open lower right and a pointed finishing stroke.
+    o.save(); o.translate(200, 0); o.scale(.75, 1); o.beginPath();
+    o.moveTo(953, 365); o.lineTo(675, 365); o.lineTo(675, 434); o.quadraticCurveTo(675, 478, 719, 478); o.lineTo(881, 478);
+    o.quadraticCurveTo(905, 476, 911, 448); o.quadraticCurveTo(915, 476, 939, 479); o.lineTo(939, 535);
+    o.lineTo(719, 535); o.quadraticCurveTo(616, 535, 616, 432); o.lineTo(616, 306);
+    o.quadraticCurveTo(616, 203, 719, 203); o.lineTo(850, 203);
+    o.quadraticCurveTo(891, 203, 897, 170); o.quadraticCurveTo(903, 203, 925, 208);
+    o.quadraticCurveTo(953, 220, 953, 306);
+    o.lineTo(953, 365); o.closePath();
+    o.moveTo(678, 317); o.lineTo(890, 317); o.lineTo(890, 301); o.quadraticCurveTo(890, 253, 842, 253);
+    o.lineTo(726, 253); o.quadraticCurveTo(678, 253, 678, 301); o.closePath();
+    o.fill('evenodd'); o.restore(); o.restore();
   }
   const maskTints = new WeakMap();
   function drawPiece(o, p, x, y, cell) {

@@ -70,13 +70,11 @@ test('planet and cactus remain transparent and editable at every canvas size', a
   expect(await pixel(page, 232, 200)).toEqual([157, 169, 98, 255]);
 });
 
-test('the centered round planet and curved W work at every grid size', async ({ page }) => {
+test('the planet stays round and centered at every grid size', async ({ page }) => {
   await page.route('**/supabase-client.js**', route => route.fulfill({ status: 200, body: '' }));
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await page.locator('.site-footer [data-view="share"]').click();
   await page.locator('[data-workshop-mode="icon"]').click();
-  await expect(page.locator('[data-icon-template="w"]')).toHaveCount(1);
-  await expect(page.locator('[data-icon-template="w-tall"]')).toHaveCount(0);
   for (const size of [8, 16, 32]) {
     await page.locator(`[data-icon-size="${size}"]`).click();
     await page.locator('[data-icon-template="planet"]').click();
@@ -86,21 +84,5 @@ test('the centered round planet and curved W work at every grid size', async ({ 
     }
     expect((await pixel(page, 259, 120))[3]).toBe(0);
     expect((await pixel(page, 259, 392))[3]).toBe(0);
-    await page.locator('[data-icon-template="w"]').click();
-    // Three separated stems and a curved, pointed lower join.
-    for (const [x, y] of [[84, 140], [220, 204], [340, 140], [150, 342]]) {
-      expect(await pixel(page, x, y)).toEqual([243, 233, 196, 255]);
-    }
-    for (const [x, y] of [[148, 204], [150, 380], [259, 100]]) {
-      expect((await pixel(page, x, y))[3]).toBe(0);
-    }
-    expect((await pixel(page, 16, 16))[3]).toBe(0);
   }
-  await page.locator('[data-icon-tool="eraser"]').click();
-  const canvas = page.locator('#iconCanvas');
-  const box = await canvas.boundingBox();
-  await canvas.click({ position: { x: box.width * 104 / 512, y: box.height * 168 / 512 } });
-  expect((await pixel(page, 104, 168))[3]).toBe(0);
-  await page.locator('[data-icon-action="undo"]').click();
-  expect(await pixel(page, 104, 168)).toEqual([243, 233, 196, 255]);
 });
