@@ -68,7 +68,7 @@
     vibe: [
       // A single scalable word, split into editable cells by the normal stamp
       // renderer. Its fine letterforms survive even the eight-cell grid.
-      ['c', 'vibe-word', 0, 0, 1, 8, 6]
+      ['c', 'vibe-word', 0, 0, 0, 8, 8]
     ],
     q: [
       // Concave flares, an open counter and a tail keep this Q legible.
@@ -174,45 +174,43 @@
     else o.rect(0, 0, 1, 1);
     o.fill();
   }
-  // Four hand-drawn modular blackletter forms. Their concave, pointed ends
-  // echo the curved stamp; counters stay genuinely transparent.
+  // Condensed modular letterforms with slim, segmented verticals and the
+  // concave four-point terminals used throughout the reference lettering.
+  // Each stroke is part of the same editable stamp, with transparent counters.
   function drawVibeWord(o) {
-    o.save(); o.scale(1 / 1000, 1 / 700);
-    o.beginPath();
-    // v: inward-sloping strokes gather into a curved, pointed foot.
-    o.moveTo(26, 195); o.quadraticCurveTo(51, 192, 55, 160); o.quadraticCurveTo(59, 192, 82, 195);
-    o.lineTo(111, 382); o.quadraticCurveTo(116, 416, 125, 438); o.quadraticCurveTo(134, 416, 139, 382);
-    o.lineTo(168, 195); o.quadraticCurveTo(191, 192, 195, 160); o.quadraticCurveTo(199, 192, 224, 195);
-    o.lineTo(170, 445); o.quadraticCurveTo(158, 508, 125, 548); o.quadraticCurveTo(92, 508, 80, 445); o.closePath();
-    // i: a four-pointed star and stem with concave terminals.
-    o.moveTo(283, 85); o.quadraticCurveTo(287, 126, 323, 130); o.quadraticCurveTo(287, 134, 283, 175);
-    o.quadraticCurveTo(279, 134, 243, 130); o.quadraticCurveTo(279, 126, 283, 85); o.closePath();
-    o.moveTo(254, 213); o.quadraticCurveTo(278, 210, 283, 180); o.quadraticCurveTo(288, 210, 312, 213);
-    o.lineTo(312, 510); o.quadraticCurveTo(288, 513, 283, 548); o.quadraticCurveTo(278, 513, 254, 510); o.closePath();
-    o.fill();
-    // b: a tall stem and rounded counter.
-    o.save(); o.translate(75, 0); o.scale(.85, 1); o.beginPath();
-    o.moveTo(355, 105); o.quadraticCurveTo(379, 102, 384, 68); o.quadraticCurveTo(389, 102, 413, 105);
-    o.lineTo(413, 233); o.quadraticCurveTo(441, 203, 486, 203); o.lineTo(528, 203);
-    o.quadraticCurveTo(573, 203, 582, 169); o.quadraticCurveTo(588, 201, 596, 225);
-    o.lineTo(596, 467); o.quadraticCurveTo(596, 535, 528, 535);
-    o.lineTo(355, 535); o.closePath();
-    o.moveTo(413, 272); o.lineTo(413, 480); o.lineTo(496, 480); o.quadraticCurveTo(537, 480, 537, 439);
-    o.lineTo(537, 299); o.quadraticCurveTo(537, 258, 496, 258); o.lineTo(476, 258);
-    o.quadraticCurveTo(443, 258, 413, 272); o.closePath();
-    o.fill('evenodd'); o.restore();
-    // e: a curved counter, open lower right and a pointed finishing stroke.
-    o.save(); o.translate(200, 0); o.scale(.75, 1); o.beginPath();
-    o.moveTo(953, 365); o.lineTo(675, 365); o.lineTo(675, 434); o.quadraticCurveTo(675, 478, 719, 478); o.lineTo(881, 478);
-    o.quadraticCurveTo(905, 476, 911, 448); o.quadraticCurveTo(915, 476, 939, 479); o.lineTo(939, 535);
-    o.lineTo(719, 535); o.quadraticCurveTo(616, 535, 616, 432); o.lineTo(616, 306);
-    o.quadraticCurveTo(616, 203, 719, 203); o.lineTo(850, 203);
-    o.quadraticCurveTo(891, 203, 897, 170); o.quadraticCurveTo(903, 203, 925, 208);
-    o.quadraticCurveTo(953, 220, 953, 306);
-    o.lineTo(953, 365); o.closePath();
-    o.moveTo(678, 317); o.lineTo(890, 317); o.lineTo(890, 301); o.quadraticCurveTo(890, 253, 842, 253);
-    o.lineTo(726, 253); o.quadraticCurveTo(678, 253, 678, 301); o.closePath();
-    o.fill('evenodd'); o.restore(); o.restore();
+    o.save(); o.scale(1 / 1000, 1 / 700); o.beginPath();
+    const bar = (x, y, w, h) => o.rect(x, y, w, h);
+    const star = (x, y, w, h) => {
+      o.moveTo(x, y - h); o.quadraticCurveTo(x + 2, y - 2, x + w, y);
+      o.quadraticCurveTo(x + 2, y + 2, x, y + h);
+      o.quadraticCurveTo(x - 2, y + 2, x - w, y);
+      o.quadraticCurveTo(x - 2, y - 2, x, y - h); o.closePath();
+    };
+    const stem = (x, top, bottom) => {
+      // Small breaks echo the tiled letter in the reference.
+      bar(x, top, 54, 178 - top); bar(x, 183, 54, 163);
+      bar(x, 351, 54, 163); bar(x, 519, 54, bottom - 519);
+    };
+    // V: narrow uprights transition into slanted strokes and a pointed foot.
+    for (const x of [110, 240]) { bar(x, 110, 54, 68); bar(x, 183, 54, 163); bar(x, 351, 54, 48); }
+    o.moveTo(110, 404); o.lineTo(164, 404); o.lineTo(202, 541);
+    o.lineTo(240, 404); o.lineTo(294, 404); o.lineTo(225, 600);
+    o.quadraticCurveTo(209, 613, 202, 627);
+    o.quadraticCurveTo(195, 613, 179, 600); o.closePath();
+    star(137, 104, 43, 38); star(267, 104, 43, 38);
+    // I: a single vertical column and pointed cap and foot.
+    stem(337, 110, 575); star(364, 104, 43, 38); star(364, 582, 43, 38);
+    // B: two tall, narrow stacked counters made by open strokes.
+    stem(431, 110, 575); stem(584, 110, 575);
+    bar(483, 110, 103, 54); bar(483, 319, 103, 54); bar(483, 521, 103, 54);
+    star(458, 104, 43, 38); star(611, 104, 43, 38);
+    star(458, 582, 43, 38); star(611, 582, 43, 38);
+    // E: the same column and strokes, open at the right.
+    stem(675, 110, 575);
+    bar(727, 110, 108, 54); bar(727, 319, 92, 54); bar(727, 521, 108, 54);
+    star(702, 104, 43, 38); star(702, 582, 43, 38);
+    star(837, 137, 30, 35); star(821, 346, 30, 35); star(837, 548, 30, 35);
+    o.fill(); o.restore();
   }
   const maskTints = new WeakMap();
   function drawPiece(o, p, x, y, cell) {
