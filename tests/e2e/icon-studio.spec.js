@@ -294,28 +294,29 @@ test('Q stays transparent, recognizable and editable through grid changes', asyn
   expect((await badgePixel(page, 140, 204))[3]).toBe(255);
 });
 
-test('Vibe replaces W and stays editable with transparent counters on every grid', async ({ page }) => {
+test('Vibe matches the orange tiled reference and stays editable on every grid', async ({ page }) => {
   await openStudio(page);
   await expect(page.locator('[data-icon-template="w"]')).toHaveCount(0);
   await page.locator('[data-icon-template="vibe"]').click();
   for (const size of [16, 8, 32, 16]) {
     await page.locator(`[data-icon-size="${size}"]`).click();
-    // Each letter has ink, while the counters in b/e and the surroundings are clear.
-    for (const [x, y] of [[67, 202], [182, 202], [231, 202], [355, 202]]) {
-      expect((await badgePixel(page, x, y))[3]).toBe(255);
+    // Four tall orange strokes, the squared V foot, and E's paired sweeps.
+    for (const [x, y] of [[49, 119], [177, 119], [241, 119], [369, 119], [81, 337], [401, 177], [401, 305]]) {
+      expect(await badgePixel(page, x, y)).toEqual([250, 98, 46, 255]);
     }
-    for (const [x, y] of [[260, 202], [400, 202], [10, 10]]) {
+    // The V opening, B counters, E cutout and outside remain transparent.
+    for (const [x, y] of [[81, 145], [273, 145], [273, 337], [465, 145], [5, 5]]) {
       expect((await badgePixel(page, x, y))[3]).toBe(0);
     }
   }
   const canvas = page.locator('#iconCanvas');
   const box = await canvas.boundingBox();
   await page.locator('[data-icon-tool="eraser"]').click();
-  await canvas.click({ position: { x: box.width * 231 / 512, y: box.height * 202 / 512 } });
-  expect((await badgePixel(page, 231, 202))[3]).toBe(0);
-  expect((await badgePixel(page, 355, 202))[3]).toBe(255);
+  await canvas.click({ position: { x: box.width * 241 / 512, y: box.height * 119 / 512 } });
+  expect((await badgePixel(page, 241, 119))[3]).toBe(0);
+  expect((await badgePixel(page, 369, 119))[3]).toBe(255);
   await page.locator('[data-icon-action="undo"]').click();
-  expect((await badgePixel(page, 231, 202))[3]).toBe(255);
+  expect((await badgePixel(page, 241, 119))[3]).toBe(255);
 });
 
 test('shows a shape placement outline without changing the artwork or exported badge', async ({ page }) => {

@@ -68,7 +68,7 @@
     vibe: [
       // A single scalable word, split into editable cells by the normal stamp
       // renderer. Its fine letterforms survive even the eight-cell grid.
-      ['c', 'vibe-word', 0, 0, 0, 8, 8]
+      ['o', 'vibe-word', 0, 0, 0, 8, 8]
     ],
     q: [
       // Concave flares, an open counter and a tail keep this Q legible.
@@ -174,42 +174,46 @@
     else o.rect(0, 0, 1, 1);
     o.fill();
   }
-  // Condensed modular letterforms with slim, segmented verticals and the
-  // concave four-point terminals used throughout the reference lettering.
-  // Each stroke is part of the same editable stamp, with transparent counters.
+  // The VIBE starter follows the sixteen-cell artwork: tall tiled strokes,
+  // curved cutouts, and four-point flares. It remains one editable grid stamp.
   function drawVibeWord(o) {
-    o.save(); o.scale(1 / 1000, 1 / 700); o.beginPath();
+    o.save(); o.scale(1 / 16, 1 / 16); o.beginPath();
     const bar = (x, y, w, h) => o.rect(x, y, w, h);
-    const star = (x, y, w, h) => {
-      o.moveTo(x, y - h); o.quadraticCurveTo(x + 2, y - 2, x + w, y);
-      o.quadraticCurveTo(x + 2, y + 2, x, y + h);
-      o.quadraticCurveTo(x - 2, y + 2, x - w, y);
-      o.quadraticCurveTo(x - 2, y - 2, x, y - h); o.closePath();
+    const flare = (x, y) => {
+      o.moveTo(x, y - 1);
+      o.bezierCurveTo(x, y - .45, x + .45, y, x + 1, y);
+      o.bezierCurveTo(x + .45, y, x, y + .45, x, y + 1);
+      o.bezierCurveTo(x, y + .45, x - .45, y, x - 1, y);
+      o.bezierCurveTo(x - .45, y, x, y - .45, x, y - 1);
+      o.closePath();
     };
-    const stem = (x, top, bottom) => {
-      // Small breaks echo the tiled letter in the reference.
-      bar(x, top, 54, 178 - top); bar(x, 183, 54, 163);
-      bar(x, 351, 54, 163); bar(x, 519, 54, bottom - 519);
-    };
-    // V: narrow uprights transition into slanted strokes and a pointed foot.
-    for (const x of [110, 240]) { bar(x, 110, 54, 68); bar(x, 183, 54, 163); bar(x, 351, 54, 48); }
-    o.moveTo(110, 404); o.lineTo(164, 404); o.lineTo(202, 541);
-    o.lineTo(240, 404); o.lineTo(294, 404); o.lineTo(225, 600);
-    o.quadraticCurveTo(209, 613, 202, 627);
-    o.quadraticCurveTo(195, 613, 179, 600); o.closePath();
-    star(137, 104, 43, 38); star(267, 104, 43, 38);
-    // I: a single vertical column and pointed cap and foot.
-    stem(337, 110, 575); star(364, 104, 43, 38); star(364, 582, 43, 38);
-    // B: two tall, narrow stacked counters made by open strokes.
-    stem(431, 110, 575); stem(584, 110, 575);
-    bar(483, 110, 103, 54); bar(483, 319, 103, 54); bar(483, 521, 103, 54);
-    star(458, 104, 43, 38); star(611, 104, 43, 38);
-    star(458, 582, 43, 38); star(611, 582, 43, 38);
-    // E: the same column and strokes, open at the right.
-    stem(675, 110, 575);
-    bar(727, 110, 108, 54); bar(727, 319, 92, 54); bar(727, 521, 108, 54);
-    star(702, 104, 43, 38); star(702, 582, 43, 38);
-    star(837, 137, 30, 35); star(821, 346, 30, 35); star(837, 548, 30, 35);
+    // V is deliberately a squared, rounded U in the original artwork.
+    bar(1, 2, 1, 11); bar(1, 10, 2, 3); bar(3, 3, 1, 9);
+    o.moveTo(3, 3); o.bezierCurveTo(3, 2.45, 3.45, 2, 4, 2);
+    o.lineTo(4, 3); o.closePath();
+    o.moveTo(3, 12); o.lineTo(4, 12);
+    o.bezierCurveTo(4, 12.55, 3.55, 13, 3, 13); o.closePath();
+    flare(1, 2); flare(1, 13);
+    // I and B share the reference's long vertical proportions.
+    bar(5, 2, 1, 11); flare(6, 2); flare(5, 13);
+    bar(7, 2, 1, 11); bar(7, 2, 3, 1); bar(9, 3, 1, 3);
+    bar(7, 6, 2, 2); bar(9, 7, 1, 6); bar(7, 12, 3, 1);
+    o.moveTo(9, 6); o.bezierCurveTo(9.55, 6, 10, 6.45, 10, 7);
+    o.lineTo(9, 7); o.closePath();
+    flare(10, 2); flare(7, 13);
+    // E uses paired concave sweeps, meeting in points at the top of each bowl.
+    bar(11, 3, 3, 1); bar(11, 7, 3, 1); bar(11, 11, 2, 2); bar(11, 12, 4, 1);
+    o.moveTo(11, 3); o.bezierCurveTo(11, 2.45, 11.45, 2, 12, 2);
+    o.lineTo(15, 2); o.lineTo(15, 3);
+    o.bezierCurveTo(15, 3.55, 14.55, 4, 14, 4); o.lineTo(11, 4); o.closePath();
+    for (const y of [4, 8]) {
+      o.moveTo(11, y); o.lineTo(13, y);
+      o.bezierCurveTo(13, y + 1.5, 12.3, y + 2.55, 11, y + 2.8);
+      o.closePath();
+      o.moveTo(13, y); o.bezierCurveTo(13, y + 1.65, 14.25, y + 3, 16, y + 3);
+      o.lineTo(13, y + 3); o.closePath();
+    }
+    flare(15, 2); flare(15, 13);
     o.fill(); o.restore();
   }
   const maskTints = new WeakMap();
