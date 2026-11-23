@@ -71,13 +71,9 @@
       ['o', 'vibe-word', 0, 0, 0, 8, 8]
     ],
     q: [
-      // Concave flares, an open counter and a tail keep this Q legible.
-      ['c', 'square', 0, 2, 2, 1, 4], ['c', 'square', 0, 5, 2, 1, 4],
-      ['c', 'square', 0, 3, 1, 2, 1], ['c', 'square', 0, 3, 6, 2, 1],
-      ['c', 'quarter', 270, 2, 1, 1, 1], ['c', 'quarter', 0, 5, 1, 1, 1],
-      ['c', 'quarter', 180, 2, 6, 1, 1], ['c', 'quarter', 90, 5, 6, 1, 1],
-      ['c', 'curved', 0, 1, 2, 1, 1], ['c', 'curved', 180, 6, 5, 1, 1],
-      ['c', 'slash', 0, 5, 5, 2, 2], ['c', 'sparkle', 0, 2, 0, 1, 1]
+      // Sixteen-cell reference: a yellow field and one clipped, editable Q.
+      ['y', 'square', 0, 0, 0, 8, 8],
+      ['o', 'q-reference', 0, 0, 0, 8, 8]
     ],
     cactus: [
       ['v', 'circle', 0, 3, 1, 2, 2],
@@ -101,6 +97,13 @@
           pixels[index] = { ...piece(C[color], shape, rotation, dx, dy, cols, rows), under: pixels[index] };
         }
       });
+      if (name === 'q') {
+        // A shared background mask lets Fill recolor the visible yellow field,
+        // including transparent corners inside the orange stamp's bounding box.
+        const mask = document.createElement('canvas'); mask.width = mask.height = 512;
+        const context = mask.getContext('2d'); context.fillRect(0, 0, 512, 512);
+        pixels.forEach(p => { p.under = { ...p.under, shape: 'fill-mask', mask }; });
+      }
       return pixels;
     }
     const rows = patterns[name] || patterns.blank;
@@ -163,6 +166,7 @@
   // into independent grid cells so a later stamp or eraser can edit any part.
   function shapePath(o, shape) {
     if (shape === 'vibe-word') { drawVibeWord(o); return; }
+    if (shape === 'q-reference') { drawReferenceQ(o); return; }
     o.beginPath();
     if (shape === 'circle') o.arc(.5, .5, .5, 0, Math.PI * 2);
     else if (shape === 'triangle') { o.moveTo(0, 0); o.lineTo(1, 1); o.lineTo(0, 1); o.closePath(); }
@@ -173,6 +177,25 @@
     else if (shape === 'curved') { o.moveTo(0, 0); o.lineTo(1, 0); o.lineTo(1, 1); o.arc(0, 1, 1, 0, -Math.PI / 2, true); o.closePath(); }
     else o.rect(0, 0, 1, 1);
     o.fill();
+  }
+  // The Q reproduces the reference on a 16-cell grid. Its curved four-point
+  // flourishes and squared strokes stay editable through the normal cell clips.
+  function drawReferenceQ(o) {
+    o.save(); o.scale(1 / 16, 1 / 16); o.beginPath();
+    const bar = (x, y, w, h) => o.rect(x, y, w, h);
+    const flare = (x, y, r) => {
+      o.moveTo(x, y - r);
+      o.bezierCurveTo(x, y - r * .45, x + r * .45, y, x + r, y);
+      o.bezierCurveTo(x + r * .45, y, x, y + r * .45, x, y + r);
+      o.bezierCurveTo(x, y + r * .45, x - r * .45, y, x - r, y);
+      o.bezierCurveTo(x - r * .45, y, x, y - r * .45, x, y - r);
+      o.closePath();
+    };
+    bar(1, 3, 14, 1); bar(1, 4, 5, 1);
+    bar(1, 5, 3, 8); bar(12, 4, 3, 8);
+    bar(1, 12, 12, 1); bar(9, 10, 4, 3);
+    flare(9, 10, 2); flare(13, 13, 2);
+    o.fill(); o.restore();
   }
   // The VIBE starter follows the sixteen-cell artwork: tall tiled strokes,
   // curved cutouts, and four-point flares. It remains one editable grid stamp.

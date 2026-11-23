@@ -264,34 +264,44 @@ test('background fill preserves enclosed transparent regions and artwork under a
   expect((await badgePixel(page, 140, 140))[3]).toBe(0);
 });
 
-test('Q stays transparent, recognizable and editable through grid changes', async ({ page }) => {
+test('Q matches the yellow and orange reference and remains editable at every grid size', async ({ page }) => {
   await openStudio(page);
-  for (const [name, ink, empty] of [
-    ['q', [140, 204], [236, 204]]
-  ]) {
-    await page.locator('[data-icon-size="16"]').click();
-    await page.locator(`[data-icon-template="${name}"]`).click();
-    for (const size of [16, 8, 32, 16]) {
-      if (size !== 16 || await page.locator('[data-icon-size="16"]').getAttribute('aria-pressed') !== 'true') {
-        await page.locator(`[data-icon-size="${size}"]`).click();
-      }
-      expect((await badgePixel(page, ...ink))[3]).toBe(255);
-      expect((await badgePixel(page, ...empty))[3]).toBe(0);
-      expect((await badgePixel(page, 10, 10))[3]).toBe(0);
-      if (name === 'q') {
-        expect((await badgePixel(page, 392, 392))[3]).toBeGreaterThan(0); // connected tail
-        expect((await badgePixel(page, 392, 344))[3]).toBe(0); // outside the tail
-      }
-    }
-  }
+  await page.locator('[data-icon-size="16"]').click();
   await page.locator('[data-icon-template="q"]').click();
-  await page.locator('[data-icon-tool="eraser"]').click();
+  for (const size of [16, 8, 32, 16]) {
+    await page.locator(`[data-icon-size="${size}"]`).click();
+    // Square-sided Q, inset counter and the curved, four-point tail.
+    for (const [x, y] of [[49,113], [49,209], [433,209], [81,401], [289,281], [417,441]]) {
+      expect(await badgePixel(page, x, y)).toEqual([250, 98, 46, 255]);
+    }
+    for (const [x, y] of [[11,11], [201,201], [241,271], [475,451]]) {
+      expect(await badgePixel(page, x, y)).toEqual([248, 210, 61, 255]);
+    }
+    expect((await badgePixel(page, 512 / size, 201))[3]).toBe(0); // the usual transparent grid seam
+  }
   const canvas = page.locator('#iconCanvas');
   const box = await canvas.boundingBox();
-  await canvas.click({ position: { x: box.width * 4.5 / 16, y: box.height * 6.5 / 16 } });
-  expect((await badgePixel(page, 140, 204))[3]).toBe(0);
+  const clickPixel = (x, y) => canvas.click({ position: { x: box.width * x / 512, y: box.height * y / 512 } });
+  await page.locator('[data-icon-tool="fill"]').click();
+  await page.locator('[data-icon-color="#0f8fb1"]').click();
+  await clickPixel(200, 200); // yellow inside the Q, under the curved stamp
+  expect(await badgePixel(page, 200, 200)).toEqual([15, 143, 177, 255]);
+  expect(await badgePixel(page, 10, 10)).toEqual([15, 143, 177, 255]);
+  expect(await badgePixel(page, 48, 208)).toEqual([250, 98, 46, 255]);
+  await page.locator('[data-icon-color="#f45077"]').click();
+  await clickPixel(48, 208);
+  expect(await badgePixel(page, 48, 208)).toEqual([244, 80, 119, 255]);
+  expect(await badgePixel(page, 417, 440)).toEqual([244, 80, 119, 255]);
+  expect(await badgePixel(page, 200, 200)).toEqual([15, 143, 177, 255]);
   await page.locator('[data-icon-action="undo"]').click();
-  expect((await badgePixel(page, 140, 204))[3]).toBe(255);
+  expect(await badgePixel(page, 48, 208)).toEqual([250, 98, 46, 255]);
+  await page.locator('[data-icon-action="undo"]').click();
+  expect(await badgePixel(page, 200, 200)).toEqual([248, 210, 61, 255]);
+  await page.locator('[data-icon-tool="eraser"]').click();
+  await clickPixel(48, 208);
+  expect((await badgePixel(page, 48, 208))[3]).toBe(0);
+  await page.locator('[data-icon-action="undo"]').click();
+  expect(await badgePixel(page, 48, 208)).toEqual([250, 98, 46, 255]);
 });
 
 test('Vibe matches the orange tiled reference and stays editable on every grid', async ({ page }) => {
