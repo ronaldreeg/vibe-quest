@@ -1317,7 +1317,7 @@ async function loadPublishedFieldNotes() {
   if (!state.backendEnabled) return [];
   const { data, error } = await window.vvSupabase
     .from("out_there_posts")
-    .select("id, author_id, field_note_number, title, dek, body, city, address, map_label, map_note, latitude, longitude, cover_photo_path, status, featured, published_at, created_at, updated_at")
+    .select("id, author_id, field_note_number, title, dek, body, city, address, map_label, map_note, latitude, longitude, map_places, cover_photo_path, status, featured, published_at, created_at, updated_at")
     .eq("status", "published")
     .order("featured", { ascending: false })
     .order("published_at", { ascending: false, nullsFirst: false })
@@ -1340,7 +1340,7 @@ async function loadEditorialPosts() {
   }
   const { data, error } = await window.vvSupabase
     .from("out_there_posts")
-    .select("id, author_id, field_note_number, title, dek, body, city, address, map_label, map_note, latitude, longitude, cover_photo_path, status, featured, published_at, created_at, updated_at")
+    .select("id, author_id, field_note_number, title, dek, body, city, address, map_label, map_note, latitude, longitude, map_places, cover_photo_path, status, featured, published_at, created_at, updated_at")
     .order("updated_at", { ascending: false })
     .limit(FIELD_NOTE_LIMIT);
   if (error) throw error;
@@ -2000,7 +2000,8 @@ function adventureCard(adventure) {
 let map;
 let mapMarkers = [];
 let outThereMap;
-let outThereMapMarker;
+let outThereMapMarkers = [];
+let outThereMapNeedsFit = false;
 let mobileMapInteractionEnabled = false;
 const compactMapQuery = window.matchMedia("(max-width: 900px), (pointer: coarse)");
 const MAX_MAP_MARKERS = 150;
@@ -2407,11 +2408,45 @@ function addOutThereBasemap() {
 }
 
 function fieldNoteCoordinates(post) {
-  const latitude = Number(post?.latitude);
-  const longitude = Number(post?.longitude);
-  return Number.isFinite(latitude) && Number.isFinite(longitude)
-    ? [latitude, longitude]
-    : null;
+  const validNumber = (value, limit) => {
+    if ((typeof value !== "number" && typeof value !== "string") || (typeof value === "string" && !value.trim())) return null;
+    const number = Number(value);
+    return Number.isFinite(number) && Math.abs(number) <= limit ? number : null;
+  };
+  const latitude = validNumber(post?.latitude, 90);
+  const longitude = validNumber(post?.longitude, 180);
+  return latitude !== null && longitude !== null ? [latitude, longitude] : null;
+}
+
+function fieldNoteMapPlaces(post) {
+  const primaryCoordinates = fieldNoteCoordinates(post);
+  const places = primaryCoordinates
+    ? [{ name: post.map_label || post.city || "Field note location", coordinates: primaryCoordinates }]
+    : [];
+  if (Array.isArray(post?.map_places)) {
+    post.map_places.forEach((place) => {
+      const coordinates = fieldNoteCoordinates(place);
+      if (coordinates) places.push({ name: place.name || place.address || place.city || "A place worth noticing", coordinates });
+    });
+  }
+  return places;
+}
+
+function renderOutThereMapLegend(places) {
+  const footer = els.outThereMap?.closest(".editorial-map-window")?.querySelector(".editorial-map-footer");
+  if (!footer) return;
+  footer.querySelector(".editorial-map-places")?.remove();
+  if (places.length < 2) return;
+  const list = document.createElement("ol");
+  list.className = "editorial-map-places";
+  list.setAttribute("aria-label", "Places on this map");
+  list.style.cssText = "margin: 0 0 10px; padding-left: 1.5em; max-height: 90px; overflow-y: auto; color: var(--muted-strong); font-size: 0.82rem; line-height: 1.4";
+  places.forEach((place) => {
+    const item = document.createElement("li");
+    item.textContent = place.name;
+    list.appendChild(item);
+  });
+  footer.insertBefore(list, els.outThereExploreLink || null);
 }
 
 function renderOutThereMapFallback(message = "Location unavailable") {
@@ -2419,19 +2454,30 @@ function renderOutThereMapFallback(message = "Location unavailable") {
   if (outThereMap) {
     outThereMap.remove();
     outThereMap = null;
-    outThereMapMarker = null;
+    outThereMapMarkers = [];
   }
+  outThereMapNeedsFit = false;
+  renderOutThereMapLegend([]);
   els.outThereMap.classList.remove("uses-vector-basemap", "uses-raster-basemap", "leaflet-container");
   delete els.outThereMap.dataset.lat;
   delete els.outThereMap.dataset.lng;
   els.outThereMap.innerHTML = `<span class="editorial-map-loading">${escapeHtml(message)}</span>`;
 }
 
+function fitOutThereMapLocations() {
+  if (!outThereMap || !outThereMapMarkers.length || !els.outThereMap?.offsetWidth || !els.outThereMap?.offsetHeight) return;
+  outThereMap.invalidateSize({ animate: false });
+  const coordinates = outThereMapMarkers.map((marker) => marker.getLatLng());
+  if (coordinates.length === 1) outThereMap.setView(coordinates[0], EDITORIAL_MAP_ZOOM, { animate: false });
+  else outThereMap.fitBounds(L.latLngBounds(coordinates), { padding: [28, 28], maxZoom: EDITORIAL_MAP_ZOOM, animate: false });
+  outThereMapNeedsFit = false;
+}
+
 function updateOutThereLocationMap(post) {
   if (!els.outThereMap) return;
-  const coordinates = fieldNoteCoordinates(post);
-  if (!coordinates || !window.L) {
-    renderOutThereMapFallback(coordinates ? "Map is loading..." : "Location unavailable");
+  const places = fieldNoteMapPlaces(post);
+  if (!places.length || !window.L) {
+    renderOutThereMapFallback(places.length ? "Map is loading..." : "Location unavailable");
     return;
   }
 
@@ -2447,7 +2493,7 @@ function updateOutThereLocationMap(post) {
       boxZoom: false,
       keyboard: false,
       tap: false
-    }).setView(coordinates, EDITORIAL_MAP_ZOOM);
+    }).setView(places[0].coordinates, EDITORIAL_MAP_ZOOM);
     addOutThereBasemap();
     els.outThereMap.insertAdjacentHTML(
       "beforeend",
@@ -2467,25 +2513,31 @@ function updateOutThereLocationMap(post) {
     });
   }
 
-  if (!outThereMapMarker) {
-    outThereMapMarker = L.marker(coordinates, {
-      interactive: false,
-      keyboard: false,
+  outThereMapMarkers.forEach((marker) => marker.remove());
+  outThereMapMarkers = places.map((place, index) => {
+    const numbered = places.length > 1;
+    const label = `${numbered ? `${index + 1}. ` : ""}${place.name}`;
+    const marker = L.marker(place.coordinates, {
+      title: label,
+      alt: label,
       icon: L.divIcon({
         className: "editorial-map-pin-shell",
-        html: '<span class="editorial-map-pin" aria-hidden="true"></span>',
+        html: `<span class="editorial-map-pin" aria-hidden="true"${numbered ? ' style="display:grid;place-items:center;color:#2f3035;font:bold 11px/1 sans-serif"' : ""}>${numbered ? index + 1 : ""}</span>`,
         iconSize: [22, 30],
         iconAnchor: [11, 27]
       })
     }).addTo(outThereMap);
-  } else {
-    outThereMapMarker.setLatLng(coordinates);
-  }
-
-  els.outThereMap.dataset.lat = String(coordinates[0]);
-  els.outThereMap.dataset.lng = String(coordinates[1]);
-  outThereMap.setView(coordinates, EDITORIAL_MAP_ZOOM, { animate: false });
-  window.requestAnimationFrame(() => outThereMap?.invalidateSize({ animate: false }));
+    marker.bindTooltip(escapeHtml(label), { direction: "top", offset: [0, -20] });
+    return marker;
+  });
+  renderOutThereMapLegend(places);
+  els.outThereMap.setAttribute("aria-label", places.length === 1
+    ? `Map showing the field note location near ${places[0].name}`
+    : `Map showing ${places.length} field note locations`);
+  els.outThereMap.dataset.lat = String(places[0].coordinates[0]);
+  els.outThereMap.dataset.lng = String(places[0].coordinates[1]);
+  outThereMapNeedsFit = true;
+  window.requestAnimationFrame(fitOutThereMapLocations);
 }
 
 function initMap() {
@@ -2959,7 +3011,10 @@ function renderViews() {
   if (isDiscover && map) setTimeout(() => map.invalidateSize(), 50);
   if (isOutThere) {
     updateOutThereSlideshow();
-    window.requestAnimationFrame(() => outThereMap?.invalidateSize({ animate: false }));
+    window.requestAnimationFrame(() => {
+      if (outThereMapNeedsFit) fitOutThereMapLocations();
+      else outThereMap?.invalidateSize({ animate: false });
+    });
   }
   if (isShare) {
     window.vvFlyerStudio?.render();
@@ -3175,6 +3230,26 @@ function renderFieldNoteMediaList() {
     : `<div class="field-note-media-empty">No slideshow photos yet.</div>`;
 }
 
+function isValidFieldNotePoint(latitude, longitude) {
+  return Number.isFinite(latitude) && latitude >= -90 && latitude <= 90
+    && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
+}
+
+function addFieldNotePlace(place = {}) {
+  const list = document.querySelector("#fieldNotePlaces");
+  if (!list) return;
+  const row = document.createElement("div");
+  row.className = "field-note-place";
+  row.originalPlace = place;
+  row.innerHTML = `
+    <label class="field"><span>Place name</span><input data-place-name maxlength="160" placeholder="e.g. Maceo Spice &amp; Import Co." value="${escapeHtml(place.name || "")}" /></label>
+    <label class="field"><span>City <small>(optional if same as above)</small></span><input data-place-city maxlength="120" placeholder="Same as field note" value="${escapeHtml(place.city || "")}" /></label>
+    <label class="field field-note-place-address"><span>Address or named place</span><input data-place-address maxlength="300" placeholder="Street address or recognizable venue" value="${escapeHtml(place.address || "")}" /></label>
+    <button class="text-button" type="button" data-remove-place>Remove place</button>
+  `;
+  list.appendChild(row);
+}
+
 function openFieldNoteEditor(postId = "") {
   const user = getCurrentUser();
   if (!user?.isAdmin || !els.fieldNoteForm || !els.fieldNoteModal) {
@@ -3196,6 +3271,9 @@ function openFieldNoteEditor(postId = "") {
   els.fieldNoteForm.elements.mapNote.value = post?.map_note || "";
   els.fieldNoteForm.elements.status.value = post?.status || "draft";
   els.fieldNoteForm.elements.featured.checked = Boolean(post?.featured);
+  const places = document.querySelector("#fieldNotePlaces");
+  if (places) places.replaceChildren();
+  if (Array.isArray(post?.map_places)) post.map_places.forEach(addFieldNotePlace);
   els.fieldNoteEditorTitle.textContent = post ? `Edit ${fieldNoteLabel(post.field_note_number)}` : "New field note";
   els.fieldNoteMessage.textContent = "";
   els.fieldNoteSubmit.disabled = false;
@@ -4848,6 +4926,29 @@ async function saveFieldNote(event) {
     return;
   }
 
+  const placeInputs = [...document.querySelectorAll("#fieldNotePlaces .field-note-place")]
+    .map((row) => ({
+      row,
+      name: row.querySelector("[data-place-name]").value.trim(),
+      address: row.querySelector("[data-place-address]").value.trim(),
+      city: row.querySelector("[data-place-city]").value.trim() || city,
+      original: row.originalPlace || {}
+    }))
+    .filter((place) => place.name || place.address || place.row.querySelector("[data-place-city]").value.trim());
+  for (const place of placeInputs) {
+    if (!place.name || !place.address || !place.city) {
+      els.fieldNoteMessage.textContent = "Add a name, address or named place, and city for each map pin, or remove the empty place.";
+      (place.row.querySelector(!place.name ? "[data-place-name]" : !place.address ? "[data-place-address]" : "[data-place-city]")).focus();
+      return;
+    }
+  }
+  const resetLocationSubmit = () => {
+    els.fieldNoteSubmit.disabled = false;
+    els.fieldNoteSubmit.textContent = existing ? "Save changes" : "Create field note";
+  };
+  els.fieldNoteSubmit.disabled = true;
+  els.fieldNoteSubmit.textContent = "Finding locations...";
+
   let latitude = Number.isFinite(existing?.latitude) ? existing.latitude : null;
   let longitude = Number.isFinite(existing?.longitude) ? existing.longitude : null;
   const addressChanged = normalize(address) !== normalize(existing?.address || "")
@@ -4855,20 +4956,41 @@ async function saveFieldNote(event) {
   if (!address) {
     latitude = null;
     longitude = null;
-  } else if (addressChanged || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+  } else if (addressChanged || !isValidFieldNotePoint(latitude, longitude)) {
     els.fieldNoteSubmit.disabled = true;
     els.fieldNoteSubmit.textContent = "Finding location...";
     els.fieldNoteMessage.textContent = "Matching the address to the map...";
     const location = await geocodeListingLocation(address, city);
-    if (!location.ok) {
-      els.fieldNoteSubmit.disabled = false;
-      els.fieldNoteSubmit.textContent = existing ? "Save changes" : "Create field note";
-      els.fieldNoteMessage.textContent = location.message;
+    if (!location.ok || !isValidFieldNotePoint(location.lat, location.lng)) {
+      resetLocationSubmit();
+      els.fieldNoteMessage.textContent = !location.ok && location.message ? location.message : "We couldn't place that address on the map. Please check it and try again.";
       form.elements.address.focus();
       return;
     }
     latitude = location.lat;
     longitude = location.lng;
+  }
+
+  const mapPlaces = [];
+  for (let index = 0; index < placeInputs.length; index += 1) {
+    const place = placeInputs[index];
+    let placeLatitude = place.original.latitude;
+    let placeLongitude = place.original.longitude;
+    const locationChanged = normalize(place.address) !== normalize(place.original.address || "")
+      || normalize(place.city) !== normalize(place.original.city || "");
+    if (locationChanged || !isValidFieldNotePoint(placeLatitude, placeLongitude)) {
+      els.fieldNoteMessage.textContent = `Finding ${place.name} (${index + 1} of ${placeInputs.length})...`;
+      const location = await geocodeListingLocation(place.address, place.city);
+      if (!location.ok || !isValidFieldNotePoint(location.lat, location.lng)) {
+        resetLocationSubmit();
+        els.fieldNoteMessage.textContent = `${place.name}: ${!location.ok && location.message ? location.message : "We couldn't place that address on the map. Please check it and try again."}`;
+        place.row.querySelector("[data-place-address]").focus();
+        return;
+      }
+      placeLatitude = location.lat;
+      placeLongitude = location.lng;
+    }
+    mapPlaces.push({ name: place.name, address: place.address, city: place.city, latitude: placeLatitude, longitude: placeLongitude });
   }
 
   const now = new Date().toISOString();
@@ -4880,6 +5002,7 @@ async function saveFieldNote(event) {
     address: address || null,
     map_label: form.elements.mapLabel.value.trim() || address || city || null,
     map_note: form.elements.mapNote.value.trim() || null,
+    map_places: mapPlaces,
     latitude,
     longitude
   };
@@ -5974,6 +6097,18 @@ els.accountDeleteForm.addEventListener("submit", deleteCurrentAccount);
 els.reportForm.addEventListener("submit", submitReport);
 els.profileForm.addEventListener("submit", saveProfile);
 els.fieldNoteForm.addEventListener("submit", saveFieldNote);
+document.querySelector("#fieldNoteAddPlace")?.addEventListener("click", () => {
+  if (document.querySelector("#fieldNotePlaces")?.children.length >= 20) {
+    els.fieldNoteMessage.textContent = "You can add up to 20 more places.";
+    return;
+  }
+  addFieldNotePlace();
+  document.querySelector("#fieldNotePlaces .field-note-place:last-child [data-place-name]")?.focus();
+});
+document.querySelector("#fieldNotePlaces")?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-remove-place]");
+  if (button) button.closest(".field-note-place")?.remove();
+});
 els.fieldNoteForm.elements.photos.addEventListener("change", handleEditorialPhotoSelection);
 els.fieldNoteModal.addEventListener("cancel", (event) => {
   event.preventDefault();

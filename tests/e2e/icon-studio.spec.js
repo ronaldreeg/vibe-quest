@@ -108,14 +108,16 @@ test('stamps partial geometric shapes and rotates them without changing the chos
   await page.locator('[data-icon-template="blank"]').click();
   await page.locator('[data-icon-shape="triangle"]').click();
   // Stamp at the top-left grid cell, with solid below the diagonal.
-  await page.locator('#iconCanvas').click({ position: { x: 8, y: 8 } });
+  const canvas = page.locator('#iconCanvas');
+  const box = await canvas.boundingBox();
+  await canvas.click({ position: { x: box.width * 8 / 512, y: box.height * 8 / 512 } });
   expect((await badgePixel(page, 6, 26))[3]).toBe(255);
   expect((await badgePixel(page, 26, 6))[3]).toBe(0);
   await page.locator('[data-icon-action="rotate"]').click();
   await expect(page.locator('[data-icon-shape="triangle"]')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('[data-icon-action="rotate"]')).toHaveAttribute('aria-label', /90 degrees/);
   await expect(page.locator('[data-icon-shape="triangle"] svg')).toHaveCSS('transform', 'matrix(0, 1, -1, 0, 0, 0)');
-  await page.locator('#iconCanvas').click({ position: { x: 40, y: 8 } });
+  await canvas.click({ position: { x: box.width * 40 / 512, y: box.height * 8 / 512 } });
   expect((await badgePixel(page, 38, 6))[3]).toBe(255);
   expect((await badgePixel(page, 58, 26))[3]).toBe(0);
 });

@@ -3283,6 +3283,47 @@ textarea:focus {
   line-height: 1.35;
 }
 
+.field-note-places {
+  padding: 16px;
+  border: 1px solid var(--line);
+}
+
+.field-note-places-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.field-note-places-header strong,
+.field-note-places-header small {
+  display: block;
+}
+
+.field-note-places-header small {
+  margin-top: 4px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.field-note-place {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.field-note-place .field-note-place-address { grid-column: 1 / -1; }
+.field-note-place button { justify-self: start; align-self: end; }
+
+@media (max-width: 600px) {
+  .field-note-place { grid-template-columns: 1fr; }
+  .field-note-place .field-note-place-address { grid-column: auto; }
+}
+
 .field-note-media-list {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
