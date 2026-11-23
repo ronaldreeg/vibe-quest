@@ -94,7 +94,7 @@ test('keeps canvas and tools together on a narrow screen', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openStudio(page);
   const canvas = await page.locator('#iconCanvas').boundingBox();
-  const palette = await page.locator('.icon-palette').boundingBox();
+  const palette = await page.locator('.icon-colors .icon-palette').boundingBox();
   const tools = await page.locator('.icon-tool-options').boundingBox();
   expect(canvas.width).toBeLessThanOrEqual(390);
   expect(palette.y).toBeGreaterThan(canvas.y + canvas.height);
@@ -406,4 +406,92 @@ test('aligns a rotated asymmetric stamp preview with its painted area, including
   expect(await alpha(500, 478)).toBeGreaterThan(0);
   await canvas.click({ position: { x: box.width * 485 / 512, y: box.height * 485 / 512 } });
   expect((await badgePixel(page, 500, 485))[3]).toBe(255);
+});
+
+test('switches non-destructively between transparent badges and a wide photo with a chosen background', async ({ page }) => {
+  await openStudio(page);
+  await page.locator('[data-icon-template="blank"]').click();
+  const canvas = page.locator('#iconCanvas');
+  const box = await canvas.boundingBox();
+  await canvas.click({ position: { x: box.width * 2.5 / 16, y: box.height * 2.5 / 16 } });
+  const original = await badgePixel(page, 80, 80);
+  await page.locator('[data-icon-destination="photo"]').click();
+  await page.locator('[data-icon-background="#f3e9c4"]').click();
+  await expect(page.locator('#iconSmallPreview')).toHaveClass(/is-photo/);
+  await expect(page.locator('#iconPreviewLabel')).toHaveText('Quest photo preview');
+  const info = await page.evaluate(async () => {
+    const bitmap = await createImageBitmap(await window.vvIconStudio.getOutputBlob());
+    const c = document.createElement('canvas'); c.width = bitmap.width; c.height = bitmap.height;
+    const ctx = c.getContext('2d'); ctx.drawImage(bitmap, 0, 0);
+    const data = ctx.getImageData(0, 0, c.width, c.height).data;
+    let left = c.width, top = c.height, right = -1, bottom = -1;
+    for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
+      const i = (y * c.width + x) * 4;
+      if (data[i] === 250 && data[i+1] === 98 && data[i+2] === 46) { left = Math.min(left, x); right = Math.max(right, x); top = Math.min(top, y); bottom = Math.max(bottom, y); }
+    }
+    return { width:c.width, height:c.height, background:[...data.slice(0,4)], shapeWidth:right-left+1, shapeHeight:bottom-top+1 };
+  });
+  expect(info.width).toBe(1200); expect(info.height).toBe(675);
+  expect(info.background).toEqual([243,233,196,255]);
+  expect(Math.abs(info.shapeWidth - info.shapeHeight)).toBeLessThanOrEqual(1);
+  expect(info.shapeWidth).toBeGreaterThan(35);
+  await page.locator('[data-icon-destination="badge"]').click();
+  expect(await badgePixel(page, 80, 80)).toEqual(original);
+  expect((await badgePixel(page, 400, 400))[3]).toBe(0);
+});
+
+test('photo output and editor preview use the same wide crop for an uploaded image', async ({ page }) => {
+  await openStudio(page);
+  await page.locator('[data-icon-destination="photo"]').click();
+  const bytes = await page.evaluate(() => {
+    const c = document.createElement('canvas'); c.width = 100; c.height = 200;
+    const x = c.getContext('2d'); x.fillStyle = '#ff0000'; x.fillRect(0,0,100,100); x.fillStyle = '#00ff00'; x.fillRect(0,100,100,100);
+    return c.toDataURL('image/png').split(',')[1];
+  });
+  await page.locator('#iconUpload').setInputFiles({ name:'portrait.png', mimeType:'image/png', buffer:Buffer.from(bytes, 'base64') });
+  await expect(page.locator('#iconUploadControls')).toBeVisible();
+  async function sample() {
+    return page.evaluate(async () => {
+      const bitmap = await createImageBitmap(await window.vvIconStudio.getOutputBlob());
+      const c = document.createElement('canvas'); c.width = bitmap.width; c.height = bitmap.height;
+      const x = c.getContext('2d'); x.drawImage(bitmap, 0, 0);
+      const output = [...x.getImageData(600,337,1,1).data];
+      const editor = [...document.querySelector('#iconCanvas').getContext('2d').getImageData(256,256,1,1).data];
+      const preview = [...document.querySelector('#iconSmallPreview').getContext('2d').getImageData(80,45,1,1).data];
+      return { width: bitmap.width, height: bitmap.height, output, editor, preview };
+    });
+  }
+  await page.locator('#iconCropY').fill('0');
+  let result = await sample();
+  expect(result).toEqual({ width:1200, height:675, output:[255,0,0,255], editor:[255,0,0,255], preview:[255,0,0,255] });
+  await page.locator('#iconCropY').fill('100'); await page.locator('#iconPixelate').check();
+  result = await sample();
+  expect(result).toEqual({ width:1200, height:675, output:[0,255,0,255], editor:[0,255,0,255], preview:[0,255,0,255] });
+});
+
+test('sends wide artwork to the main-photo field while leaving the badge untouched', async ({ page }) => {
+  await openStudio(page);
+  await page.locator('[data-icon-template="mushroom"]').click();
+  await page.locator('[data-icon-destination="photo"]').click();
+  await page.evaluate(() => window.addEventListener('vibe-icon-selected', e => {
+    window.lastStudioSelection = { destination: e.detail.destination, type: e.detail.blob.type, size: e.detail.blob.size };
+  }, { once: true }));
+  await page.locator('[data-icon-action="use"]').click();
+  await expect(page.locator('#hostView')).toBeVisible();
+  await expect(page.locator('#questPhotoSelectionImage')).toBeVisible();
+  await expect(page.locator('#questBadgePreview')).toContainText('No badge selected');
+  const result = await page.evaluate(() => window.lastStudioSelection);
+  expect(result.destination).toBe('photo'); expect(result.type).toBe('image/png'); expect(result.size).toBeGreaterThan(0);
+});
+
+test('opening directly in either destination preserves existing artwork', async ({ page }) => {
+  await openStudio(page);
+  await page.locator('[data-icon-template="blank"]').click();
+  await page.locator('#iconCanvas').click({ position:{x:12,y:12} });
+  const before = await badgePixel(page,16,16);
+  await page.evaluate(() => window.vvIconStudio.open('photo'));
+  await expect(page.locator('[data-icon-destination="photo"]')).toHaveAttribute('aria-pressed','true');
+  await page.evaluate(() => window.vvIconStudio.open('badge'));
+  await expect(page.locator('[data-icon-destination="badge"]')).toHaveAttribute('aria-pressed','true');
+  expect(await badgePixel(page,16,16)).toEqual(before);
 });

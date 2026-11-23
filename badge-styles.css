@@ -4,6 +4,12 @@
   font-size: 0.9rem;
 }
 
+.quest-photo-selection { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; margin-top: 12px; }
+.quest-photo-selection[hidden] { display: none; }
+.quest-photo-selection img { width: min(240px, 100%); aspect-ratio: 16 / 9; object-fit: cover; border: 1px solid var(--line); }
+.quest-photo-selection > div { display: grid; gap: 6px; color: var(--muted-strong); }
+.quest-photo-selection button { justify-self: start; }
+
 .quest-badge-controls {
   display: flex;
   align-items: center;

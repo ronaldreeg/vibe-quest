@@ -4673,6 +4673,30 @@ function updateLocationPrivacyUi() {
 }
 
 let badgeSelectionVersion = 0;
+let pendingStudioPhotoFile = null;
+let hostPhotoPreviewUrl = "";
+
+function showHostPhotoSelection(file) {
+  if (hostPhotoPreviewUrl) URL.revokeObjectURL(hostPhotoPreviewUrl);
+  hostPhotoPreviewUrl = "";
+  const container = document.querySelector("#questPhotoSelection");
+  const image = document.querySelector("#questPhotoSelectionImage");
+  if (!container || !image) return;
+  if (!(file instanceof Blob) || !file.size) {
+    image.removeAttribute("src");
+    container.hidden = true;
+    return;
+  }
+  hostPhotoPreviewUrl = URL.createObjectURL(file);
+  image.src = hostPhotoPreviewUrl;
+  container.hidden = false;
+}
+
+function clearHostPhotoSelection() {
+  pendingStudioPhotoFile = null;
+  els.hostForm.elements.photoFile.value = "";
+  showHostPhotoSelection(null);
+}
 
 function renderQuestBadgeSelection() {
   const preview = document.querySelector("#questBadgePreview");
@@ -4723,6 +4747,7 @@ async function selectQuestBadge(input) {
 }
 
 function resetHostForm() {
+  clearHostPhotoSelection();
   badgeSelectionVersion++;
   state.pendingBadgeBlob = null;
   state.pendingBadgeDataUrl = "";
@@ -5321,6 +5346,7 @@ async function editPost(id) {
     privateLocation = data;
   }
 
+  clearHostPhotoSelection();
   state.editingAdventureId = id;
   badgeSelectionVersion++;
   state.pendingBadgeBlob = null;
@@ -5485,6 +5511,7 @@ async function publishAdventure(event) {
   }
   const user = getCurrentUser();
   const data = new FormData(els.hostForm);
+  const selectedPhoto = pendingStudioPhotoFile || data.get("photoFile");
   const submittedLinkInputs = hostLinkInputs(null, els.hostForm);
   const type = String(data.get("type") || data.get("category") || "Pop-ups & Events");
   const listingMode = LISTING_MODES.includes(String(data.get("listingMode")))
@@ -5541,10 +5568,9 @@ async function publishAdventure(event) {
     const center = locationVisibility === "private"
       ? approximatePrivateCoordinates(geocode.lat, geocode.lng, activityId)
       : exactCenter;
-    const photoFile = data.get("photoFile");
     let uploadedPhoto = "";
-    if (photoFile instanceof File && photoFile.size) {
-      uploadedPhoto = await optimizeImageFile(photoFile);
+    if (selectedPhoto instanceof File && selectedPhoto.size) {
+      uploadedPhoto = await optimizeImageFile(selectedPhoto);
     }
     const links = normalizeHostLinks(submittedLinkInputs);
     if (state.editingAdventureId && (!existing || existing.createdBy !== user.id)) {
@@ -5729,13 +5755,13 @@ document.addEventListener("click", async (event) => {
   }
 
   const action = target.dataset.action;
-  if (action === "open-badge-studio") {
-    if (!window.vvVibetineraryStudio?.setWorkshopMode) {
-      toast("The badge workshop is still loading. Try again in a moment.");
+  if (action === "open-badge-studio" || action === "open-photo-studio") {
+    if (!window.vvIconStudio?.open) {
+      toast("The Workshop is still loading. Try again in a moment.");
       return;
     }
     setView("share");
-    window.vvVibetineraryStudio.setWorkshopMode("icon");
+    window.vvIconStudio.open(action === "open-photo-studio" ? "photo" : "badge");
     return;
   }
   if (action === "remove-quest-badge") {
@@ -5961,14 +5987,34 @@ document.querySelector("#questBadgeFile")?.addEventListener("change", async (eve
   input.value = "";
 });
 window.addEventListener("vibe-icon-selected", async (event) => {
+  if (event.detail?.destination === "photo") {
+    const blob = event.detail?.blob;
+    if (!(blob instanceof Blob) || !blob.size || blob.type !== "image/png" || blob.size > MAX_UPLOAD_BYTES) {
+      toast("We could not prepare that photo. Please try again.");
+      return;
+    }
+    pendingStudioPhotoFile = new File([blob], "vibe-quest-photo.png", { type: "image/png" });
+    els.hostForm.elements.photoFile.value = "";
+    showHostPhotoSelection(pendingStudioPhotoFile);
+    setView("host");
+    document.querySelector("#questPhotoSelection")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    toast("Main photo added to your quest. Finish the post when you're ready.");
+    return;
+  }
   if (await selectQuestBadge(event.detail?.blob)) {
     setView("host");
     document.querySelector("#questBadgePreview")?.scrollIntoView({ behavior: "smooth", block: "center" });
     toast("Badge added to your quest. Finish the post when you're ready.");
   }
 });
+document.querySelector("#questPhotoClear")?.addEventListener("click", clearHostPhotoSelection);
 els.hostForm.addEventListener("change", (event) => {
   const input = event.target;
+  if (input instanceof HTMLInputElement && input.name === "photoFile") {
+    pendingStudioPhotoFile = null;
+    showHostPhotoSelection(input.files?.[0] || null);
+    return;
+  }
   if (input instanceof HTMLInputElement && input.name === "listingMode") {
     updateScheduleFields();
     return;

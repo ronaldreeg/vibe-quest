@@ -38,6 +38,8 @@
 .icon-preview-panel > p { max-width: 440px; margin: 12px auto; font-size: .88rem; }
 .icon-small-preview { display: flex; align-items: center; gap: 14px; width: min(100%, 440px); margin: 24px auto; color: var(--muted-strong); }
 #iconSmallPreview { width: 64px; height: 64px; image-rendering: pixelated; border: 2px solid var(--line); }
+#iconSmallPreview.is-photo { width: min(160px, 45vw); height: auto; aspect-ratio: 16 / 9; }
+.icon-output-options #iconPhotoBackground { margin-top: 14px; }
 .icon-actions { flex-wrap: wrap; }
 @media (max-width: 650px) { .workshop-mode-switch { grid-template-columns: repeat(2, minmax(0, 1fr)); } .workshop-mode-button:nth-of-type(3) { border-left: 0; } }
 .icon-check input[type="checkbox"] { flex: 0 0 auto; width: 20px; height: 20px; margin: 0; }
@@ -46,7 +48,8 @@
   .icon-controls, .icon-preview-panel { display: contents; }
   .icon-controls > .flyer-controls-heading { order: 0; }
   .icon-controls > p:not(.flyer-status) { order: 1; }
-  .icon-controls > .icon-starters { order: 2; }
+  .icon-controls > .icon-output-options { order: 2; }
+  .icon-controls > .icon-starters { order: 3; }
   .icon-controls > .icon-grid-options { order: 3; }
   .icon-preview-panel > .flyer-preview-heading { order: 3; margin-top: 20px; }
   .icon-canvas-shell { order: 4; width: min(100%, 360px); margin-top: 12px; }
