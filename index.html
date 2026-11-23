@@ -35,7 +35,7 @@
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" integrity="sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK" crossorigin="anonymous" />
     <link rel="stylesheet" href="./styles.css?v=20261121-footer-leading-v2" />
     <link rel="stylesheet" href="./badge-styles.css?v=20261123-photo-preview-v2" />
-    <link rel="stylesheet" href="./icon-studio.css?v=20261123-photo-output-v6" />
+    <link rel="stylesheet" href="./icon-studio.css?v=20261123-photo-crop-v7" />
 </head>
   <body>
     <div class="app-shell">
@@ -957,6 +957,8 @@
                 <div class="icon-upload">
                   <label class="field"><span>Or upload your own image</span><input id="iconUpload" type="file" accept="image/png,image/jpeg,image/webp" /><small>PNG, JPG or WebP, up to 5 MB. Your image stays on your device until you use it on a quest.</small></label>
                   <div id="iconUploadControls" hidden>
+                    <label class="field"><span>Zoom crop</span><input id="iconCropZoom" type="range" min="100" max="300" step="1" value="100" /></label>
+                    <small>Zoom in, then move the crop to choose what appears.</small>
                     <label class="field"><span>Move crop horizontally</span><input id="iconCropX" type="range" min="0" max="100" value="50" /></label>
                     <label class="field"><span>Move crop vertically</span><input id="iconCropY" type="range" min="0" max="100" value="50" /></label>
                     <label class="icon-check"><input id="iconPixelate" type="checkbox" /> Pixelate image</label>
@@ -1260,6 +1262,6 @@
   <script src="./flyer-studio.js?v=20261013-deep-accents-v1"></script>
   <script src="./vibetinerary-studio.js?v=20261121-icon-studio-v1"></script>
   <script src="./vibe-code-studio.js?v=20260925-flyer-logo-v1"></script>
-  <script src="./icon-studio.js?v=20261123-photo-output-v18"></script>
+  <script src="./icon-studio.js?v=20261123-photo-crop-v19"></script>
 </body>
 </html>

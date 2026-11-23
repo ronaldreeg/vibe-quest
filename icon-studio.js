@@ -20,6 +20,7 @@
   const uploadControls = document.querySelector('#iconUploadControls');
   const cropX = document.querySelector('#iconCropX');
   const cropY = document.querySelector('#iconCropY');
+  const cropZoom = document.querySelector('#iconCropZoom');
   const pixelate = document.querySelector('#iconPixelate');
   const custom = document.querySelector('#iconCustomColor');
   const brushSize = document.querySelector('#iconBrushSize');
@@ -118,7 +119,7 @@
   }
   function snapshot() {
     state.history.push({ size: state.size, pixels: state.pixels.map(p => p && { ...p }), image: state.image,
-      cropX: cropX.value, cropY: cropY.value, pixelate: pixelate.checked });
+      cropX: cropX.value, cropY: cropY.value, cropZoom: cropZoom.value, pixelate: pixelate.checked });
     if (state.history.length > 50) state.history.shift();
   }
   function updateControls() {
@@ -269,18 +270,29 @@
     o.translate(.5, .5); o.rotate(p.rotation * Math.PI / 180); o.translate(-.5, -.5);
     o.fillStyle = p.color; shapePath(o, p.shape); o.restore();
   }
+  // Calculate the same crop for the editor, preview, and exported PNG. Zooming
+  // shrinks the source rectangle so even a matching-aspect image can be framed.
+  function imageCrop(ratio) {
+    const image = state.image;
+    const zoom = Number(cropZoom.value) / 100;
+    const width = Math.min(image.naturalWidth, image.naturalHeight * ratio) / zoom;
+    const height = width / ratio;
+    return {
+      x: (image.naturalWidth - width) * Number(cropX.value) / 100,
+      y: (image.naturalHeight - height) * Number(cropY.value) / 100,
+      width, height
+    };
+  }
   function compose(withSeams = true) {
     const out = document.createElement('canvas'); out.width = 512; out.height = 512;
     const o = out.getContext('2d');
     if (state.image) {
-      const image = state.image, side = Math.min(image.naturalWidth, image.naturalHeight);
-      const x = (image.naturalWidth - side) * Number(cropX.value) / 100;
-      const y = (image.naturalHeight - side) * Number(cropY.value) / 100;
+      const image = state.image, { x, y, width, height } = imageCrop(1);
       if (pixelate.checked) {
         const small = document.createElement('canvas'); small.width = small.height = state.size;
-        small.getContext('2d').drawImage(image, x, y, side, side, 0, 0, state.size, state.size);
+        small.getContext('2d').drawImage(image, x, y, width, height, 0, 0, state.size, state.size);
         o.imageSmoothingEnabled = false; o.drawImage(small, 0, 0, 512, 512);
-      } else o.drawImage(image, x, y, side, side, 0, 0, 512, 512);
+      } else o.drawImage(image, x, y, width, height, 0, 0, 512, 512);
     } else {
       const cell = 512 / state.size;
       state.pixels.forEach((p, i) => {
@@ -308,10 +320,7 @@
     const out = document.createElement('canvas'); out.width = 1200; out.height = 675;
     const o = out.getContext('2d'); o.fillStyle = state.photoBackground; o.fillRect(0, 0, 1200, 675);
     if (state.image) {
-      const image = state.image, ratio = 16 / 9;
-      const width = Math.min(image.naturalWidth, image.naturalHeight * ratio), height = width / ratio;
-      const x = (image.naturalWidth - width) * Number(cropX.value) / 100;
-      const y = (image.naturalHeight - height) * Number(cropY.value) / 100;
+      const image = state.image, { x, y, width, height } = imageCrop(16 / 9);
       if (pixelate.checked) {
         const small = document.createElement('canvas'); small.width = state.size; small.height = Math.max(1, Math.round(state.size * 9 / 16));
         small.getContext('2d').drawImage(image, x, y, width, height, 0, 0, small.width, small.height);
@@ -475,7 +484,7 @@
   });
   function undo() {
     const previous = state.history.pop();
-    if (previous) { state.uploadRequest++; state.size = previous.size; state.pixels = previous.pixels; state.image = previous.image; cropX.value = previous.cropX; cropY.value = previous.cropY; pixelate.checked = previous.pixelate; uploadControls.hidden = !state.image; if (!state.image) upload.value = ''; state.cursorX = Math.min(state.cursorX, state.size - 1); state.cursorY = Math.min(state.cursorY, state.size - 1); render(); say('Last change undone.'); }
+    if (previous) { state.uploadRequest++; state.size = previous.size; state.pixels = previous.pixels; state.image = previous.image; cropX.value = previous.cropX; cropY.value = previous.cropY; cropZoom.value = previous.cropZoom; pixelate.checked = previous.pixelate; uploadControls.hidden = !state.image; if (!state.image) upload.value = ''; state.cursorX = Math.min(state.cursorX, state.size - 1); state.cursorY = Math.min(state.cursorY, state.size - 1); render(); say('Last change undone.'); }
     else say('Nothing to undo yet.');
     updateControls();
   }
@@ -512,11 +521,14 @@
     const file = upload.files?.[0]; if (!file) return;
     if (!['image/png','image/jpeg','image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) { say('Choose a PNG, JPG, or WebP image under 5 MB.'); upload.value = ''; return; }
     const request = ++state.uploadRequest, url = URL.createObjectURL(file), image = new Image();
-    image.onload = () => { URL.revokeObjectURL(url); if (request !== state.uploadRequest) return; snapshot(); state.image = image; uploadControls.hidden = false; cropX.value = cropY.value = 50; pixelate.checked = false; say('Image loaded. Adjust the crop or add a pixel effect.'); render(); };
+    image.onload = () => { URL.revokeObjectURL(url); if (request !== state.uploadRequest) return; snapshot(); state.image = image; uploadControls.hidden = false; cropX.value = cropY.value = 50; cropZoom.value = 100; pixelate.checked = false; say('Image loaded. Zoom and move the crop, or add a pixel effect.'); render(); };
     image.onerror = () => { URL.revokeObjectURL(url); if (request !== state.uploadRequest) return; upload.value = ''; say('Could not open that image. Please try another.'); };
     image.src = url;
   });
-  [cropX, cropY, pixelate].forEach(el => el.addEventListener('input', render));
+  [cropX, cropY, cropZoom, pixelate].forEach(el => {
+    el.addEventListener('input', render);
+    el.addEventListener('change', render);
+  });
   state.pixels = pixelsFromTemplate('spark', state.size);
   window.vvIconStudio = { render, getBadgeBlob, getOutputBlob, open(destination) {
     if (destination === 'photo' || destination === 'badge') state.destination = destination;

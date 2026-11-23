@@ -41,9 +41,15 @@
 #iconSmallPreview.is-photo { width: min(160px, 45vw); height: auto; aspect-ratio: 16 / 9; }
 .icon-output-options #iconPhotoBackground { margin-top: 14px; }
 .icon-actions { flex-wrap: wrap; }
+/* Keep the editor in view while the longer settings column scrolls. */
+@media (min-width: 901px) {
+  .icon-preview-panel > .flyer-preview-heading { position: sticky; top: 120px; background: var(--bg-soft); }
+  /* The drawing guide sets a relative position inline; sticky is also a positioning context. */
+  .icon-canvas-shell { position: sticky !important; top: 176px; width: min(100%, 440px, max(180px, calc(100vh - 270px))); }
+}
 @media (max-width: 650px) { .workshop-mode-switch { grid-template-columns: repeat(2, minmax(0, 1fr)); } .workshop-mode-button:nth-of-type(3) { border-left: 0; } }
 .icon-check input[type="checkbox"] { flex: 0 0 auto; width: 20px; height: 20px; margin: 0; }
-@media (max-width: 700px) {
+@media (max-width: 900px) {
   .icon-studio { display: flex; flex-direction: column; padding: 18px 14px; }
   .icon-controls, .icon-preview-panel { display: contents; }
   .icon-controls > .flyer-controls-heading { order: 0; }
@@ -61,4 +67,16 @@
   .icon-upload { order: 10; }
   .icon-actions { order: 11; }
   .icon-controls > .flyer-status { order: 12; }
+  /* A compact live preview stays visible beside crop controls on small screens. */
+  .icon-studio:has(#iconUploadControls:not([hidden])) .icon-small-preview {
+    position: sticky;
+    top: 76px;
+    z-index: 5;
+    width: min(100%, 360px);
+    padding: 8px 10px;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+  }
+  .icon-studio:has(#iconUploadControls:not([hidden])) #iconSmallPreview:not(.is-photo) { width: 72px; height: 72px; }
+  .icon-studio:has(#iconUploadControls:not([hidden])) #iconSmallPreview.is-photo { width: min(128px, 40vw); }
 }
