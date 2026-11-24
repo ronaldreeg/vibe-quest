@@ -383,7 +383,7 @@
     context.restore();
   }
 
-  function drawQuestPatternRegion(x, y, width, height, offsetX = 0, offsetY = -6, background = studio.accent) {
+  function drawQuestPatternRegion(x, y, width, height, offsetX = 0, offsetY = -6, background = studio.accent, tileWidth = SIZE * 0.75) {
     context.save();
     context.beginPath();
     context.rect(x, y, width, height);
@@ -392,8 +392,6 @@
     context.fillRect(x, y, width, height);
 
     if (questPattern.complete && questPattern.naturalWidth > 0) {
-      // Scale the same artwork down in the narrow Signal border so the gems remain visible.
-      const tileWidth = width <= 40 ? 260 : SIZE;
       const tileHeight = tileWidth * questPattern.naturalHeight / questPattern.naturalWidth;
       const startX = x + offsetX;
       const startY = y + offsetY;
@@ -484,6 +482,9 @@
 
   function drawSignalLayout(copy, qr) {
     const accent = studio.accent;
+    // Keep both Signal borders at the same scale and align the artwork at the corner.
+    const patternWidth = 312;
+    const patternHeight = patternWidth * (questPattern.naturalHeight || 1350) / (questPattern.naturalWidth || 1080);
     context.fillStyle = COLORS.charcoal;
     context.fillRect(0, 0, SIZE, SIZE);
     context.fillStyle = accent;
@@ -498,7 +499,7 @@
       context.stroke();
     }
 
-    drawQuestPatternRegion(0, 0, 32, 900);
+    drawQuestPatternRegion(0, 0, 32, 900, 0, -6, accent, patternWidth);
     drawBrand(46, 24, 160, accent);
     fittedText(copy.title, {
       x: 66,
@@ -543,7 +544,7 @@
       align: "center"
     });
 
-    drawQuestPatternRegion(0, 900, SIZE, 180, -18);
+    drawQuestPatternRegion(0, 900, SIZE, 180, 0, -((900 + 6) % patternHeight), accent, patternWidth);
   }
 
   function drawPortalLayout(copy, qr) {
