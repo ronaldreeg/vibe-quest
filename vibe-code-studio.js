@@ -6,7 +6,7 @@
   const FONT_INTERFACE = '"VT323", monospace';
   const BRAND_MARK_URL = "./assets/brand/VQ-logo-flyer.svg?v=20260925-v1";
   const ICON_LIBRARY_URL = "./assets/brand/master-icon-library.svg?v=20260921-balanced-icons-v1";
-  const QUEST_PATTERN_URL = "./assets/brand/step-pattern-1.svg?v=20261124-v1";
+  const QUEST_PATTERN_URL = "./assets/brand/quest-gem-pattern-motif.svg?v=20261124-v1";
   const GEM_MARK_URL = "./assets/brand/inventory.svg?v=20260912-v1";
   const ICON_LIBRARY_SIZE = { width: 3144.72, height: 115.56 };
   const CODE_MARKS = {
@@ -392,13 +392,39 @@
     context.fillRect(x, y, width, height);
 
     if (questPattern.complete && questPattern.naturalWidth > 0) {
-      const tileHeight = tileWidth * questPattern.naturalHeight / questPattern.naturalWidth;
-      const startX = x + offsetX;
-      const startY = y + offsetY;
+      // The source artwork is a diagonal lattice; its artboard is not a
+      // repeatable rectangle. Rebuild it from one original gem instead.
+      const scale = tileWidth / 1080;
+      const a = 65.5747923323;
+      const b = -63.2330351438;
+      const c = 74.3018263473;
+      const d = 70.1805688623;
+      const determinant = a * d - b * c;
+      // This motif's viewBox starts at (-300, 230) in the original artwork.
+      const originX = x + offsetX - 300 * scale;
+      const originY = y + offsetY + 230 * scale;
+      const motifWidth = 140 * scale;
+      const motifHeight = 150 * scale;
+      const bounds = [
+        [x - motifWidth, y - motifHeight], [x + width, y - motifHeight],
+        [x - motifWidth, y + height], [x + width, y + height]
+      ].map(([px, py]) => {
+        const dx = (px - originX) / scale;
+        const dy = (py - originY) / scale;
+        return [(d * dx - c * dy) / determinant, (-b * dx + a * dy) / determinant];
+      });
+      const minI = Math.floor(Math.min(...bounds.map(([i]) => i))) - 1;
+      const maxI = Math.ceil(Math.max(...bounds.map(([i]) => i))) + 1;
+      const minJ = Math.floor(Math.min(...bounds.map(([, j]) => j))) - 1;
+      const maxJ = Math.ceil(Math.max(...bounds.map(([, j]) => j))) + 1;
       context.imageSmoothingEnabled = true;
-      for (let tileY = startY; tileY < y + height; tileY += tileHeight) {
-        for (let tileX = startX; tileX < x + width; tileX += tileWidth) {
-          context.drawImage(questPattern, tileX, tileY, tileWidth, tileHeight);
+      for (let i = minI; i <= maxI; i += 1) {
+        for (let j = minJ; j <= maxJ; j += 1) {
+          const gemX = originX + (a * i + c * j) * scale;
+          const gemY = originY + (b * i + d * j) * scale;
+          if (gemX + motifWidth <= x || gemX >= x + width ||
+              gemY + motifHeight <= y || gemY >= y + height) continue;
+          context.drawImage(questPattern, gemX, gemY, motifWidth, motifHeight);
         }
       }
     }
@@ -484,7 +510,6 @@
     const accent = studio.accent;
     // Keep both Signal borders at the same scale and align the artwork at the corner.
     const patternWidth = 312;
-    const patternHeight = patternWidth * (questPattern.naturalHeight || 1350) / (questPattern.naturalWidth || 1080);
     context.fillStyle = COLORS.charcoal;
     context.fillRect(0, 0, SIZE, SIZE);
     context.fillStyle = accent;
@@ -544,7 +569,7 @@
       align: "center"
     });
 
-    drawQuestPatternRegion(0, 900, SIZE, 180, 0, -((900 + 6) % patternHeight), accent, patternWidth);
+    drawQuestPatternRegion(0, 900, SIZE, 180, 0, -906, accent, patternWidth);
   }
 
   function drawPortalLayout(copy, qr) {
