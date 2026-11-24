@@ -6,7 +6,7 @@
   const FONT_INTERFACE = '"VT323", monospace';
   const BRAND_MARK_URL = "./assets/brand/VQ-logo-flyer.svg?v=20260925-v1";
   const ICON_LIBRARY_URL = "./assets/brand/master-icon-library.svg?v=20260921-balanced-icons-v1";
-  const ICON_PATTERN_URL = "./assets/brand/icon-pattern.png?v=20260913-v2";
+  const QUEST_PATTERN_URL = "./assets/brand/step-pattern-1.svg?v=20261124-v1";
   const GEM_MARK_URL = "./assets/brand/inventory.svg?v=20260912-v1";
   const ICON_LIBRARY_SIZE = { width: 3144.72, height: 115.56 };
   const CODE_MARKS = {
@@ -60,12 +60,6 @@
     cowboyHat: { x: 196.4, y: 39.9, width: 55.5, height: 44.9 },
     bike: { x: 615.4, y: 42.8, width: 62.2, height: 44.3 }
   };
-  const ICON_RIBBON = [
-    "tent", "racketBall", "confetti", "bowl", "beer", "sparkles", "gift", "key", "flag", "skull",
-    "scooter", "lounge", "mask", "dice", "music", "bandage", "fruit", "palette", "burger", "baseball",
-    "sword", "mushroom", "dumbbell", "cup", "utensils", "orb", "pill", "hotdog", "basketball", "bird",
-    "cauldron", "parcels", "cart", "lightning", "cassette", "ski", "invader", "puzzle", "horse", "trophy"
-  ];
   const COLORS = {
     charcoal: "#2f3035",
     charcoalDeep: "#22242a",
@@ -136,8 +130,12 @@
   brandMark.decoding = "async";
   const iconLibrary = new Image();
   iconLibrary.decoding = "async";
-  const iconPattern = new Image();
-  iconPattern.decoding = "async";
+  const questPattern = new Image();
+  questPattern.decoding = "async";
+  const questPatternReady = new Promise((resolve) => {
+    questPattern.addEventListener("load", () => { render(); resolve(true); }, { once: true });
+    questPattern.addEventListener("error", () => resolve(false), { once: true });
+  });
   const gemMark = new Image();
   gemMark.decoding = "async";
   const studio = {
@@ -385,34 +383,7 @@
     context.restore();
   }
 
-  function drawIconField(x, y, width, height) {
-    const rows = 3;
-    const rowHeight = height / rows;
-    const offsets = [-28, 5, -46];
-    const yOffsets = [-7, 2, 5];
-    const sizes = [54, 45, 60, 49, 57, 47, 62, 51];
-    let iconIndex = 0;
-
-    context.save();
-    context.beginPath();
-    context.rect(x, y, width, height);
-    context.clip();
-
-    for (let row = 0; row < rows; row += 1) {
-      let iconX = x + offsets[row];
-      while (iconX < x + width + 40) {
-        const size = sizes[(iconIndex + row * 3) % sizes.length];
-        const iconY = y + row * rowHeight + (rowHeight - size) / 2 + yOffsets[row];
-        drawLibraryIcon(ICON_RIBBON[iconIndex % ICON_RIBBON.length], iconX, iconY, size, size);
-        iconX += size + 3 + ((iconIndex + row) % 3) * 2;
-        iconIndex += 1;
-      }
-    }
-
-    context.restore();
-  }
-
-  function drawIconPatternRegion(x, y, width, height, offsetX = 0, offsetY = -6, background = studio.accent) {
+  function drawQuestPatternRegion(x, y, width, height, offsetX = 0, offsetY = -6, background = studio.accent) {
     context.save();
     context.beginPath();
     context.rect(x, y, width, height);
@@ -420,34 +391,17 @@
     context.fillStyle = background;
     context.fillRect(x, y, width, height);
 
-    if (!iconPattern.complete || iconPattern.naturalWidth <= 0) {
-      context.restore();
-      drawIconField(x, y, width, height);
-      return;
-    }
-
-    const sourceY = 43;
-    const sourceHeight = 1009;
-    const scale = (SIZE / iconPattern.naturalWidth) * 1.22;
-    const tileWidth = iconPattern.naturalWidth * scale;
-    const tileHeight = sourceHeight * scale;
-    const startX = x + offsetX;
-    const startY = y + offsetY;
-    context.imageSmoothingEnabled = false;
-
-    for (let tileY = startY; tileY < y + height; tileY += tileHeight) {
-      for (let tileX = startX; tileX < x + width; tileX += tileWidth) {
-        context.drawImage(
-          iconPattern,
-          0,
-          sourceY,
-          iconPattern.naturalWidth,
-          sourceHeight,
-          tileX,
-          tileY,
-          tileWidth,
-          tileHeight
-        );
+    if (questPattern.complete && questPattern.naturalWidth > 0) {
+      // Scale the same artwork down in the narrow Signal border so the gems remain visible.
+      const tileWidth = width <= 40 ? 260 : SIZE;
+      const tileHeight = tileWidth * questPattern.naturalHeight / questPattern.naturalWidth;
+      const startX = x + offsetX;
+      const startY = y + offsetY;
+      context.imageSmoothingEnabled = true;
+      for (let tileY = startY; tileY < y + height; tileY += tileHeight) {
+        for (let tileX = startX; tileX < x + width; tileX += tileWidth) {
+          context.drawImage(questPattern, tileX, tileY, tileWidth, tileHeight);
+        }
       }
     }
     context.restore();
@@ -544,7 +498,7 @@
       context.stroke();
     }
 
-    drawIconPatternRegion(0, 0, 32, 900);
+    drawQuestPatternRegion(0, 0, 32, 900);
     drawBrand(46, 24, 160, accent);
     fittedText(copy.title, {
       x: 66,
@@ -589,7 +543,7 @@
       align: "center"
     });
 
-    drawIconPatternRegion(0, 900, SIZE, 180, -18);
+    drawQuestPatternRegion(0, 900, SIZE, 180, -18);
   }
 
   function drawPortalLayout(copy, qr) {
@@ -634,13 +588,13 @@
       color: accent,
       align: "center"
     });
-    drawIconPatternRegion(0, 900, SIZE, 180, -18);
+    drawQuestPatternRegion(0, 900, SIZE, 180, -18);
   }
 
   function drawIconFieldLayout(copy, qr) {
     context.fillStyle = COLORS.charcoalDeep;
     context.fillRect(0, 0, SIZE, SIZE);
-    drawIconPatternRegion(0, 0, SIZE, SIZE, -20, -14, COLORS.charcoalDeep);
+    drawQuestPatternRegion(0, 0, SIZE, SIZE, -20, -14, COLORS.charcoalDeep);
 
     const panel = { x: 170, y: 145, width: 740, height: 760 };
     context.fillStyle = COLORS.charcoalDeep;
@@ -881,6 +835,11 @@
   }
 
   async function download() {
+    setStatus("Loading the Quest gem pattern...");
+    if (!(await questPatternReady)) {
+      setStatus("The Quest gem pattern could not load. Refresh and try again.", true);
+      return;
+    }
     const ready = await render();
     if (!ready) {
       destinationInput?.focus();
@@ -946,8 +905,7 @@
   brandMark.src = BRAND_MARK_URL;
   iconLibrary.addEventListener("load", render);
   iconLibrary.src = ICON_LIBRARY_URL;
-  iconPattern.addEventListener("load", render);
-  iconPattern.src = ICON_PATTERN_URL;
+  questPattern.src = QUEST_PATTERN_URL;
   gemMark.addEventListener("load", render);
   gemMark.src = GEM_MARK_URL;
   updateControlState();
