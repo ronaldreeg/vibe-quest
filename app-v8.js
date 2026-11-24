@@ -3633,19 +3633,32 @@ function isStreetAddressQuery(value) {
   return /^\s*\d+\s+/.test(String(value || ""));
 }
 
+// Geocoders normally return the building's street address without a unit.
+// Keep the submitted address intact; ignore its unit only for road matching.
+function withoutAddressUnit(value) {
+  return String(value || "").replace(
+    /\s+(?:(?:apt|apartment|ste|suite|unit|floor|fl|room|rm)\.?\s*#?\s*(?:\d+[a-z0-9-]*|[a-z])|#\s*[a-z0-9-]+)\s*$/i,
+    ""
+  );
+}
+
 function addressMatchesQuery(result, location) {
   const query = String(location || "").split(",")[0].trim();
   const queryNumber = query.match(/^\s*(\d+)\s+/)?.[1];
   if (!queryNumber) return false;
   const address = result?.address || {};
   const display = String(result?.display_name || "").split(",").slice(0, 2).join(" ");
-  const candidateNumber = String(address.house_number || display.match(/\b\d+\b/)?.[0] || "");
+  // Census may put the start of the street range in house_number; its matched
+  // address starts with the actual number. Prefer that explicit number when
+  // present so the range start cannot be mistaken for the returned address.
+  const matchedNumber = String(result?.display_name || "").match(/^\s*(\d+)\s+/)?.[1];
+  const candidateNumber = String(matchedNumber || address.house_number || display.match(/\b\d+\b/)?.[0] || "");
   if (candidateNumber !== queryNumber) return false;
   const normalizeRoad = (value) => normalizedPlaceName(value)
     .replace(/\b(avenue|ave)\b/g, "ave").replace(/\b(street|st)\b/g, "st")
     .replace(/\b(road|rd)\b/g, "rd").replace(/\b(boulevard|blvd)\b/g, "blvd")
     .replace(/\b(drive|dr)\b/g, "dr").replace(/\b(lane|ln)\b/g, "ln");
-  const requestedRoad = normalizeRoad(query.replace(/^\s*\d+\s+/, ""));
+  const requestedRoad = normalizeRoad(withoutAddressUnit(query.replace(/^\s*\d+\s+/, "")));
   const candidateRoad = normalizeRoad(address.road || display.replace(new RegExp(`\\b${queryNumber}\\b`), ""));
   return Boolean(requestedRoad && candidateRoad === requestedRoad);
 }
